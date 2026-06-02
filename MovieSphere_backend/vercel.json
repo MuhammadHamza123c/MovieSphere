@@ -1,5 +1,11 @@
 {
+  "version": 2,
   "builds": [
+    {
+      "src": "frontend/package.json",
+      "use": "@vercel/static-build",
+      "config": { "distDir": "dist" }
+    },
     {
       "src": "app/main.py",
       "use": "@vercel/python",
@@ -8,16 +14,21 @@
   ],
   "routes": [
     {
-      "src": "/assets/(.*)",
+      "src": "/api/(.*)",
       "dest": "app/main.py"
+    },
+    {
+      "src": "/assets/(.*)",
+      "dest": "frontend/assets/$1"
     },
     {
       "src": "/logo.png",
-      "dest": "app/main.py"
+      "dest": "frontend/logo.png"
     },
     {
       "src": "/(.*)",
-      "dest": "app/main.py"
+      "dest": "frontend/$1",
+      "check": true
     }
   ]
 }
