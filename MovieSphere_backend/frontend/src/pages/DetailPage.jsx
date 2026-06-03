@@ -1,6 +1,6 @@
 ﻿import { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { fetchDetail, fetchCast, fetchRecommendations, fetchComments, postComment, deleteComment } from '../api/endpoints'
+import { fetchDetail, fetchCast, fetchRecommendations, fetchComments, postComment, deleteComment, fetchBucket, addToBucket, removeFromBucket, checkInBucket } from '../api/endpoints'
 import { getMe } from '../api/auth'
 import CastCard from '../components/CastCard'
 import GenreTag from '../components/GenreTag'
@@ -10,17 +10,19 @@ export default function DetailPage() {
   const { id } = useParams()
   const navigate = useNavigate()
   const mediaType = window.location.pathname.startsWith('/tv') ? 'tv' : 'movie'
-  const [data, setData] = useState(null)
-  const [cast, setCast] = useState([])
-  const [recs, setRecs] = useState([])
-  const [comments, setComments] = useState([])
-  const [newComment, setNewComment] = useState('')
-  const [newRating, setNewRating] = useState(0)
-  const [submitting, setSubmitting] = useState(false)
-  const [currentUserId, setCurrentUserId] = useState(null)
-  const [loading, setLoading] = useState(true)
-  const [selectedSeason, setSelectedSeason] = useState(1)
-  const [selectedEpisode, setSelectedEpisode] = useState(1)
+const [data, setData] = useState(null)
+    const [cast, setCast] = useState([])
+    const [recs, setRecs] = useState([])
+    const [comments, setComments] = useState([])
+    const [newComment, setNewComment] = useState('')
+    const [newRating, setNewRating] = useState(0)
+    const [submitting, setSubmitting] = useState(false)
+    const [currentUserId, setCurrentUserId] = useState(null)
+    const [loading, setLoading] = useState(true)
+    const [selectedSeason, setSelectedSeason] = useState(1)
+    const [selectedEpisode, setSelectedEpisode] = useState(1)
+    const [bucketState, setBucketState] = useState(false)
+    const [bucketLoading, setBucketLoading] = useState(false)
 
   useEffect(() => {
     setLoading(true)
@@ -34,12 +36,18 @@ export default function DetailPage() {
         if (title) {
           fetchRecommendations(title).then(setRecs).catch(() => {})
         }
+        // Check if item is in bucket
+        if (currentUserId) {
+          checkInBucket(data?.Id || data?.id || 0, mediaType).then(result => {
+            setBucketState(result.in_bucket || false)
+          })
+        }
         setLoading(false)
       })
       .catch(() => setLoading(false))
-  }, [id])
+  }, [id, currentUserId, mediaType])
 
-  if (loading) {
+if (loading) {
     return (
       <div className="animate-pulse space-y-6">
         <div className="h-[400px] bg-[#1a1b32] rounded-2xl" />
@@ -47,8 +55,32 @@ export default function DetailPage() {
       </div>
     )
   }
-
+  
   if (!data) return <div className="text-center py-20 text-gray-500">Failed to load details</div>
+  
+  // Bucket toggle function
+  const toggleBucket = async () => {
+    if (!currentUserId) {
+      // Handle unauthenticated case - you might want to redirect to login
+      alert('Please log in to use the bucket feature')
+      return
+    }
+    
+    setBucketLoading(true)
+    try {
+      if (bucketState) {
+        await removeFromBucket(data.Id || data.id, mediaType)
+      } else {
+        await addToBucket(data.Id || data.id, mediaType)
+      }
+      setBucketState(!bucketState)
+    } catch (error) {
+      console.error('Bucket operation failed:', error)
+      alert('Failed to update bucket. Please try again.')
+    } finally {
+      setBucketLoading(false)
+    }
+  }
 
   const title = data.Title || data.title || 'Untitled'
   const poster = data.Poster_path || data.poster_path || ''
@@ -82,15 +114,30 @@ export default function DetailPage() {
               <h1 className="text-3xl md:text-4xl font-extrabold text-gray-100">{title}</h1>
               {year && <span className="text-lg text-gray-400">({year})</span>}
             </div>
-            <div className="flex items-center gap-3 text-sm text-gray-400 mb-3">
-              <span className="px-2.5 py-0.5 bg-indigo-500/20 text-indigo-300 rounded-md text-xs font-semibold uppercase tracking-wide">{mediaType === 'tv' ? 'TV Series' : 'Movie'}</span>
-              <span className="text-gray-500">|</span>
-              <span>{displayRating}/10</span>
-              {date && <><span className="text-gray-500">|</span><span>{date}</span></>}
-            </div>
+<div className="flex items-center gap-3 text-sm text-gray-400 mb-3">
+               <span className="px-2.5 py-0.5 bg-indigo-500/20 text-indigo-300 rounded-md text-xs font-semibold uppercase tracking-wide">{mediaType === 'tv' ? 'TV Series' : 'Movie'}</span>
+               <span className="text-gray-500">|</span>
+               <span>{displayRating}/10</span>
+               {date && <><span className="text-gray-500">|</span><span>{date}</span></>}
+             </div>
+             
+             {/* Bucket Button */}
+             <button 
+               onClick={toggleBucket}
+               disabled={bucketLoading}
+               className={`p-2 rounded hover:bg-[#1e2040]/50 transition-colors ${
+                 bucketState ? 'text-indigo-300' : 'text-gray-400'
+               }`}
+             >
+               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5}
+                   d="M3 7h10a2 2 0 012 2v9a2 2 0 01-2 2H3a2 2 0 01-2-2v-9a2 2 0 012-2zM3 3b0 .804.083 1.577.23 2.298m5.736.06A2.011 2.011 0 009 3.5c-.58 0-1.04.466-1.041 1.038m0 10.924a2.011 2.011 0 001.041 1.038c.58 0 1.04-.466 1.041-1.038m-1.041-10.929a5.086 5.086 0 015-2V3a2 2 0 012 2v2.414m-5.879.707a2 2 0 01-1.414-1.414V3a2 2 0 012-2h4a2 2 0 012 2v1.414a2 2 0 01-1.414 1.414L12 6.757l-1.293 1.293a2 2 0 00-2.828 0L9 10.414V14a2 2 0 002 2h2a2 2 0 002-2v-1.586l1.293-1.293a2 2 0 012.828 0L16 10.414V14a2 2 0 01-2 2h-2.586l-.707.707A2 2 0 0113.172 16H5a2 2 0 01-2-2v-2a2 2 0 012-2z"/>
+               </svg>
+             </button>
+             <span className="text-xs text-gray-400 ml-1">Bucket</span>
             <div className="flex flex-wrap gap-1.5 mb-4">{genreArr.map((g, i) => <GenreTag key={i} name={g} />)}</div>
-             <p className="text-sm text-gray-400 leading-relaxed max-w-2xl mb-5 line-clamp-4">{overview}</p>
-             <div className="flex flex-wrap items-center gap-3">
+            <p className="text-sm text-gray-400 leading-relaxed max-w-2xl mb-5 line-clamp-4">{overview}</p>
+            <div className="flex flex-wrap items-center gap-3">
               {mediaType === 'tv' && seasons.length > 0 && (
                 <>
                   <select value={selectedSeason} onChange={e => { setSelectedSeason(Number(e.target.value)); setSelectedEpisode(1) }} className="px-3 py-2 bg-[#12142a] border border-gray-700 rounded-lg text-sm text-gray-200 outline-none focus:border-indigo-500 cursor-pointer">

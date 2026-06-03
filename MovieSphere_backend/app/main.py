@@ -20,6 +20,7 @@ from app.api.toprated import top_rated_app
 from app.api.comments import comment_app
 from app.api.history import user_hist_app
 from app.api.auth import auth_app
+from app.api.bucket import bucket_app
 
 app = FastAPI()
 

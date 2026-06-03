@@ -95,6 +95,26 @@ export async function fetchHistoryRecs() {
   return data.MovieSphere || []
 }
 
+export async function fetchBucket() {
+  const { data } = await client.get('/MovieSphere/bucket')
+  return data.MovieSphere || []
+}
+
+export async function addToBucket(id, mediaType) {
+  const { data } = await client.post('/MovieSphere/add_bucket', null, { params: { id, media_type: mediaType } })
+  return data.MovieSphere || {}
+}
+
+export async function removeFromBucket(id, mediaType) {
+  const { data } = await client.delete('/MovieSphere/remove_bucket', { params: { id, media_type: mediaType } })
+  return data.MovieSphere || {}
+}
+
+export async function checkInBucket(id, mediaType) {
+  const { data } = await client.get('/MovieSphere/check_bucket', { params: { id, media_type: mediaType } })
+  return data.MovieSphere || { in_bucket: false }
+}
+
 
 export async function askAi(id, season, epi) {
   const params = { id }
