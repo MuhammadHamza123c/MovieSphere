@@ -65,6 +65,20 @@ export default function DetailPage() {
   const seasons = data['Seasons/Episode'] || data.Seasons || data.seasons || []
   const activeSeason = seasons.find(s => (s.season_number || s.Season_number) === selectedSeason)
   const episodeCount = activeSeason?.episode_count || activeSeason?.Episode_count || 1
+  
+  // Production details
+  const budget = data.Budget || data.budget || 0
+  const revenue = data.Revenue || data.revenue || 0
+  const runtime = data.Runtime || data.runtime || 0
+  const status = data.Status || data.status || ''
+  const tagline = data.Tagline || data.tagline || ''
+  const originalLanguage = data.Original_Language || data.original_language || ''
+  const voteCount = data.Vote_Count || data.vote_count || 0
+  const homepage = data.Homepage || data.homepage || ''
+  const imdbId = data.Imdb_Id || data.imdb_id || ''
+  const productionCompanies = data.Production_Companies || data.production_companies || []
+  const productionCountries = data.Production_Countries || data.production_countries || []
+  const spokenLanguages = data.Spoken_Languages || data.spoken_languages || []
 
   return (
     <div>
@@ -89,8 +103,127 @@ export default function DetailPage() {
               {date && <><span className="text-gray-500">|</span><span>{date}</span></>}
             </div>
             <div className="flex flex-wrap gap-1.5 mb-4">{genreArr.map((g, i) => <GenreTag key={i} name={g} />)}</div>
-            <p className="text-sm text-gray-400 leading-relaxed max-w-2xl mb-5 line-clamp-4">{overview}</p>
-            <div className="flex flex-wrap items-center gap-3">
+             <p className="text-sm text-gray-400 leading-relaxed max-w-2xl mb-5 line-clamp-4">{overview}</p>
+             
+             {/* Production Details */}
+             {mediaType === 'movie' && (
+               <div className="space-y-4 mb-6">
+                 <div className="border border-gray-700/50 rounded-lg p-4">
+                   <div className="flex flex-col space-y-2">
+                     {budget > 0 && (
+                       <div className="flex justify-between text-sm text-gray-400">
+                         <span>Budget:</span>
+                         <span className="font-medium">${
+                           budget >= 1000000 
+                             ? (budget / 1000000).toFixed(1) + 'M' 
+                             : budget.toLocaleString()
+                         }</span>
+                       </div>
+                     )}
+                     {revenue > 0 && (
+                       <div className="flex justify-between text-sm text-gray-400">
+                         <span>Box Office:</span>
+                         <span className="font-medium">${
+                           revenue >= 1000000 
+                             ? (revenue / 1000000).toFixed(1) + 'M' 
+                             : revenue.toLocaleString()
+                         }</span>
+                       </div>
+                     )}
+                     {runtime > 0 && (
+                       <div className="flex justify-between text-sm text-gray-400">
+                         <span>Runtime:</span>
+                         <span className="font-medium">
+                           {Math.floor(runtime / 60)}h {runtime % 60}m
+                         </span>
+                       </div>
+                     )}
+                     {status && (
+                       <div className="flex justify-between text-sm text-gray-400">
+                         <span>Status:</span>
+                         <span className="font-medium text-capitalize">{status}</span>
+                       </div>
+                     )}
+                     {originalLanguage && (
+                       <div className="flex justify-between text-sm text-gray-400">
+                         <span>Original Language:</span>
+                         <span className="font-medium text-uppercase">{originalLanguage}</span>
+                       </div>
+                     )}
+                     {voteCount > 0 && (
+                       <div className="flex justify-between text-sm text-gray-400">
+                         <span>Votes:</span>
+                         <span className="font-medium">{voteCount.toLocaleString()}</span>
+                       </div>
+                     )}
+                     {homepage && (
+                       <div className="flex justify-between text-sm text-gray-400">
+                         <span>Official Site:</span>
+                         <a href={homepage} target="_blank" rel="noopener noreferrer" className="font-medium text-indigo-300 hover:underline">
+                           Visit Site
+                         </a>
+                       </div>
+                     )}
+                     {imdbId && (
+                       <div className="flex justify-between text-sm text-gray-400">
+                         <span>IMDB ID:</span>
+                         <span className="font-medium">{imdbId}</span>
+                       </div>
+                     )}
+                   </div>
+                 </div>
+                 
+                 {/* Production Companies */}
+                 {productionCompanies.length > 0 && (
+                   <>
+                     <div className="mb-2">
+                       <span className="font-semibold text-sm text-gray-400">Production Companies:</span>
+                     </div>
+                     <div className="flex flex-wrap gap-2">
+                       {productionCompanies.map((company, index) => (
+                         <span key={index} className="bg-[#12142a]/50 px-3 py-1 rounded text-xs text-gray-300">
+                           {company}
+                         </span>
+                       ))}
+                     </div>
+                   </>
+                 )}
+                 
+                 {/* Production Countries */}
+                 {productionCountries.length > 0 && (
+                   <>
+                     <div className="mb-2">
+                       <span className="font-semibold text-sm text-gray-400">Production Countries:</span>
+                     </div>
+                     <div className="flex flex-wrap gap-2">
+                       {productionCountries.map((country, index) => (
+                         <span key={index} className="bg-[#12142a]/50 px-3 py-1 rounded text-xs text-gray-300">
+                           {country}
+                         </span>
+                       ))}
+                     </div>
+                   </>
+                 )}
+                 
+                 {/* Spoken Languages */}
+                 {spokenLanguages.length > 0 && (
+                   <>
+                     <div className="mb-2">
+                       <span className="font-semibold text-sm text-gray-400">Languages:</span>
+                     </div>
+                     <div className="flex flex-wrap gap-2">
+                       {spokenLanguages.map((lang, index) => (
+                         <span key={index} className="bg-[#12142a]/50 px-3 py-1 rounded text-xs text-gray-300">
+                           {lang}
+                         </span>
+                       ))}
+                     </div>
+                   </>
+                 )}
+               </div>
+             )}
+             
+             <div className="flex flex-wrap items-center gap-3">
               {mediaType === 'tv' && seasons.length > 0 && (
                 <>
                   <select value={selectedSeason} onChange={e => { setSelectedSeason(Number(e.target.value)); setSelectedEpisode(1) }} className="px-3 py-2 bg-[#12142a] border border-gray-700 rounded-lg text-sm text-gray-200 outline-none focus:border-indigo-500 cursor-pointer">

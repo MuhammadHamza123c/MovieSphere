@@ -288,18 +288,7 @@ def info_now(name: str, id: int):
                 'Overview': data.get('overview'),
                 'Genre': '|'.join([genre.get('name') for genre in data.get('genres', [])]),
                 'Status': data.get('status'),
-                'Tagline': data.get('tagline'),
-                'Runtime': data.get('runtime'),
-                'Budget': data.get('budget'),
-                'Revenue': data.get('revenue'),
-                'Vote_Average': data.get('vote_average'),
-                'Vote_Count': data.get('vote_count'),
-                'Original_Language': data.get('original_language'),
-                'Homepage': data.get('homepage'),
-                'Imdb_Id': data.get('imdb_id'),
-                'Production_Companies': [company.get('name') for company in data.get('production_companies', [])],
-                'Production_Countries': [country.get('name') for country in data.get('production_countries', [])],
-                'Spoken_Languages': [lang.get('english_name') for lang in data.get('spoken_languages', [])]
+                'Tagline': data.get('tagline')
             }
         )
     return data_list
@@ -400,17 +389,7 @@ def get_movie(id: int):
             'Release_date': data.get('release_date'),
             'Revenue': data.get('revenue'),
             'Tagline': data.get('tagline'),
-            'Title': data.get('title'),
-            'Runtime': data.get('runtime'),
-            'Status': data.get('status'),
-            'Original_Language': data.get('original_language'),
-            'Vote_Average': data.get('vote_average'),
-            'Vote_Count': data.get('vote_count'),
-            'Homepage': data.get('homepage'),
-            'Imdb_Id': data.get('imdb_id'),
-            'Production_Companies': [company.get('name') for company in data.get('production_companies', [])],
-            'Production_Countries': [country.get('name') for country in data.get('production_countries', [])],
-            'Spoken_Languages': [lang.get('english_name') for lang in data.get('spoken_languages', [])]
+            'Title': data.get('title')
         }
     )
     return data_store
@@ -432,9 +411,7 @@ def get_tv(id: int, season: int, epi: int):
             'Episode_number': data.get('episode_number'),
             'Season_number': data.get('season_number'),
             'Runtime': data.get('runtime'),
-            'Overview': data.get('overview'),
-            'Show_Name': data.get('show_name'),
-            'Episode_Id': data.get('id')
+            'Overview': data.get('overview')
         }
     )
     return data_store
