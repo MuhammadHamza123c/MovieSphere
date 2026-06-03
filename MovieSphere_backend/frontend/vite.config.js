@@ -1,13 +1,11 @@
-﻿import { defineConfig } from 'vite'
-import react from '@vitejs/plugin-react'
-import tailwindcss from '@tailwindcss/vite'
+import axios from 'axios';
 
-export default defineConfig({
-  plugins: [react(), tailwindcss()],
-  server: {
-    proxy: {
-      '/auth': 'http://localhost:8000',
-      '/MovieSphere': 'http://localhost:8000'
-    }
-  }
-})
+// Production Vercel Backend Link
+const API_URL = 'https://movie-sphere-lake.vercel.app';
+
+const API = axios.create({
+  baseURL: API_URL,
+  withCredentials: true 
+});
+
+export default API;
