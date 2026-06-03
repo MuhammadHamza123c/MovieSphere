@@ -1,2 +1,0 @@
-[tool.vercel]
-entrypoint = "MovieSphere_backend.app.main:app"
