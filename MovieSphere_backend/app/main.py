@@ -47,6 +47,7 @@ app.include_router(genres_app)
 app.include_router(top_rated_app)
 app.include_router(comment_app)
 app.include_router(auth_app)
+app.include_router(bucket_app)
 
 FRONTEND_DIST = os.path.join(os.path.dirname(os.path.dirname(__file__)), "frontend", "dist")
 if os.path.isdir(FRONTEND_DIST):
