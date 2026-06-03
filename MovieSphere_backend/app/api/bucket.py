@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query
 from app.core.database import supabase
 from app.api.auth import get_current_user  # Import the auth dependency
 
@@ -10,7 +10,7 @@ async def get_bucket(user: dict = Depends(get_current_user)):
     return {'MovieSphere': response.data}
 
 @bucket_app.post("/MovieSphere/add_bucket")
-async def add_to_bucket(media_id: int, media_type: str, user: dict = Depends(get_current_user)):
+async def add_to_bucket(media_id: int = Query(...), media_type: str = Query(...), user: dict = Depends(get_current_user)):
     # Validate media_type
     if media_type not in ['movie', 'tv']:
         raise HTTPException(status_code=400, detail="Invalid media type")
@@ -30,11 +30,11 @@ async def add_to_bucket(media_id: int, media_type: str, user: dict = Depends(get
     return {'MovieSphere': response.data[0] if response.data else {}}
 
 @bucket_app.delete("/MovieSphere/remove_bucket")
-async def remove_from_bucket(media_id: int, media_type: str, user: dict = Depends(get_current_user)):
+async def remove_from_bucket(media_id: int = Query(...), media_type: str = Query(...), user: dict = Depends(get_current_user)):
     response = supabase.table('user_bucket').delete().eq('user_id', user['id']).eq('media_id', media_id).eq('media_type', media_type).execute()
     return {'MovieSphere': response.data}
 
 @bucket_app.get("/MovieSphere/check_bucket")
-async def check_in_bucket(media_id: int, media_type: str, user: dict = Depends(get_current_user)):
+async def check_in_bucket(media_id: int = Query(...), media_type: str = Query(...), user: dict = Depends(get_current_user)):
     response = supabase.table('user_bucket').select('id').eq('user_id', user['id']).eq('media_id', media_id).eq('media_type', media_type).execute()
     return {'MovieSphere': {'in_bucket': len(response.data) > 0}}
