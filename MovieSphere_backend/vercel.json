@@ -2,26 +2,14 @@
   "version": 2,
   "builds": [
     {
-      "src": "MovieSphere_frontend/package.json",
-      "use": "@vercel/static-build"
-    },
-    {
-      "src": "MovieSphere_backend/app/main.py",
+      "src": "app/main.py",
       "use": "@vercel/python"
     }
   ],
   "routes": [
     {
-      "src": "/api/(.*)",
-      "dest": "MovieSphere_backend/app/main.py"
-    },
-    {
-      "src": "/assets/(.*)",
-      "dest": "MovieSphere_frontend/dist/assets/$1"
-    },
-    {
       "src": "/(.*)",
-      "dest": "MovieSphere_frontend/dist/index.html"
+      "dest": "app/main.py"
     }
   ]
 }
