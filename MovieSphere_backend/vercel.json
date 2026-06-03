@@ -3,21 +3,13 @@
     {
       "src": "app/main.py",
       "use": "@vercel/python",
-      "config": { "maxLambdaSize": "50mb" }
+      "config": {
+        "installCommand": "pip install -r requirements.txt && cd frontend && npm install && npm run build",
+        "maxLambdaSize": "50mb"
+      }
     }
   ],
   "routes": [
-    {
-      "src": "/assets/(.*)",
-      "dest": "app/main.py"
-    },
-    {
-      "src": "/logo.png",
-      "dest": "app/main.py"
-    },
-    {
-      "src": "/(.*)",
-      "dest": "app/main.py"
-    }
+    { "src": "/(.*)", "dest": "app/main.py" }
   ]
 }
