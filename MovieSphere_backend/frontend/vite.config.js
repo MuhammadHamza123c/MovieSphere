@@ -14,9 +14,9 @@ export default defineConfig({
 
     proxy: {
 
-      '/auth': 'http://localhost:8000',
+      '/auth': 'https://movie-sphere-lake.vercel.app/',
 
-      '/MovieSphere': 'http://localhost:8000'
+      '/MovieSphere': 'https://movie-sphere-lake.vercel.app/'
 
     }
 
