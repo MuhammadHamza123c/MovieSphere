@@ -49,20 +49,6 @@ app.include_router(auth_app)
 
 FRONTEND_DIST = os.path.join(os.path.dirname(os.path.dirname(__file__)), "frontend", "dist")
 if os.path.isdir(FRONTEND_DIST):
-    @app.get("/logo.png")
-    async def serve_logo():
-        logo_path = os.path.join(FRONTEND_DIST, "logo.png")
-        print(f"[MovieSphere] Serving logo from: {logo_path}, exists: {os.path.isfile(logo_path)}")
-        return FileResponse(logo_path, media_type="image/png")
-
-    @app.get("/{full_path:path}")
-    async def serve_frontend(full_path: str):
-        file_path = os.path.join(FRONTEND_DIST, full_path)
-        if os.path.isfile(file_path):
-            media_type, _ = mimetypes.guess_type(file_path)
-            return FileResponse(file_path, media_type=media_type)
-        return FileResponse(os.path.join(FRONTEND_DIST, "index.html"), media_type="text/html")
-
-    @app.get("/")
-    async def serve_index():
-        return FileResponse(os.path.join(FRONTEND_DIST, "index.html"), media_type="text/html")
+    app.mount("/", StaticFiles(directory=FRONTEND_DIST, html=True), name="frontend")
+else:
+    print(f"[MovieSphere] Frontend directory not found: {FRONTEND_DIST}")
