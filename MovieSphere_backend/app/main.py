@@ -22,8 +22,6 @@ from app.api.watch_later import watch_later_app
 from app.api.comments import comment_app
 from app.api.history import user_hist_app
 from app.api.auth import auth_app
-from app.api.notifications import notification_app
-from app.api.push import push_app
 
 app = FastAPI()
 
@@ -52,8 +50,6 @@ app.include_router(upcoming_app)
 app.include_router(watch_later_app)
 app.include_router(comment_app)
 app.include_router(auth_app)
-app.include_router(notification_app)
-app.include_router(push_app)
 
 FRONTEND_DIST = os.path.join(os.path.dirname(os.path.dirname(__file__)), "frontend", "dist")
 if os.path.isdir(FRONTEND_DIST):

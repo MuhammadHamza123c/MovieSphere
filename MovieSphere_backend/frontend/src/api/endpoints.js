@@ -55,11 +55,6 @@ export async function fetchWatchLater() {
   return data.MovieSphere || []
 }
 
-export async function checkReleasedItems() {
-  const { data } = await client.get('/MovieSphere/watch_later/releases')
-  return data.MovieSphere || []
-}
-
 export async function fetchWatchLaterById(id) {
   const { data } = await client.get(`/MovieSphere/watch_later/${id}`)
   return data.MovieSphere
@@ -153,42 +148,6 @@ export async function askAiWithImage(file) {
   const formData = new FormData()
   formData.append('f1', file)
   const { data } = await client.post('/MovieSphere/streamit/ask_it', formData)
-  return data.MovieSphere
-}
-
-export async function fetchNotifications() {
-  const { data } = await client.get('/MovieSphere/notifications')
-  return data.MovieSphere || []
-}
-
-export async function fetchUnreadCount() {
-  const { data } = await client.get('/MovieSphere/notifications/unread')
-  return data.MovieSphere?.count || 0
-}
-
-export async function markNotificationsRead(notificationId) {
-  const params = notificationId ? { notification_id: notificationId } : {}
-  const { data } = await client.put('/MovieSphere/notifications/read', null, { params })
-  return data.MovieSphere
-}
-
-export async function createNotification(notification) {
-  const { data } = await client.post('/MovieSphere/notifications', notification)
-  return data.MovieSphere
-}
-
-export async function fetchNotificationById(id) {
-  const { data } = await client.get(`/MovieSphere/notifications/${id}`)
-  return data.MovieSphere
-}
-
-export async function updateNotification(id, body) {
-  const { data } = await client.put(`/MovieSphere/notifications/${id}`, body)
-  return data.MovieSphere
-}
-
-export async function deleteNotification(id) {
-  const { data } = await client.delete(`/MovieSphere/notifications/${id}`)
   return data.MovieSphere
 }
 

@@ -2,7 +2,6 @@
 import { useParams, useNavigate } from 'react-router-dom'
 import { fetchDetail, fetchCast, fetchRecommendations, fetchComments, postComment, deleteComment, checkWatchLater, addWatchLater, removeWatchLater, addFavorite, removeFavorite, fetchFavorites, fetchMedia } from '../api/endpoints'
 import { getMe } from '../api/auth'
-import { useNotifications } from '../hooks/useNotifications'
 import CastCard from '../components/CastCard'
 import GenreTag from '../components/GenreTag'
 import MovieCard from '../components/MovieCard'
@@ -27,7 +26,8 @@ export default function DetailPage() {
   const [mediaItems, setMediaItems] = useState(null)
   const [lightbox, setLightbox] = useState(null)
   const [videoPlayer, setVideoPlayer] = useState(null)
-  const { scheduleReminder, cancelReminder } = useNotifications()
+  const [showTrailers, setShowTrailers] = useState(true)
+  const [showOtherVideos, setShowOtherVideos] = useState(true)
 
   useEffect(() => {
     setInWatchLater(false)
@@ -111,11 +111,9 @@ export default function DetailPage() {
     try {
       if (inWatchLater) {
         await removeWatchLater(id, mediaType)
-        cancelReminder(id, mediaType)
         setInWatchLater(false)
       } else {
         await addWatchLater(id, mediaType)
-        scheduleReminder(id, mediaType, title, posterUrl)
         setInWatchLater(true)
       }
     } catch {}
@@ -174,13 +172,9 @@ export default function DetailPage() {
                   </select>
                 </>
               )}
-              <button onClick={() => {
-                if (mediaType === 'tv' && seasons.length) {
-                  navigate(`/watch/tv/${id}/${selectedSeason}/${selectedEpisode}`)
-                } else {
-                  navigate(`/watch/${mediaType}/${id}`)
-                }
-              }} className="px-6 py-2.5 bg-indigo-500 hover:bg-indigo-600 text-white text-sm font-bold rounded-lg transition-all cursor-pointer shadow-lg shadow-indigo-500/25">Play Now</button>
+              {mediaType !== 'tv' && (
+              <button onClick={() => navigate(`/watch/${mediaType}/${id}`)} className="px-6 py-2.5 bg-indigo-500 hover:bg-indigo-600 text-white text-sm font-bold rounded-lg transition-all cursor-pointer shadow-lg shadow-indigo-500/25">Play Now</button>
+              )}
               <button onClick={toggleFavorite} className="flex items-center gap-1.5 px-4 py-2.5 border border-gray-700/50 rounded-lg text-sm font-medium transition-all cursor-pointer bg-transparent hover:border-gray-600" style={{ color: isFav ? '#ef4444' : '#9ca3af' }}>
                 <svg className="w-5 h-5" fill={isFav ? 'currentColor' : 'none'} stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
@@ -246,11 +240,14 @@ export default function DetailPage() {
           </div>
           {mediaItems.trailers?.length > 0 && (
             <div className="mb-8">
-              <h4 className="text-xs font-semibold text-red-400 uppercase tracking-wider mb-4 flex items-center gap-2">
-                <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
-                Trailers
-              </h4>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <button onClick={() => setShowTrailers(!showTrailers)} className="w-full flex items-center gap-2 mb-4 cursor-pointer text-left bg-transparent border-0 p-0">
+                <span style={{ transform: showTrailers ? 'none' : 'rotate(-90deg)' }} className="text-red-400 text-sm font-mono transition-transform duration-200 inline-block">{'>'}</span>
+                <h4 className="text-xs font-semibold text-red-400 uppercase tracking-wider flex items-center gap-2">
+                  <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+                  Trailers
+                </h4>
+              </button>
+              <div className={'grid grid-cols-1 sm:grid-cols-2 gap-4' + (showTrailers ? '' : ' hidden')}>
                 {mediaItems.trailers.map((v, i) => (
                   <button key={i} onClick={() => setVideoPlayer(v.key)} className="group relative overflow-hidden rounded-xl bg-black/40 border border-red-900/30 hover:border-red-500/40 transition-all cursor-pointer text-left w-full">
                     <div className="aspect-video relative">
@@ -272,11 +269,14 @@ export default function DetailPage() {
           )}
           {mediaItems.other_videos?.length > 0 && (
             <div className="mb-8">
-              <h4 className="text-xs font-semibold text-indigo-400 uppercase tracking-wider mb-4 flex items-center gap-2">
-                <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
-                More Videos
-              </h4>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <button onClick={() => setShowOtherVideos(!showOtherVideos)} className="w-full flex items-center gap-2 mb-4 cursor-pointer text-left bg-transparent border-0 p-0">
+                <span style={{ transform: showOtherVideos ? 'none' : 'rotate(-90deg)' }} className="text-indigo-400 text-sm font-mono transition-transform duration-200 inline-block">{'>'}</span>
+                <h4 className="text-xs font-semibold text-indigo-400 uppercase tracking-wider flex items-center gap-2">
+                  <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+                  More Videos
+                </h4>
+              </button>
+              <div className={'grid grid-cols-1 sm:grid-cols-2 gap-4' + (showOtherVideos ? '' : ' hidden')}>
                 {mediaItems.other_videos.map((v, i) => (
                   <button key={i} onClick={() => setVideoPlayer(v.key)} className="group relative overflow-hidden rounded-xl bg-black/40 border border-gray-800/50 hover:border-indigo-500/30 transition-all cursor-pointer text-left w-full">
                     <div className="aspect-video relative">

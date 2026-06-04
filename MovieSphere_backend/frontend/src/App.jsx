@@ -1,7 +1,5 @@
 ﻿import { Routes, Route, Navigate } from 'react-router-dom'
 import { useAuth } from './hooks/useAuth'
-import { useNotifications } from './hooks/useNotifications'
-import { usePushNotifications } from './hooks/usePushNotifications'
 import AppLayout from './components/layout/AppLayout'
 import AuthPage from './pages/AuthPage'
 import HomePage from './pages/HomePage'
@@ -25,8 +23,6 @@ function ProtectedRoute({ children }) {
 
 export default function App() {
   const { user, loading } = useAuth()
-  useNotifications({ poll: true })
-  usePushNotifications()
   if (loading) return <div className="flex items-center justify-center h-screen bg-[#0b0d17]"><div className="w-8 h-8 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin" /></div>
   return (
     <Routes>
