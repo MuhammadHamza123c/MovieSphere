@@ -49,6 +49,31 @@ async def check_watch_later(media_id: int = Query(...), media_type: str = Query(
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+@watch_later_app.get("/MovieSphere/watch_later/releases")
+async def check_releases(user = Depends(get_current_user)):
+    try:
+        response = supabase.table('user_watch_later').select('*').eq('user_id', user.id).execute()
+        if not response.data:
+            return {'MovieSphere': []}
+        released = []
+        for item in response.data:
+            media_id = item['media_id']
+            media_type = item['media_type']
+            r = requests.get(f"https://api.themoviedb.org/3/{media_type}/{media_id}", params={'api_key': TMDB_API_KEY})
+            if r.ok:
+                data = r.json()
+                if data.get('status') == 'Released':
+                    title = data.get('title') or data.get('name') or data.get('original_title') or data.get('original_name')
+                    released.append({
+                        'Id': data.get('id'),
+                        'Title': title,
+                        'media_type': media_type,
+                        'Poster_path': f"https://image.tmdb.org/t/p/w500{data.get('poster_path')}" if data.get('poster_path') else None
+                    })
+        return {'MovieSphere': released}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
 @watch_later_app.get("/MovieSphere/watch_later/{item_id}")
 async def get_watch_later_item(item_id: str, user = Depends(get_current_user)):
     try:
@@ -85,30 +110,5 @@ async def delete_watch_later_item(item_id: str, user = Depends(get_current_user)
         return {'MovieSphere': {'message': 'Deleted'}}
     except HTTPException:
         raise
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-
-@watch_later_app.get("/MovieSphere/watch_later/releases")
-async def check_releases(user = Depends(get_current_user)):
-    try:
-        response = supabase.table('user_watch_later').select('*').eq('user_id', user.id).execute()
-        if not response.data:
-            return {'MovieSphere': []}
-        released = []
-        for item in response.data:
-            media_id = item['media_id']
-            media_type = item['media_type']
-            r = requests.get(f"https://api.themoviedb.org/3/{media_type}/{media_id}", params={'api_key': TMDB_API_KEY})
-            if r.ok:
-                data = r.json()
-                if data.get('status') == 'Released':
-                    title = data.get('title') or data.get('name') or data.get('original_title') or data.get('original_name')
-                    released.append({
-                        'Id': data.get('id'),
-                        'Title': title,
-                        'media_type': media_type,
-                        'Poster_path': f"https://image.tmdb.org/t/p/w500{data.get('poster_path')}" if data.get('poster_path') else None
-                    })
-        return {'MovieSphere': released}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
