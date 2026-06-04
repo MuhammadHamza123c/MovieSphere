@@ -26,6 +26,7 @@ export default function DetailPage() {
   const [isFav, setIsFav] = useState(false)
   const [mediaItems, setMediaItems] = useState(null)
   const [lightbox, setLightbox] = useState(null)
+  const [videoPlayer, setVideoPlayer] = useState(null)
   const { scheduleReminder, cancelReminder } = useNotifications()
 
   useEffect(() => {
@@ -251,7 +252,7 @@ export default function DetailPage() {
               </h4>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 {mediaItems.videos.map((v, i) => (
-                  <a key={i} href={`https://www.youtube.com/watch?v=${v.key}`} target="_blank" rel="noopener noreferrer" className="group relative overflow-hidden rounded-xl bg-black/40 border border-gray-800/50 hover:border-indigo-500/30 transition-all">
+                  <button key={i} onClick={() => setVideoPlayer(v.key)} className="group relative overflow-hidden rounded-xl bg-black/40 border border-gray-800/50 hover:border-indigo-500/30 transition-all cursor-pointer text-left w-full">
                     <div className="aspect-video relative">
                       <img src={`https://img.youtube.com/vi/${v.key}/mqdefault.jpg`} alt={v.name} className="w-full h-full object-cover" loading="lazy" />
                       <div className="absolute inset-0 bg-black/40 group-hover:bg-black/20 transition-all flex items-center justify-center">
@@ -264,7 +265,7 @@ export default function DetailPage() {
                       <p className="text-sm font-medium text-gray-300 truncate">{v.name}</p>
                       <p className="text-xs text-gray-500 mt-0.5 capitalize">{v.type}</p>
                     </div>
-                  </a>
+                  </button>
                 ))}
               </div>
             </div>
@@ -393,6 +394,19 @@ export default function DetailPage() {
       className="max-w-[90vw] max-h-[90vh] object-contain rounded-lg shadow-2xl"
       onClick={e => e.stopPropagation()}
     />
+  </div>
+)}
+{videoPlayer && (
+  <div className="fixed inset-0 z-[200] bg-black/90 flex items-center justify-center" onClick={() => setVideoPlayer(null)}>
+    <button onClick={() => setVideoPlayer(null)} className="absolute top-5 right-5 z-10 w-10 h-10 flex items-center justify-center bg-white/10 hover:bg-white/20 text-white/80 hover:text-white rounded-full transition-all cursor-pointer backdrop-blur-sm border border-white/20 text-lg">✕</button>
+    <div className="w-full max-w-5xl aspect-video p-4" onClick={e => e.stopPropagation()}>
+      <iframe
+        src={`https://www.youtube.com/embed/${videoPlayer}?autoplay=1&rel=0`}
+        allow="autoplay; encrypted-media"
+        allowFullScreen
+        className="w-full h-full rounded-xl border-0 shadow-2xl"
+      />
+    </div>
   </div>
 )}
       </div>
