@@ -17,7 +17,7 @@ export default function Sidebar() {
   const navigate = useNavigate()
 
   return (
-    <aside ref={notifRef} className="group w-14 hover:w-56 bg-[#12142a] border-r border-[#1e2040] flex flex-col flex-shrink-0 h-screen sticky top-0 transition-all duration-200 z-50">
+    <aside className="group w-14 hover:w-56 bg-[#12142a] border-r border-[#1e2040] flex flex-col flex-shrink-0 h-screen sticky top-0 transition-all duration-200 z-50">
       <div className="flex items-center h-16 border-b border-[#1e2040]">
         <div className="flex items-center justify-center w-14 min-w-[56px]">
           <div className="w-5 h-5 rounded bg-gradient-to-br from-indigo-400 to-purple-400" />
