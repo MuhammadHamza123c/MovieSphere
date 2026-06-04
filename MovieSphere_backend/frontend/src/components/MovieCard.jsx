@@ -17,6 +17,7 @@ export default function MovieCard({ item, onFavChange, mediaType: forceMediaType
   const rating = item.Popularity || item.vote_average || 0
   const displayRating = rating ? (typeof rating === 'number' ? rating.toFixed(1) : rating) : ''
   const mediaType = forceMediaType || item.media_type || 'movie'
+  const addedDate = item.added_at ? new Date(item.added_at).toLocaleDateString() : null
 
   useEffect(() => { setIsFav(item._isFav || false) }, [item._isFav])
 
@@ -59,6 +60,7 @@ export default function MovieCard({ item, onFavChange, mediaType: forceMediaType
       <div className="px-3 py-2.5">
         <h3 className="text-sm font-semibold text-gray-200 truncate">{title}</h3>
         <p className="text-xs text-gray-500 mt-1">{year}{displayRating ? ` · ${displayRating}` : ''}</p>
+        {addedDate && <p className="text-[10px] text-gray-600 mt-0.5">Added {addedDate}</p>}
       </div>
     </div>
   )

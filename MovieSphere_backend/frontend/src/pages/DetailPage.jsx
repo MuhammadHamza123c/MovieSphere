@@ -1,7 +1,8 @@
 ﻿import { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { fetchDetail, fetchCast, fetchRecommendations, fetchComments, postComment, deleteComment, fetchBucket, addToBucket, removeFromBucket, checkInBucket } from '../api/endpoints'
+import { fetchDetail, fetchCast, fetchRecommendations, fetchComments, postComment, deleteComment, checkWatchLater, addWatchLater, removeWatchLater, addFavorite, removeFavorite, fetchFavorites } from '../api/endpoints'
 import { getMe } from '../api/auth'
+import { useNotifications } from '../hooks/useNotifications'
 import CastCard from '../components/CastCard'
 import GenreTag from '../components/GenreTag'
 import MovieCard from '../components/MovieCard'
@@ -10,23 +11,33 @@ export default function DetailPage() {
   const { id } = useParams()
   const navigate = useNavigate()
   const mediaType = window.location.pathname.startsWith('/tv') ? 'tv' : 'movie'
-const [data, setData] = useState(null)
-    const [cast, setCast] = useState([])
-    const [recs, setRecs] = useState([])
-    const [comments, setComments] = useState([])
-    const [newComment, setNewComment] = useState('')
-    const [newRating, setNewRating] = useState(0)
-    const [submitting, setSubmitting] = useState(false)
-    const [currentUserId, setCurrentUserId] = useState(null)
-    const [loading, setLoading] = useState(true)
-    const [selectedSeason, setSelectedSeason] = useState(1)
-    const [selectedEpisode, setSelectedEpisode] = useState(1)
-    const [bucketState, setBucketState] = useState(false)
-    const [bucketLoading, setBucketLoading] = useState(false)
+  const [data, setData] = useState(null)
+  const [cast, setCast] = useState([])
+  const [recs, setRecs] = useState([])
+  const [comments, setComments] = useState([])
+  const [newComment, setNewComment] = useState('')
+  const [newRating, setNewRating] = useState(0)
+  const [submitting, setSubmitting] = useState(false)
+  const [currentUserId, setCurrentUserId] = useState(null)
+  const [loading, setLoading] = useState(true)
+  const [selectedSeason, setSelectedSeason] = useState(1)
+  const [selectedEpisode, setSelectedEpisode] = useState(1)
+  const [inWatchLater, setInWatchLater] = useState(false)
+  const [isFav, setIsFav] = useState(false)
+  const { scheduleReminder, cancelReminder } = useNotifications()
 
   useEffect(() => {
+    setInWatchLater(false)
+    setIsFav(false)
     setLoading(true)
-    getMe().then(u => setCurrentUserId(u?.id)).catch(() => {})
+    getMe().then(u => {
+      setCurrentUserId(u?.id)
+      if (u?.id) {
+        checkWatchLater(id, mediaType).then(res => {
+          if (res?.in_watch_later) setInWatchLater(true)
+        }).catch(() => {})
+      }
+    }).catch(() => {})
     Promise.all([fetchDetail('', id, mediaType), fetchCast('', id, mediaType), fetchComments(id, mediaType)])
       .then(([detail, castData, commentData]) => {
         setData(detail)
@@ -35,19 +46,17 @@ const [data, setData] = useState(null)
         const title = detail.Title || detail.title || ''
         if (title) {
           fetchRecommendations(title).then(setRecs).catch(() => {})
-        }
-        // Check if item is in bucket
-        if (currentUserId) {
-          checkInBucket(data?.Id || data?.id || 0, mediaType).then(result => {
-            setBucketState(result.in_bucket || false)
-          })
+          fetchFavorites().then(favs => {
+            const match = favs.find(f => (f.Title || f.title || '').toLowerCase() === title.toLowerCase())
+            if (match) setIsFav(true)
+          }).catch(() => {})
         }
         setLoading(false)
       })
       .catch(() => setLoading(false))
-  }, [id, currentUserId, mediaType])
+  }, [id])
 
-if (loading) {
+  if (loading) {
     return (
       <div className="animate-pulse space-y-6">
         <div className="h-[400px] bg-[#1a1b32] rounded-2xl" />
@@ -55,40 +64,16 @@ if (loading) {
       </div>
     )
   }
-  
+
   if (!data) return <div className="text-center py-20 text-gray-500">Failed to load details</div>
-  
-  // Bucket toggle function
-  const toggleBucket = async () => {
-    if (!currentUserId) {
-      // Handle unauthenticated case - you might want to redirect to login
-      alert('Please log in to use the bucket feature')
-      return
-    }
-    
-    setBucketLoading(true)
-    try {
-      if (bucketState) {
-        await removeFromBucket(data.Id || data.id, mediaType)
-      } else {
-        await addToBucket(data.Id || data.id, mediaType)
-      }
-      setBucketState(!bucketState)
-    } catch (error) {
-      console.error('Bucket operation failed:', error)
-      alert('Failed to update bucket. Please try again.')
-    } finally {
-      setBucketLoading(false)
-    }
-  }
 
   const title = data.Title || data.title || 'Untitled'
   const poster = data.Poster_path || data.poster_path || ''
   const posterUrl = poster ? (poster.startsWith('http') ? poster : `https://image.tmdb.org/t/p/w780${poster}`) : ''
   const backdrop = data.Backdrop_path || data.backdrop_path || ''
-  const backdropUrl = backdrop ? `https://image.tmdb.org/t/p/w1280${backdrop}` : ''
+  const backdropUrl = backdrop.startsWith('http') ? backdrop : (backdrop ? `https://image.tmdb.org/t/p/w1280${backdrop}` : '')
   const overview = data.Overview || data.overview || 'No overview available.'
-  const rating = data.Popularity || data.vote_average || 0
+  const rating = data.vote_average || data.Popularity || 0
   const displayRating = rating ? (typeof rating === 'number' ? rating.toFixed(1) : rating) : 'N/A'
   const date = data.Release_date || data.release_date || ''
   const year = date.split('-')[0]
@@ -97,6 +82,52 @@ if (loading) {
   const seasons = data['Seasons/Episode'] || data.Seasons || data.seasons || []
   const activeSeason = seasons.find(s => (s.season_number || s.Season_number) === selectedSeason)
   const episodeCount = activeSeason?.episode_count || activeSeason?.Episode_count || 1
+
+  const runtime = data.runtime
+  const runtimeDisplay = runtime ? `${Math.floor(runtime / 60)}h ${runtime % 60}m` : null
+  const langMap = { en: 'English', es: 'Spanish', fr: 'French', de: 'German', ja: 'Japanese', ko: 'Korean', zh: 'Chinese', hi: 'Hindi', pt: 'Portuguese', ru: 'Russian', it: 'Italian', ar: 'Arabic', tr: 'Turkish', nl: 'Dutch', sv: 'Swedish', no: 'Norwegian', da: 'Danish', fi: 'Finnish', pl: 'Polish', cs: 'Czech', hu: 'Hungarian', ro: 'Romanian', th: 'Thai', vi: 'Vietnamese', uk: 'Ukrainian', el: 'Greek', he: 'Hebrew' }
+  const language = data.Language ? (langMap[data.Language] || data.Language.toUpperCase()) : null
+  const budget = data.Budget
+  const budgetDisplay = budget > 0 ? '$' + (budget >= 1000000 ? (budget / 1000000).toFixed(1) + 'M' : (budget / 1000).toFixed(0) + 'K') : null
+  const revenue = data.Revenue
+  const revenueDisplay = revenue > 0 ? '$' + (revenue >= 1000000 ? (revenue / 1000000).toFixed(1) + 'M' : (revenue / 1000).toFixed(0) + 'K') : null
+  const production = data.Production
+  const voteCount = data.vote_count
+
+  const extraDetails = [
+    runtimeDisplay && { label: 'Runtime', value: runtimeDisplay },
+    language && { label: 'Language', value: language },
+    budgetDisplay && { label: 'Budget', value: budgetDisplay },
+    revenueDisplay && { label: 'Revenue', value: revenueDisplay },
+    voteCount && { label: 'Votes', value: voteCount.toLocaleString() },
+    production && { label: 'Production', value: production },
+  ].filter(Boolean)
+
+  const toggleWatchLater = async () => {
+    try {
+      if (inWatchLater) {
+        await removeWatchLater(id, mediaType)
+        cancelReminder(id, mediaType)
+        setInWatchLater(false)
+      } else {
+        await addWatchLater(id, mediaType)
+        scheduleReminder(id, mediaType, title, posterUrl)
+        setInWatchLater(true)
+      }
+    } catch {}
+  }
+
+  const toggleFavorite = async () => {
+    try {
+      if (isFav) {
+        await removeFavorite(title)
+        setIsFav(false)
+      } else {
+        await addFavorite(title)
+        setIsFav(true)
+      }
+    } catch {}
+  }
 
   return (
     <div>
@@ -114,27 +145,12 @@ if (loading) {
               <h1 className="text-3xl md:text-4xl font-extrabold text-gray-100">{title}</h1>
               {year && <span className="text-lg text-gray-400">({year})</span>}
             </div>
-<div className="flex items-center gap-3 text-sm text-gray-400 mb-3">
-               <span className="px-2.5 py-0.5 bg-indigo-500/20 text-indigo-300 rounded-md text-xs font-semibold uppercase tracking-wide">{mediaType === 'tv' ? 'TV Series' : 'Movie'}</span>
-               <span className="text-gray-500">|</span>
-               <span>{displayRating}/10</span>
-               {date && <><span className="text-gray-500">|</span><span>{date}</span></>}
-             </div>
-             
-             {/* Bucket Button */}
-             <button 
-               onClick={toggleBucket}
-               disabled={bucketLoading}
-               className={`p-2 rounded hover:bg-[#1e2040]/50 transition-colors ${
-                 bucketState ? 'text-indigo-300' : 'text-gray-400'
-               }`}
-             >
-               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5}
-                   d="M3 7h10a2 2 0 012 2v9a2 2 0 01-2 2H3a2 2 0 01-2-2v-9a2 2 0 012-2zM3 3b0 .804.083 1.577.23 2.298m5.736.06A2.011 2.011 0 009 3.5c-.58 0-1.04.466-1.041 1.038m0 10.924a2.011 2.011 0 001.041 1.038c.58 0 1.04-.466 1.041-1.038m-1.041-10.929a5.086 5.086 0 015-2V3a2 2 0 012 2v2.414m-5.879.707a2 2 0 01-1.414-1.414V3a2 2 0 012-2h4a2 2 0 012 2v1.414a2 2 0 01-1.414 1.414L12 6.757l-1.293 1.293a2 2 0 00-2.828 0L9 10.414V14a2 2 0 002 2h2a2 2 0 002-2v-1.586l1.293-1.293a2 2 0 012.828 0L16 10.414V14a2 2 0 01-2 2h-2.586l-.707.707A2 2 0 0113.172 16H5a2 2 0 01-2-2v-2a2 2 0 012-2z"/>
-               </svg>
-             </button>
-             <span className="text-xs text-gray-400 ml-1">Bucket</span>
+            <div className="flex items-center gap-3 text-sm text-gray-400 mb-3">
+              <span className="px-2.5 py-0.5 bg-indigo-500/20 text-indigo-300 rounded-md text-xs font-semibold uppercase tracking-wide">{mediaType === 'tv' ? 'TV Series' : 'Movie'}</span>
+              <span className="text-gray-500">|</span>
+              <span>{displayRating}/10</span>
+              {date && <><span className="text-gray-500">|</span><span>{date}</span></>}
+            </div>
             <div className="flex flex-wrap gap-1.5 mb-4">{genreArr.map((g, i) => <GenreTag key={i} name={g} />)}</div>
             <p className="text-sm text-gray-400 leading-relaxed max-w-2xl mb-5 line-clamp-4">{overview}</p>
             <div className="flex flex-wrap items-center gap-3">
@@ -161,10 +177,53 @@ if (loading) {
                   navigate(`/watch/${mediaType}/${id}`)
                 }
               }} className="px-6 py-2.5 bg-indigo-500 hover:bg-indigo-600 text-white text-sm font-bold rounded-lg transition-all cursor-pointer shadow-lg shadow-indigo-500/25">Play Now</button>
+              <button onClick={toggleFavorite} className="flex items-center gap-1.5 px-4 py-2.5 border border-gray-700/50 rounded-lg text-sm font-medium transition-all cursor-pointer bg-transparent hover:border-gray-600" style={{ color: isFav ? '#ef4444' : '#9ca3af' }}>
+                <svg className="w-5 h-5" fill={isFav ? 'currentColor' : 'none'} stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                </svg>
+                Favorite
+              </button>
+              <button onClick={toggleWatchLater} className="flex items-center gap-1.5 px-4 py-2.5 border border-gray-700/50 rounded-lg text-sm font-medium transition-all cursor-pointer bg-transparent hover:border-gray-600" style={{ color: inWatchLater ? '#f59e0b' : '#9ca3af' }}>
+                <svg className="w-5 h-5" fill={inWatchLater ? 'currentColor' : 'none'} stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                Watch Later
+              </button>
             </div>
           </div>
         </div>
       </div>
+
+      {extraDetails.length > 0 && (
+        <div className="mb-10 bg-[#12142a]/40 rounded-2xl p-5 border border-gray-800/40">
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-4">
+            {extraDetails.map((d, i) => (
+              <div key={i}>
+                <p className="text-[10px] uppercase tracking-wider text-gray-500 mb-1">{d.label}</p>
+                <p className="text-sm font-semibold text-gray-200">{d.value}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {data.Crew && (
+        <div className="mb-8">
+          <h3 className="text-lg font-bold text-gray-200 mb-4">Crew</h3>
+          <div className="flex flex-wrap gap-2">
+            {data.Crew.split('|').map((entry, i) => {
+              const [role, ...nameParts] = entry.trim().split(': ')
+              const name = nameParts.join(': ')
+              return (
+                <div key={i} className="bg-[#12142a]/60 border border-gray-800/50 rounded-lg px-4 py-2.5">
+                  <p className="text-[10px] uppercase tracking-wider text-indigo-400 font-semibold">{role}</p>
+                  <p className="text-sm text-gray-200 font-medium">{name}</p>
+                </div>
+              )
+            })}
+          </div>
+        </div>
+      )}
 
       {cast.length > 0 && (
         <div className="mb-10">

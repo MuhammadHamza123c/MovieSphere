@@ -1,16 +1,16 @@
 import { useState, useEffect } from 'react'
-import { fetchTopRated } from '../api/endpoints'
+import { fetchUpcoming } from '../api/endpoints'
 import MovieGrid from '../components/MovieGrid'
 import Pagination from '../components/Pagination'
 
-export default function TopRatedPage() {
+export default function UpcomingPage() {
   const [items, setItems] = useState([])
   const [page, setPage] = useState(1)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     setLoading(true)
-    Promise.all([fetchTopRated('movie', page), fetchTopRated('tv', page)]).then(([movies, tv]) => {
+    Promise.all([fetchUpcoming('movie', page), fetchUpcoming('tv', page)]).then(([movies, tv]) => {
       const merged = []
       const max = Math.max(movies.length, tv.length)
       for (let i = 0; i < max; i++) {
@@ -25,8 +25,8 @@ export default function TopRatedPage() {
   return (
     <div>
       <div className="mb-6">
-        <h2 className="text-xl font-extrabold text-gray-100">Top Rated</h2>
-        <p className="text-sm text-gray-500 mt-0.5">Highest-rated movies & TV shows</p>
+        <h2 className="text-xl font-extrabold text-gray-100">Upcoming</h2>
+        <p className="text-sm text-gray-500 mt-0.5">New movies & TV shows</p>
       </div>
       {loading ? (
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-5">
