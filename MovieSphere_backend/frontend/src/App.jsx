@@ -10,9 +10,8 @@ import RecommendPage from './pages/RecommendPage'
 import DetailPage from './pages/DetailPage'
 import WatchPage from './pages/WatchPage'
 import ActorPage from './pages/ActorPage'
+import AiPage from './pages/AiPage'
 import TopRatedPage from './pages/TopRatedPage'
-import UpcomingPage from './pages/UpcomingPage'
-import WatchLaterPage from './pages/WatchLaterPage'
 
 function ProtectedRoute({ children }) {
   const { user, loading } = useAuth()
@@ -38,8 +37,7 @@ export default function App() {
         <Route path="/watch/:type/:id" element={<WatchPage />} />
         <Route path="/watch/:type/:id/:season/:epi" element={<WatchPage />} />
         <Route path="/actor/:id" element={<ActorPage />} />
-        <Route path="/upcoming" element={<UpcomingPage />} />
-        <Route path="/watch-later" element={<WatchLaterPage />} />
+        <Route path="/ai" element={<AiPage />} />
         <Route path="/top-rated" element={<TopRatedPage />} />
         <Route path="/" element={<Navigate to="/home" replace />} />
         <Route path="*" element={<Navigate to="/home" replace />} />

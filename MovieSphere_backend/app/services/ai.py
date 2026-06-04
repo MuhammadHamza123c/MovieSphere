@@ -37,7 +37,7 @@ Rules:
                 "content": text,
             }
         ],
-        model="openai/gpt-oss-120b",
+        model="llama-3.3-70b-versatile",
         temperature=0.6
     )
     return chat_completion.choices[0].message.content
@@ -95,7 +95,7 @@ Output:
                 "content": llm_input,
             }
         ],
-        model="openai/gpt-oss-120b"
+        model="llama-3.3-70b-versatile"
     )
     return chat_completion.choices[0].message.content
 

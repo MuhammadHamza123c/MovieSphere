@@ -50,6 +50,11 @@ export async function removeFavorite(name) {
   return data
 }
 
+export async function fetchRecommendations(movieName) {
+  const { data } = await client.get('/MovieSphere/Recommend', { params: { movie_name: movieName } })
+  return data.MovieSphere || []
+}
+
 export async function fetchWatchLater() {
   const { data } = await client.get('/MovieSphere/watch_later')
   return data.MovieSphere || []
@@ -85,9 +90,22 @@ export async function checkWatchLater(mediaId, mediaType) {
   return data.MovieSphere
 }
 
-export async function fetchRecommendations(movieName) {
-  const { data } = await client.get('/MovieSphere/Recommend', { params: { movie_name: movieName } })
+export async function fetchMedia(id, type) {
+  const { data } = await client.get('/MovieSphere/media', { params: { id, type } })
+  return data.MovieSphere || { images: [], videos: [] }
+}
+
+export async function fetchContinueWatching() {
+  const { data } = await client.get('/MovieSphere/continue-watching')
   return data.MovieSphere || []
+}
+
+export async function saveProgress(payload) {
+  await client.put('/MovieSphere/continue-watching/progress', payload)
+}
+
+export async function removeContinueWatching(mediaId) {
+  await client.delete(`/MovieSphere/continue-watching/${mediaId}`)
 }
 
 export async function fetchDetail(name, id, type) {
@@ -149,9 +167,4 @@ export async function askAiWithImage(file) {
   formData.append('f1', file)
   const { data } = await client.post('/MovieSphere/streamit/ask_it', formData)
   return data.MovieSphere
-}
-
-export async function fetchMedia(id, type) {
-  const { data } = await client.get('/MovieSphere/media', { params: { id, type } })
-  return data.MovieSphere || { images: [], videos: [] }
 }

@@ -7,26 +7,27 @@ export default function TopRatedPage() {
   const [items, setItems] = useState([])
   const [page, setPage] = useState(1)
   const [loading, setLoading] = useState(true)
+  const [type, setType] = useState('movie')
 
   useEffect(() => {
     setLoading(true)
-    Promise.all([fetchTopRated('movie', page), fetchTopRated('tv', page)]).then(([movies, tv]) => {
-      const merged = []
-      const max = Math.max(movies.length, tv.length)
-      for (let i = 0; i < max; i++) {
-        if (i < movies.length) merged.push(movies[i])
-        if (i < tv.length) merged.push(tv[i])
-      }
-      setItems(merged)
+    fetchTopRated(type, page).then(data => {
+      setItems(data)
       setLoading(false)
     }).catch(() => setLoading(false))
-  }, [page])
+  }, [page, type])
 
   return (
     <div>
-      <div className="mb-6">
-        <h2 className="text-xl font-extrabold text-gray-100">Top Rated</h2>
-        <p className="text-sm text-gray-500 mt-0.5">Highest-rated movies & TV shows</p>
+      <div className="mb-6 flex items-center justify-between">
+        <div>
+          <h2 className="text-xl font-extrabold text-gray-100">Top Rated</h2>
+          <p className="text-sm text-gray-500 mt-0.5">{type === 'movie' ? 'Highest-rated movies' : 'Highest-rated TV shows'}</p>
+        </div>
+        <div className="flex gap-2">
+          <button onClick={() => { setType('movie'); setPage(1) }} className={`px-4 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer border ${type === 'movie' ? 'bg-indigo-500/20 text-indigo-300 border-indigo-500/50' : 'bg-[#1a1b32] text-gray-400 border-gray-700/50 hover:border-gray-600 hover:text-gray-200'}`}>Movies</button>
+          <button onClick={() => { setType('tv'); setPage(1) }} className={`px-4 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer border ${type === 'tv' ? 'bg-indigo-500/20 text-indigo-300 border-indigo-500/50' : 'bg-[#1a1b32] text-gray-400 border-gray-700/50 hover:border-gray-600 hover:text-gray-200'}`}>TV Shows</button>
+        </div>
       </div>
       {loading ? (
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-5">
@@ -38,7 +39,7 @@ export default function TopRatedPage() {
           ))}
         </div>
       ) : (
-        <MovieGrid items={items} />
+        <MovieGrid items={items} mediaType={type === 'tv' ? 'tv' : undefined} />
       )}
       <Pagination currentPage={page} onPageChange={setPage} />
     </div>

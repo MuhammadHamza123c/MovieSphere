@@ -17,10 +17,9 @@ from app.api.actors import actor_detail_app
 from app.api.ai import ai_movie_app
 from app.api.genres import genres_app
 from app.api.toprated import top_rated_app
-from app.api.upcoming import upcoming_app
-from app.api.watch_later import watch_later_app
 from app.api.comments import comment_app
 from app.api.history import user_hist_app
+from app.api.continue_watching import continue_watching_app
 from app.api.auth import auth_app
 
 app = FastAPI()
@@ -46,9 +45,8 @@ app.include_router(ai_movie_app)
 app.include_router(user_hist_app)
 app.include_router(genres_app)
 app.include_router(top_rated_app)
-app.include_router(upcoming_app)
-app.include_router(watch_later_app)
 app.include_router(comment_app)
+app.include_router(continue_watching_app)
 app.include_router(auth_app)
 
 FRONTEND_DIST = os.path.join(os.path.dirname(os.path.dirname(__file__)), "frontend", "dist")
