@@ -191,3 +191,8 @@ export async function deleteNotification(id) {
   const { data } = await client.delete(`/MovieSphere/notifications/${id}`)
   return data.MovieSphere
 }
+
+export async function fetchMedia(id, type) {
+  const { data } = await client.get('/MovieSphere/media', { params: { id, type } })
+  return data.MovieSphere || { images: [], videos: [] }
+}

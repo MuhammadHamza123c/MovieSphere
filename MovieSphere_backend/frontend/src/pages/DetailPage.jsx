@@ -1,6 +1,6 @@
 ﻿import { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { fetchDetail, fetchCast, fetchRecommendations, fetchComments, postComment, deleteComment, checkWatchLater, addWatchLater, removeWatchLater, addFavorite, removeFavorite, fetchFavorites } from '../api/endpoints'
+import { fetchDetail, fetchCast, fetchRecommendations, fetchComments, postComment, deleteComment, checkWatchLater, addWatchLater, removeWatchLater, addFavorite, removeFavorite, fetchFavorites, fetchMedia } from '../api/endpoints'
 import { getMe } from '../api/auth'
 import { useNotifications } from '../hooks/useNotifications'
 import CastCard from '../components/CastCard'
@@ -24,6 +24,7 @@ export default function DetailPage() {
   const [selectedEpisode, setSelectedEpisode] = useState(1)
   const [inWatchLater, setInWatchLater] = useState(false)
   const [isFav, setIsFav] = useState(false)
+  const [mediaItems, setMediaItems] = useState(null)
   const { scheduleReminder, cancelReminder } = useNotifications()
 
   useEffect(() => {
@@ -38,11 +39,12 @@ export default function DetailPage() {
         }).catch(() => {})
       }
     }).catch(() => {})
-    Promise.all([fetchDetail('', id, mediaType), fetchCast('', id, mediaType), fetchComments(id, mediaType)])
-      .then(([detail, castData, commentData]) => {
+    Promise.all([fetchDetail('', id, mediaType), fetchCast('', id, mediaType), fetchComments(id, mediaType), fetchMedia(id, mediaType)])
+      .then(([detail, castData, commentData, mediaData]) => {
         setData(detail)
         setCast(castData)
         setComments(commentData)
+        if (mediaData?.images?.length || mediaData?.videos?.length) setMediaItems(mediaData)
         const title = detail.Title || detail.title || ''
         if (title) {
           fetchRecommendations(title).then(setRecs).catch(() => {})
@@ -231,6 +233,44 @@ export default function DetailPage() {
           <div className="flex gap-4 overflow-x-auto pb-3 scrollbar-thin">
             {cast.map((c, i) => <CastCard key={c.Id || c.id || i} cast={c} />)}
           </div>
+        </div>
+      )}
+
+      {mediaItems && (mediaItems.videos?.length > 0 || mediaItems.images?.length > 0) && (
+        <div className="mb-10">
+          <h3 className="text-lg font-bold text-gray-200 mb-4">Media</h3>
+          {mediaItems.videos?.length > 0 && (
+            <div className="mb-6">
+              <h4 className="text-sm font-semibold text-gray-400 uppercase tracking-wide mb-3">Videos</h4>
+              <div className="flex gap-4 overflow-x-auto pb-3 scrollbar-thin">
+                {mediaItems.videos.map((v, i) => (
+                  <a key={i} href={`https://www.youtube.com/watch?v=${v.key}`} target="_blank" rel="noopener noreferrer" className="flex-shrink-0 w-72 group">
+                    <div className="relative rounded-xl overflow-hidden bg-black/60">
+                      <img src={`https://img.youtube.com/vi/${v.key}/mqdefault.jpg`} alt={v.name} className="w-full aspect-video object-cover" />
+                      <div className="absolute inset-0 flex items-center justify-center bg-black/30 group-hover:bg-black/10 transition-all">
+                        <svg className="w-12 h-12 text-white/90 drop-shadow-lg" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+                      </div>
+                    </div>
+                    <p className="text-xs text-gray-400 mt-1.5 truncate">{v.name}</p>
+                  </a>
+                ))}
+              </div>
+            </div>
+          )}
+          {mediaItems.images?.length > 0 && (
+            <div>
+              <h4 className="text-sm font-semibold text-gray-400 uppercase tracking-wide mb-3">Photos</h4>
+              <div className="flex gap-4 overflow-x-auto pb-3 scrollbar-thin">
+                {mediaItems.images.map((img, i) => (
+                  <a key={i} href={`https://image.tmdb.org/t/p/original${img.file_path}`} target="_blank" rel="noopener noreferrer" className="flex-shrink-0 w-80 group">
+                    <div className="rounded-xl overflow-hidden bg-[#12142a] border border-gray-800/50 group-hover:border-gray-700/50 transition-all">
+                      <img src={`https://image.tmdb.org/t/p/w400${img.file_path}`} alt="" className="w-full aspect-video object-cover" loading="lazy" />
+                    </div>
+                  </a>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       )}
 
