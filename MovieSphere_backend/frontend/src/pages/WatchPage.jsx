@@ -18,10 +18,10 @@ export default function WatchPage() {
 
   if (cinema && streamUrl) {
     return (
-      <div className="fixed inset-0 z-[100] bg-black flex items-center justify-center">
+      <div className="fixed inset-0 z-[100] bg-black flex items-center justify-center group">
         <button
           onClick={() => setCinema(false)}
-          className="absolute top-5 right-5 z-10 w-9 h-9 flex items-center justify-center bg-white/10 hover:bg-white/20 text-white/70 hover:text-white rounded-full transition-all cursor-pointer backdrop-blur-sm border border-white/10 text-sm"
+          className="absolute top-5 right-5 z-10 w-9 h-9 flex items-center justify-center bg-white/10 hover:bg-white/20 text-white/70 hover:text-white rounded-full transition-all cursor-pointer backdrop-blur-sm border border-white/10 text-sm opacity-0 hover:opacity-100 group-hover:opacity-100"
           title="Exit Cinema Mode"
         >✕</button>
         <div className="w-full h-full max-w-[98vw] max-h-[98vh] p-4">
