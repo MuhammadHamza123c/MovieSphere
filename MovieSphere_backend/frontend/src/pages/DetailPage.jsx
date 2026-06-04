@@ -254,7 +254,7 @@ export default function DetailPage() {
                 {mediaItems.trailers.map((v, i) => (
                   <button key={i} onClick={() => setVideoPlayer(v.key)} className="group relative overflow-hidden rounded-xl bg-black/40 border border-red-900/30 hover:border-red-500/40 transition-all cursor-pointer text-left w-full">
                     <div className="aspect-video relative">
-                      <img src={`https://img.youtube.com/vi/${v.key}/mqdefault.jpg`} alt={v.name} className="w-full h-full object-cover" loading="lazy" />
+                      <img src={`https://img.youtube.com/vi/${v.key}/maxresdefault.jpg`} alt={v.name} className="w-full h-full object-cover" loading="lazy" />
                       <div className="absolute inset-0 bg-black/40 group-hover:bg-black/20 transition-all flex items-center justify-center">
                         <div className="w-14 h-14 rounded-full bg-red-600/90 group-hover:bg-red-600 flex items-center justify-center shadow-lg shadow-red-600/30 transition-all group-hover:scale-110">
                           <svg className="w-6 h-6 text-white ml-0.5" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
@@ -280,7 +280,7 @@ export default function DetailPage() {
                 {mediaItems.other_videos.map((v, i) => (
                   <button key={i} onClick={() => setVideoPlayer(v.key)} className="group relative overflow-hidden rounded-xl bg-black/40 border border-gray-800/50 hover:border-indigo-500/30 transition-all cursor-pointer text-left w-full">
                     <div className="aspect-video relative">
-                      <img src={`https://img.youtube.com/vi/${v.key}/mqdefault.jpg`} alt={v.name} className="w-full h-full object-cover" loading="lazy" />
+                      <img src={`https://img.youtube.com/vi/${v.key}/maxresdefault.jpg`} alt={v.name} className="w-full h-full object-cover" loading="lazy" />
                       <div className="absolute inset-0 bg-black/40 group-hover:bg-black/20 transition-all flex items-center justify-center">
                         <div className="w-14 h-14 rounded-full bg-indigo-500/90 group-hover:bg-indigo-500 flex items-center justify-center shadow-lg shadow-indigo-500/30 transition-all group-hover:scale-110">
                           <svg className="w-6 h-6 text-white ml-0.5" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
