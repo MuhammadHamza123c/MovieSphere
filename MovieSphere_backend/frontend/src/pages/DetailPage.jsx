@@ -238,20 +238,31 @@ export default function DetailPage() {
 
       {mediaItems && (mediaItems.videos?.length > 0 || mediaItems.images?.length > 0) && (
         <div className="mb-10">
-          <h3 className="text-lg font-bold text-gray-200 mb-4">Media</h3>
+          <div className="flex items-center gap-3 mb-6">
+            <h3 className="text-lg font-bold text-gray-100">Media</h3>
+            <div className="h-px flex-1 bg-gradient-to-r from-indigo-500/20 to-transparent" />
+          </div>
           {mediaItems.videos?.length > 0 && (
-            <div className="mb-6">
-              <h4 className="text-sm font-semibold text-gray-400 uppercase tracking-wide mb-3">Videos</h4>
-              <div className="flex gap-4 overflow-x-auto pb-3 scrollbar-thin">
+            <div className="mb-8">
+              <h4 className="text-xs font-semibold text-indigo-400 uppercase tracking-wider mb-4 flex items-center gap-2">
+                <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+                Videos
+              </h4>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 {mediaItems.videos.map((v, i) => (
-                  <a key={i} href={`https://www.youtube.com/watch?v=${v.key}`} target="_blank" rel="noopener noreferrer" className="flex-shrink-0 w-72 group">
-                    <div className="relative rounded-xl overflow-hidden bg-black/60">
-                      <img src={`https://img.youtube.com/vi/${v.key}/mqdefault.jpg`} alt={v.name} className="w-full aspect-video object-cover" />
-                      <div className="absolute inset-0 flex items-center justify-center bg-black/30 group-hover:bg-black/10 transition-all">
-                        <svg className="w-12 h-12 text-white/90 drop-shadow-lg" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+                  <a key={i} href={`https://www.youtube.com/watch?v=${v.key}`} target="_blank" rel="noopener noreferrer" className="group relative overflow-hidden rounded-xl bg-black/40 border border-gray-800/50 hover:border-indigo-500/30 transition-all">
+                    <div className="aspect-video relative">
+                      <img src={`https://img.youtube.com/vi/${v.key}/mqdefault.jpg`} alt={v.name} className="w-full h-full object-cover" loading="lazy" />
+                      <div className="absolute inset-0 bg-black/40 group-hover:bg-black/20 transition-all flex items-center justify-center">
+                        <div className="w-14 h-14 rounded-full bg-indigo-500/90 group-hover:bg-indigo-500 flex items-center justify-center shadow-lg shadow-indigo-500/30 transition-all group-hover:scale-110">
+                          <svg className="w-6 h-6 text-white ml-0.5" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+                        </div>
                       </div>
                     </div>
-                    <p className="text-xs text-gray-400 mt-1.5 truncate">{v.name}</p>
+                    <div className="p-3">
+                      <p className="text-sm font-medium text-gray-300 truncate">{v.name}</p>
+                      <p className="text-xs text-gray-500 mt-0.5 capitalize">{v.type}</p>
+                    </div>
                   </a>
                 ))}
               </div>
@@ -259,12 +270,16 @@ export default function DetailPage() {
           )}
           {mediaItems.images?.length > 0 && (
             <div>
-              <h4 className="text-sm font-semibold text-gray-400 uppercase tracking-wide mb-3">Photos</h4>
-              <div className="flex gap-4 overflow-x-auto pb-3 scrollbar-thin">
+              <h4 className="text-xs font-semibold text-indigo-400 uppercase tracking-wider mb-4 flex items-center gap-2">
+                <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                Photos
+              </h4>
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
                 {mediaItems.images.map((img, i) => (
-                  <a key={i} href={`https://image.tmdb.org/t/p/original${img.file_path}`} target="_blank" rel="noopener noreferrer" className="flex-shrink-0 w-80 group">
-                    <div className="rounded-xl overflow-hidden bg-[#12142a] border border-gray-800/50 group-hover:border-gray-700/50 transition-all">
-                      <img src={`https://image.tmdb.org/t/p/w400${img.file_path}`} alt="" className="w-full aspect-video object-cover" loading="lazy" />
+                  <a key={i} href={`https://image.tmdb.org/t/p/original${img.file_path}`} target="_blank" rel="noopener noreferrer" className="group relative overflow-hidden rounded-lg bg-[#12142a] border border-gray-800/40 hover:border-indigo-500/30 transition-all aspect-video">
+                    <img src={`https://image.tmdb.org/t/p/w400${img.file_path}`} alt="" className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105" loading="lazy" />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end p-2">
+                      <svg className="w-5 h-5 text-white/80" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v3m0 0v3m0-3h3m-3 0H7"/></svg>
                     </div>
                   </a>
                 ))}
