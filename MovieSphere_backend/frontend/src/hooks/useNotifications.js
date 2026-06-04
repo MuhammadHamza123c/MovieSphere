@@ -19,10 +19,14 @@ function markNotified(key) {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(list))
 }
 
-function notify(title, body, icon) {
+async function notify(title, body, icon) {
   if (!('Notification' in window)) return
-  if (Notification.permission === 'default') Notification.requestPermission()
-  if (Notification.permission !== 'granted') return
+  if (Notification.permission === 'default') {
+    const result = await Notification.requestPermission()
+    if (result !== 'granted') return
+  } else if (Notification.permission !== 'granted') {
+    return
+  }
   new Notification(title, { body, icon })
 }
 
