@@ -6,4 +6,3 @@ supabase
 groq
 python-multipart
 pywebpush
-apscheduler

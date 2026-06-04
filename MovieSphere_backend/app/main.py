@@ -24,10 +24,6 @@ from app.api.history import user_hist_app
 from app.api.auth import auth_app
 from app.api.notifications import notification_app
 from app.api.push import push_app
-from apscheduler.schedulers.asyncio import AsyncIOScheduler
-from app.services.push_service import check_upcoming_and_notify
-
-scheduler = AsyncIOScheduler()
 
 app = FastAPI()
 
@@ -58,11 +54,6 @@ app.include_router(comment_app)
 app.include_router(auth_app)
 app.include_router(notification_app)
 app.include_router(push_app)
-
-@app.on_event("startup")
-async def start_scheduler():
-    scheduler.add_job(check_upcoming_and_notify, "interval", minutes=1)
-    scheduler.start()
 
 FRONTEND_DIST = os.path.join(os.path.dirname(os.path.dirname(__file__)), "frontend", "dist")
 if os.path.isdir(FRONTEND_DIST):
