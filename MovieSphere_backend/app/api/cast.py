@@ -27,6 +27,8 @@ def get_media(id: int, type: str = 'movie'):
         if r.ok:
             data = r.json()
             results = data.get('results', [])
-            videos = [{'key': v['key'], 'name': v.get('name'), 'type': v.get('type'), 'site': v.get('site')} for v in results[:6] if v.get('site') == 'YouTube']
+            all_videos = [{'key': v['key'], 'name': v.get('name'), 'type': v.get('type'), 'site': v.get('site')} for v in results if v.get('site') == 'YouTube']
+            trailers = [v for v in all_videos if v['type'] == 'Trailer'][:4]
+            other_videos = [v for v in all_videos if v['type'] != 'Trailer'][:4]
     except: pass
-    return {'MovieSphere': {'images': images, 'videos': videos}}
+    return {'MovieSphere': {'images': images, 'trailers': trailers, 'other_videos': other_videos}}
