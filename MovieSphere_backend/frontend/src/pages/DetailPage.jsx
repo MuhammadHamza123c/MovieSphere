@@ -1,6 +1,6 @@
-﻿import { useState, useEffect } from 'react'
+import { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { fetchDetail, fetchCast, fetchRecommendations, fetchComments, postComment, deleteComment } from '../api/endpoints'
+import { fetchDetail, fetchCast, fetchRecommendations, fetchComments, postComment, deleteComment, checkWatchLater, addWatchLater, removeWatchLater, addFavorite, removeFavorite, fetchFavorites, fetchMedia } from '../api/endpoints'
 import { getMe } from '../api/auth'
 import CastCard from '../components/CastCard'
 import GenreTag from '../components/GenreTag'
@@ -21,18 +21,37 @@ export default function DetailPage() {
   const [loading, setLoading] = useState(true)
   const [selectedSeason, setSelectedSeason] = useState(1)
   const [selectedEpisode, setSelectedEpisode] = useState(1)
+  const [inWatchLater, setInWatchLater] = useState(false)
+  const [isFav, setIsFav] = useState(false)
+  const [mediaItems, setMediaItems] = useState(null)
+  const [lightbox, setLightbox] = useState(null)
+  const [videoPlayer, setVideoPlayer] = useState(null)
 
   useEffect(() => {
+    setInWatchLater(false)
+    setIsFav(false)
     setLoading(true)
-    getMe().then(u => setCurrentUserId(u?.id)).catch(() => {})
-    Promise.all([fetchDetail('', id, mediaType), fetchCast('', id, mediaType), fetchComments(id, mediaType)])
-      .then(([detail, castData, commentData]) => {
+    getMe().then(u => {
+      setCurrentUserId(u?.id)
+      if (u?.id) {
+        checkWatchLater(id, mediaType).then(res => {
+          if (res?.in_watch_later) setInWatchLater(true)
+        }).catch(() => {})
+      }
+    }).catch(() => {})
+    Promise.all([fetchDetail('', id, mediaType), fetchCast('', id, mediaType), fetchComments(id, mediaType), fetchMedia(id, mediaType)])
+      .then(([detail, castData, commentData, mediaData]) => {
         setData(detail)
         setCast(castData)
         setComments(commentData)
+        if (mediaData?.images?.length || mediaData?.trailers?.length || mediaData?.other_videos?.length) setMediaItems(mediaData)
         const title = detail.Title || detail.title || ''
         if (title) {
           fetchRecommendations(title).then(setRecs).catch(() => {})
+          fetchFavorites().then(favs => {
+            const match = favs.find(f => (f.Title || f.title || '').toLowerCase() === title.toLowerCase())
+            if (match) setIsFav(true)
+          }).catch(() => {})
         }
         setLoading(false)
       })
@@ -54,9 +73,9 @@ export default function DetailPage() {
   const poster = data.Poster_path || data.poster_path || ''
   const posterUrl = poster ? (poster.startsWith('http') ? poster : `https://image.tmdb.org/t/p/w780${poster}`) : ''
   const backdrop = data.Backdrop_path || data.backdrop_path || ''
-  const backdropUrl = backdrop ? `https://image.tmdb.org/t/p/w1280${backdrop}` : ''
+  const backdropUrl = backdrop.startsWith('http') ? backdrop : (backdrop ? `https://image.tmdb.org/t/p/w1280${backdrop}` : '')
   const overview = data.Overview || data.overview || 'No overview available.'
-  const rating = data.Popularity || data.vote_average || 0
+  const rating = data.vote_average || data.Popularity || 0
   const displayRating = rating ? (typeof rating === 'number' ? rating.toFixed(1) : rating) : 'N/A'
   const date = data.Release_date || data.release_date || ''
   const year = date.split('-')[0]
@@ -65,6 +84,50 @@ export default function DetailPage() {
   const seasons = data['Seasons/Episode'] || data.Seasons || data.seasons || []
   const activeSeason = seasons.find(s => (s.season_number || s.Season_number) === selectedSeason)
   const episodeCount = activeSeason?.episode_count || activeSeason?.Episode_count || 1
+
+  const runtime = data.runtime
+  const runtimeDisplay = runtime ? `${Math.floor(runtime / 60)}h ${runtime % 60}m` : null
+  const langMap = { en: 'English', es: 'Spanish', fr: 'French', de: 'German', ja: 'Japanese', ko: 'Korean', zh: 'Chinese', hi: 'Hindi', pt: 'Portuguese', ru: 'Russian', it: 'Italian', ar: 'Arabic', tr: 'Turkish', nl: 'Dutch', sv: 'Swedish', no: 'Norwegian', da: 'Danish', fi: 'Finnish', pl: 'Polish', cs: 'Czech', hu: 'Hungarian', ro: 'Romanian', th: 'Thai', vi: 'Vietnamese', uk: 'Ukrainian', el: 'Greek', he: 'Hebrew' }
+  const language = data.Language ? (langMap[data.Language] || data.Language.toUpperCase()) : null
+  const budget = data.Budget
+  const budgetDisplay = budget > 0 ? '$' + (budget >= 1000000 ? (budget / 1000000).toFixed(1) + 'M' : (budget / 1000).toFixed(0) + 'K') : null
+  const revenue = data.Revenue
+  const revenueDisplay = revenue > 0 ? '$' + (revenue >= 1000000 ? (revenue / 1000000).toFixed(1) + 'M' : (revenue / 1000).toFixed(0) + 'K') : null
+  const production = data.Production
+  const voteCount = data.vote_count
+
+  const extraDetails = [
+    runtimeDisplay && { label: 'Runtime', value: runtimeDisplay },
+    language && { label: 'Language', value: language },
+    budgetDisplay && { label: 'Budget', value: budgetDisplay },
+    revenueDisplay && { label: 'Revenue', value: revenueDisplay },
+    voteCount && { label: 'Votes', value: voteCount.toLocaleString() },
+    production && { label: 'Production', value: production },
+  ].filter(Boolean)
+
+  const toggleWatchLater = async () => {
+    try {
+      if (inWatchLater) {
+        await removeWatchLater(id, mediaType)
+        setInWatchLater(false)
+      } else {
+        await addWatchLater(id, mediaType)
+        setInWatchLater(true)
+      }
+    } catch {}
+  }
+
+  const toggleFavorite = async () => {
+    try {
+      if (isFav) {
+        await removeFavorite(title)
+        setIsFav(false)
+      } else {
+        await addFavorite(title)
+        setIsFav(true)
+      }
+    } catch {}
+  }
 
   return (
     <div>
@@ -114,10 +177,53 @@ export default function DetailPage() {
                   navigate(`/watch/${mediaType}/${id}`)
                 }
               }} className="px-6 py-2.5 bg-indigo-500 hover:bg-indigo-600 text-white text-sm font-bold rounded-lg transition-all cursor-pointer shadow-lg shadow-indigo-500/25">Play Now</button>
+              <button onClick={toggleFavorite} className="flex items-center gap-1.5 px-4 py-2.5 border border-gray-700/50 rounded-lg text-sm font-medium transition-all cursor-pointer bg-transparent hover:border-gray-600" style={{ color: isFav ? '#ef4444' : '#9ca3af' }}>
+                <svg className="w-5 h-5" fill={isFav ? 'currentColor' : 'none'} stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                </svg>
+                Favorite
+              </button>
+              <button onClick={toggleWatchLater} className="flex items-center gap-1.5 px-4 py-2.5 border border-gray-700/50 rounded-lg text-sm font-medium transition-all cursor-pointer bg-transparent hover:border-gray-600" style={{ color: inWatchLater ? '#f59e0b' : '#9ca3af' }}>
+                <svg className="w-5 h-5" fill={inWatchLater ? 'currentColor' : 'none'} stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                Watch Later
+              </button>
             </div>
           </div>
         </div>
       </div>
+
+      {extraDetails.length > 0 && (
+        <div className="mb-10 bg-[#12142a]/40 rounded-2xl p-5 border border-gray-800/40">
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-4">
+            {extraDetails.map((d, i) => (
+              <div key={i}>
+                <p className="text-[10px] uppercase tracking-wider text-gray-500 mb-1">{d.label}</p>
+                <p className="text-sm font-semibold text-gray-200">{d.value}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {data.Crew && (
+        <div className="mb-8">
+          <h3 className="text-lg font-bold text-gray-200 mb-4">Crew</h3>
+          <div className="flex flex-wrap gap-2">
+            {data.Crew.split('|').map((entry, i) => {
+              const [role, ...nameParts] = entry.trim().split(': ')
+              const name = nameParts.join(': ')
+              return (
+                <div key={i} className="bg-[#12142a]/60 border border-gray-800/50 rounded-lg px-4 py-2.5">
+                  <p className="text-[10px] uppercase tracking-wider text-indigo-400 font-semibold">{role}</p>
+                  <p className="text-sm text-gray-200 font-medium">{name}</p>
+                </div>
+              )
+            })}
+          </div>
+        </div>
+      )}
 
       {cast.length > 0 && (
         <div className="mb-10">
@@ -125,6 +231,85 @@ export default function DetailPage() {
           <div className="flex gap-4 overflow-x-auto pb-3 scrollbar-thin">
             {cast.map((c, i) => <CastCard key={c.Id || c.id || i} cast={c} />)}
           </div>
+        </div>
+      )}
+
+      {mediaItems && (mediaItems.trailers?.length > 0 || mediaItems.other_videos?.length > 0 || mediaItems.images?.length > 0) && (
+        <div className="mb-10">
+          <div className="flex items-center gap-3 mb-6">
+            <h3 className="text-lg font-bold text-gray-100">Media</h3>
+            <div className="h-px flex-1 bg-gradient-to-r from-indigo-500/20 to-transparent" />
+          </div>
+          {mediaItems.trailers?.length > 0 && (
+            <div className="mb-8">
+              <h4 className="text-xs font-semibold text-red-400 uppercase tracking-wider mb-4 flex items-center gap-2">
+                <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+                Trailers
+              </h4>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {mediaItems.trailers.map((v, i) => (
+                  <button key={i} onClick={() => setVideoPlayer(v.key)} className="group relative overflow-hidden rounded-xl bg-black/40 border border-red-900/30 hover:border-red-500/40 transition-all cursor-pointer text-left w-full">
+                    <div className="aspect-video relative">
+                      <img src={`https://img.youtube.com/vi/${v.key}/maxresdefault.jpg`} alt={v.name} className="w-full h-full object-cover" loading="lazy" />
+                      <div className="absolute inset-0 bg-black/40 group-hover:bg-black/20 transition-all flex items-center justify-center">
+                        <div className="w-14 h-14 rounded-full bg-red-600/90 group-hover:bg-red-600 flex items-center justify-center shadow-lg shadow-red-600/30 transition-all group-hover:scale-110">
+                          <svg className="w-6 h-6 text-white ml-0.5" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="p-3">
+                      <p className="text-sm font-medium text-gray-300 truncate">{v.name}</p>
+                      <p className="text-xs text-red-400/80 mt-0.5 capitalize">{v.type}</p>
+                    </div>
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+          {mediaItems.other_videos?.length > 0 && (
+            <div className="mb-8">
+              <h4 className="text-xs font-semibold text-indigo-400 uppercase tracking-wider mb-4 flex items-center gap-2">
+                <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+                More Videos
+              </h4>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {mediaItems.other_videos.map((v, i) => (
+                  <button key={i} onClick={() => setVideoPlayer(v.key)} className="group relative overflow-hidden rounded-xl bg-black/40 border border-gray-800/50 hover:border-indigo-500/30 transition-all cursor-pointer text-left w-full">
+                    <div className="aspect-video relative">
+                      <img src={`https://img.youtube.com/vi/${v.key}/maxresdefault.jpg`} alt={v.name} className="w-full h-full object-cover" loading="lazy" />
+                      <div className="absolute inset-0 bg-black/40 group-hover:bg-black/20 transition-all flex items-center justify-center">
+                        <div className="w-14 h-14 rounded-full bg-indigo-500/90 group-hover:bg-indigo-500 flex items-center justify-center shadow-lg shadow-indigo-500/30 transition-all group-hover:scale-110">
+                          <svg className="w-6 h-6 text-white ml-0.5" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="p-3">
+                      <p className="text-sm font-medium text-gray-300 truncate">{v.name}</p>
+                      <p className="text-xs text-gray-500 mt-0.5 capitalize">{v.type}</p>
+                    </div>
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+          {mediaItems.images?.length > 0 && (
+            <div>
+              <h4 className="text-xs font-semibold text-indigo-400 uppercase tracking-wider mb-4 flex items-center gap-2">
+                <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                Photos
+              </h4>
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+                {mediaItems.images.map((img, i) => (
+                  <button key={i} onClick={() => setLightbox(i)} className="group relative overflow-hidden rounded-lg bg-[#12142a] border border-gray-800/40 hover:border-indigo-500/30 transition-all aspect-video cursor-pointer text-left w-full">
+                    <img src={`https://image.tmdb.org/t/p/w400${img.file_path}`} alt="" className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105" loading="lazy" />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end p-2">
+                      <svg className="w-5 h-5 text-white/80" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v3m0 0v3m0-3h3m-3 0H7"/></svg>
+                    </div>
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       )}
 
@@ -212,6 +397,40 @@ export default function DetailPage() {
             ))}
           </div>
         )}
+{lightbox !== null && mediaItems?.images?.[lightbox] && (
+  <div className="fixed inset-0 z-[200] bg-black/90 flex items-center justify-center" onClick={() => setLightbox(null)}>
+    <button onClick={() => setLightbox(null)} className="absolute top-5 right-5 z-10 w-10 h-10 flex items-center justify-center bg-white/10 hover:bg-white/20 text-white/80 hover:text-white rounded-full transition-all cursor-pointer backdrop-blur-sm border border-white/20 text-lg">?</button>
+    {lightbox > 0 && (
+      <button onClick={e => { e.stopPropagation(); setLightbox(lightbox - 1) }} className="absolute left-5 z-10 w-12 h-12 flex items-center justify-center bg-white/10 hover:bg-white/20 text-white/80 hover:text-white rounded-full transition-all cursor-pointer backdrop-blur-sm border border-white/20">
+        <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7"/></svg>
+      </button>
+    )}
+    {lightbox < mediaItems.images.length - 1 && (
+      <button onClick={e => { e.stopPropagation(); setLightbox(lightbox + 1) }} className="absolute right-5 z-10 w-12 h-12 flex items-center justify-center bg-white/10 hover:bg-white/20 text-white/80 hover:text-white rounded-full transition-all cursor-pointer backdrop-blur-sm border border-white/20">
+        <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7"/></svg>
+      </button>
+    )}
+    <img
+      src={`https://image.tmdb.org/t/p/original${mediaItems.images[lightbox].file_path}`}
+      alt=""
+      className="max-w-[90vw] max-h-[90vh] object-contain rounded-lg shadow-2xl"
+      onClick={e => e.stopPropagation()}
+    />
+  </div>
+)}
+{videoPlayer && (
+  <div className="fixed inset-0 z-[200] bg-black/90 flex items-center justify-center" onClick={() => setVideoPlayer(null)}>
+    <button onClick={() => setVideoPlayer(null)} className="absolute top-5 right-5 z-10 w-10 h-10 flex items-center justify-center bg-white/10 hover:bg-white/20 text-white/80 hover:text-white rounded-full transition-all cursor-pointer backdrop-blur-sm border border-white/20 text-lg">?</button>
+    <div className="w-full max-w-5xl aspect-video p-4" onClick={e => e.stopPropagation()}>
+      <iframe
+        src={`https://www.youtube.com/embed/${videoPlayer}?autoplay=1&rel=0`}
+        allow="autoplay; encrypted-media"
+        allowFullScreen
+        className="w-full h-full rounded-xl border-0 shadow-2xl"
+      />
+    </div>
+  </div>
+)}
       </div>
     </div>
   )
