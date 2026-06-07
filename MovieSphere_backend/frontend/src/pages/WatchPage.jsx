@@ -300,6 +300,8 @@ export default function WatchPage() {
       mode,
       startX: e.clientX ?? e.touches?.[0]?.clientX ?? 0,
       startY: e.clientY ?? e.touches?.[0]?.clientY ?? 0,
+      currentX: e.clientX ?? e.touches?.[0]?.clientX ?? 0,
+      currentY: e.clientY ?? e.touches?.[0]?.clientY ?? 0,
       origX: pos.x,
       origY: pos.y,
     }
@@ -308,22 +310,21 @@ export default function WatchPage() {
   useEffect(() => {
     const handleMove = (e) => {
       if (!draggingRef.current) return
-      const { cam, startX, startY, origX, origY } = draggingRef.current
-      const clientX = e.clientX ?? e.touches?.[0]?.clientX ?? 0
-      const clientY = e.clientY ?? e.touches?.[0]?.clientY ?? 0
-      const dx = clientX - startX
-      const dy = clientY - startY
+      draggingRef.current.currentX = e.clientX ?? e.touches?.[0]?.clientX ?? 0
+      draggingRef.current.currentY = e.clientY ?? e.touches?.[0]?.clientY ?? 0
       if (!dragRafRef.current) {
-          dragRafRef.current = requestAnimationFrame(() => {
-            dragRafRef.current = null
-            const { cam, mode, origX, origY } = draggingRef.current
-            if (mode === 'cinema') {
-              if (cam === 'local') setCinemaLocalPos({ x: origX + dx, y: origY + dy })
-              else setCinemaRemotePos({ x: origX + dx, y: origY + dy })
-            } else {
-              if (cam === 'local') setLocalCamPos({ x: origX + dx, y: origY + dy })
-            }
-          })
+        dragRafRef.current = requestAnimationFrame(() => {
+          dragRafRef.current = null
+          const { cam, mode, startX, startY, origX, origY, currentX, currentY } = draggingRef.current
+          const dx = currentX - startX
+          const dy = currentY - startY
+          if (mode === 'cinema') {
+            if (cam === 'local') setCinemaLocalPos({ x: origX + dx, y: origY + dy })
+            else setCinemaRemotePos({ x: origX + dx, y: origY + dy })
+          } else {
+            if (cam === 'local') setLocalCamPos({ x: origX + dx, y: origY + dy })
+          }
+        })
       }
     }
     const handleUp = () => {
