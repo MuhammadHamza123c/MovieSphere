@@ -33,6 +33,7 @@ export default function WatchPage() {
   const [isConnected, setIsConnected] = useState(false)
   const [cinemaChatOpen, setCinemaChatOpen] = useState(false)
   const [chatDisabled, setChatDisabled] = useState(true)
+  const [hasUnread, setHasUnread] = useState(false)
   const liveKitRoomRef = useRef(null)
   const chatScrollRef = useRef(null)
   const localVideoRef = useRef(null)
@@ -226,7 +227,8 @@ export default function WatchPage() {
           if (!participant) return
           try {
             const { text } = JSON.parse(new TextDecoder().decode(payload))
-            setChatMessages(prev => [...prev, { text, sender: participant.identity || 'friend', isMe: false, isNew: true }])
+            setChatMessages(prev => [...prev, { text, sender: participant.identity || 'friend', isMe: false }])
+            setHasUnread(true)
           } catch {}
         })
 
@@ -334,18 +336,6 @@ export default function WatchPage() {
     }
   }, [chatMessages.length])
 
-  // Flash new messages red for 2s
-  useEffect(() => {
-    if (chatMessages.length === 0) return
-    const lastIdx = chatMessages.length - 1
-    const last = chatMessages[lastIdx]
-    if (!last.isNew) return
-    const timer = setTimeout(() => {
-      setChatMessages(prev => prev.map((m, i) => i === lastIdx ? { ...m, isNew: false } : m))
-    }, 2000)
-    return () => clearTimeout(timer)
-  }, [chatMessages.length])
-
   const cancelAutoNext = () => setAutoNextCountdown(null)
 
   const goTo = (s, e) => {
@@ -374,7 +364,7 @@ export default function WatchPage() {
   const sendChatMessage = () => {
     const text = chatInput.trim()
     if (!text || !liveKitRoomRef.current || chatDisabled) return
-    setChatMessages(prev => [...prev, { text, sender: 'You', isMe: true, isNew: true }])
+    setChatMessages(prev => [...prev, { text, sender: 'You', isMe: true }])
     setChatInput('')
     liveKitRoomRef.current.localParticipant.publishData(new TextEncoder().encode(JSON.stringify({ text })))
   }
@@ -418,8 +408,10 @@ export default function WatchPage() {
         )}
         {room && isConnected && (
           <>
-            <button onClick={() => setCinemaChatOpen(!cinemaChatOpen)}
-              className="fixed top-16 left-4 z-20 w-9 h-9 flex items-center justify-center bg-white/10 hover:bg-white/20 text-white/70 hover:text-white rounded-full transition-all cursor-pointer backdrop-blur-sm border border-white/10 text-sm opacity-0 hover:opacity-100 group-hover:opacity-100"
+            <button onClick={() => { setCinemaChatOpen(!cinemaChatOpen); if (!cinemaChatOpen) setHasUnread(false) }}
+              className={`fixed top-16 left-4 z-20 w-9 h-9 flex items-center justify-center rounded-full transition-all cursor-pointer backdrop-blur-sm border text-sm ${
+                hasUnread ? 'bg-red-500/80 border-red-400/60 text-white shadow-lg shadow-red-500/30 animate-pulse' : 'bg-white/10 border-white/10 text-white/70 hover:bg-white/20 hover:text-white opacity-0 hover:opacity-100 group-hover:opacity-100'
+              }`}
               title="Chat">💬</button>
             {cinemaChatOpen && (
               <div className="fixed top-24 left-4 z-30 w-80 bg-[#12142a]/95 border border-indigo-500/40 rounded-xl overflow-hidden shadow-2xl shadow-indigo-500/10 backdrop-blur-md">
@@ -431,7 +423,7 @@ export default function WatchPage() {
                   {chatMessages.map((msg, i) => (
                     <div key={i} className={`flex ${msg.isMe ? 'justify-end' : 'justify-start'}`}>
                       <span className={`max-w-[80%] text-sm px-3 py-1.5 rounded-2xl leading-relaxed shadow-sm ${
-                        msg.isNew ? 'bg-red-500 text-white shadow-red-500/30' : msg.isMe ? 'bg-indigo-500 text-white shadow-indigo-500/30' : 'bg-gray-700/80 text-gray-100'
+                        msg.isMe ? 'bg-indigo-500 text-white shadow-indigo-500/30' : 'bg-gray-700/80 text-gray-100'
                       }`}>{msg.text}</span>
                     </div>
                   ))}
@@ -623,7 +615,7 @@ export default function WatchPage() {
                   {chatMessages.map((msg, i) => (
                     <div key={i} className={`flex ${msg.isMe ? 'justify-end' : 'justify-start'}`}>
                       <span className={`max-w-[80%] text-xs px-3 py-1.5 rounded-2xl leading-relaxed shadow-sm ${
-                        msg.isNew ? 'bg-red-500 text-white shadow-red-500/30' : msg.isMe ? 'bg-indigo-500 text-white shadow-indigo-500/30' : 'bg-gray-700/80 text-gray-100'
+                        msg.isMe ? 'bg-indigo-500 text-white shadow-indigo-500/30' : 'bg-gray-700/80 text-gray-100'
                       }`}>{msg.text}</span>
                     </div>
                   ))}
