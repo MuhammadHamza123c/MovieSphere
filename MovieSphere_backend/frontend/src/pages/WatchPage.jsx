@@ -40,7 +40,8 @@ export default function WatchPage() {
   const localVideoRef = useRef(null)
   const remoteVideoRef = useRef(null)
   const [localCamPos, setLocalCamPos] = useState({ x: 0, y: 0 })
-  const [cinemaCamPos, setCinemaCamPos] = useState({ x: 0, y: 0 })
+  const [cinemaLocalPos, setCinemaLocalPos] = useState({ x: 0, y: 0 })
+  const [cinemaRemotePos, setCinemaRemotePos] = useState({ x: 0, y: 0 })
   const draggingRef = useRef(null)
   const dragRafRef = useRef(null)
   const localCamRef = useRef(null)
@@ -290,10 +291,13 @@ export default function WatchPage() {
   }, [cinema, room, remoteStream])
 
   // Camera drag handlers
-  const handleCamPointerDown = (cam, e) => {
-    const pos = cam === 'local' ? localCamPos : remoteCamPos
+  const handleCamPointerDown = (cam, e, mode = 'sidebar') => {
+    const pos = mode === 'cinema'
+      ? (cam === 'local' ? cinemaLocalPos : cinemaRemotePos)
+      : (cam === 'local' ? localCamPos : { x: 0, y: 0 })
     draggingRef.current = {
       cam,
+      mode,
       startX: e.clientX ?? e.touches?.[0]?.clientX ?? 0,
       startY: e.clientY ?? e.touches?.[0]?.clientY ?? 0,
       origX: pos.x,
@@ -310,10 +314,16 @@ export default function WatchPage() {
       const dx = clientX - startX
       const dy = clientY - startY
       if (!dragRafRef.current) {
-        dragRafRef.current = requestAnimationFrame(() => {
-          dragRafRef.current = null
-          if (cam === 'local') setLocalCamPos({ x: origX + dx, y: origY + dy })
-        })
+          dragRafRef.current = requestAnimationFrame(() => {
+            dragRafRef.current = null
+            const { cam, mode, origX, origY } = draggingRef.current
+            if (mode === 'cinema') {
+              if (cam === 'local') setCinemaLocalPos({ x: origX + dx, y: origY + dy })
+              else setCinemaRemotePos({ x: origX + dx, y: origY + dy })
+            } else {
+              if (cam === 'local') setLocalCamPos({ x: origX + dx, y: origY + dy })
+            }
+          })
       }
     }
     const handleUp = () => {
@@ -384,11 +394,14 @@ export default function WatchPage() {
         <div className="w-full h-full max-w-[98vw] max-h-[98vh] p-4">
           <iframe ref={iframeRef} src={displayUrl} allowFullScreen allow="autoplay; encrypted-media" className="w-full h-full border-0 rounded-lg" />
         </div>
-        {/* Floating camera feeds in cinema mode */}
+        {/* Floating camera feeds in cinema mode — individually draggable */}
         {room && (
-          <div className="fixed bottom-4 right-4 z-20 flex gap-2">
+          <>
             <div ref={localCamRef}
-              className="w-36 aspect-video bg-black/80 rounded-xl overflow-hidden border border-gray-700/60 relative group"
+              onMouseDown={(e) => handleCamPointerDown('local', e, 'cinema')}
+              onTouchStart={(e) => handleCamPointerDown('local', e, 'cinema')}
+              className="fixed z-20 w-44 aspect-video bg-black/80 rounded-xl overflow-hidden border border-gray-700/60 cursor-grab active:cursor-grabbing select-none group"
+              style={{ left: `calc(50% + ${cinemaLocalPos.x}px)`, top: `calc(20% + ${cinemaLocalPos.y}px)`, transform: 'translate(-50%, -50%)' }}
             >
               <video ref={localVideoRef} autoPlay playsInline muted className="w-full h-full object-cover scale-x-[-1]"></video>
               <button onClick={() => localVideoRef.current?.requestFullscreen()}
@@ -396,7 +409,12 @@ export default function WatchPage() {
                       title="Full screen">⛶</button>
               <div className="absolute bottom-1.5 left-1.5 bg-black/70 backdrop-blur-md px-1.5 py-0.5 rounded text-[8px] font-bold border border-white/5">You</div>
             </div>
-            <div ref={remoteCamRef} className="w-36 aspect-video bg-black/80 rounded-xl overflow-hidden border border-gray-700/60 relative group flex items-center justify-center">
+            <div ref={remoteCamRef}
+              onMouseDown={(e) => handleCamPointerDown('remote', e, 'cinema')}
+              onTouchStart={(e) => handleCamPointerDown('remote', e, 'cinema')}
+              className="fixed z-20 w-44 aspect-video bg-black/80 rounded-xl overflow-hidden border border-gray-700/60 cursor-grab active:cursor-grabbing select-none group flex items-center justify-center"
+              style={{ left: `calc(50% + ${cinemaRemotePos.x}px)`, top: `calc(45% + ${cinemaRemotePos.y}px)`, transform: 'translate(-50%, -50%)' }}
+            >
               <video ref={remoteVideoRef} autoPlay playsInline className="w-full h-full object-cover"></video>
               <button onClick={() => remoteVideoRef.current?.requestFullscreen()}
                       className="absolute top-1 right-1 w-5 h-5 bg-black/60 hover:bg-black/80 rounded text-white text-[10px] opacity-0 group-hover:opacity-100 transition-opacity z-10 cursor-pointer flex items-center justify-center"
@@ -408,7 +426,7 @@ export default function WatchPage() {
                 </div>
               )}
             </div>
-          </div>
+          </>
         )}
         {room && isConnected && (
           <>
