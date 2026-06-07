@@ -1,8 +1,9 @@
-import { useState, useEffect, useMemo, useRef } from 'react'
+import { useState, useEffect, useMemo, useRef, useCallback } from 'react'
 import { useParams, useNavigate, useLocation } from 'react-router-dom'
 import { getStreamUrl, fetchDetail, fetchSeasonEpisodes, saveProgress, getWatchPartyToken } from '../api/endpoints'
 import { Room } from 'livekit-client'
 import { useRecentlyViewed } from '../hooks/useRecentlyViewed'
+import QRCode from 'qrcode'
 
 export default function WatchPage() {
   const { type, id, season, epi } = useParams()
@@ -35,6 +36,8 @@ export default function WatchPage() {
   const [chatDisabled, setChatDisabled] = useState(true)
   const [hasUnread, setHasUnread] = useState(false)
   const [emojiReactions, setEmojiReactions] = useState([])
+  const [qrDataUrl, setQrDataUrl] = useState(null)
+  const [qrModal, setQrModal] = useState(false)
   const liveKitRoomRef = useRef(null)
   const chatScrollRef = useRef(null)
   const unreadTimerRef = useRef(null)
@@ -383,6 +386,15 @@ export default function WatchPage() {
     setTimeout(() => setCopied(false), 2000)
   }
 
+  const showQr = useCallback(async () => {
+    const url = window.location.href
+    if (!qrDataUrl) {
+      const dataUrl = await QRCode.toDataURL(url, { width: 300, margin: 2, color: { dark: '#6366f1', light: '#ffffff' } })
+      setQrDataUrl(dataUrl)
+    }
+    setQrModal(true)
+  }, [qrDataUrl])
+
   const sendChatMessage = () => {
     const text = chatInput.trim()
     if (!text || !liveKitRoomRef.current || chatDisabled) return
@@ -608,12 +620,10 @@ export default function WatchPage() {
               {/* Invite Info */}
               <div className="bg-[#181a36]/50 rounded-xl p-3 border border-gray-800 mb-4">
                 <p className="text-xs text-gray-400 font-medium mb-2">Invite friends to watch with you:</p>
-                <button
-                  onClick={copyInviteLink}
-                  className="w-full py-2 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold rounded-lg transition-all cursor-pointer shadow active:scale-[0.98]"
-                >
-                  {copied ? '✓ Link Copied!' : 'Copy Invite Link'}
-                </button>
+                <div className="flex gap-2">
+                  <button onClick={copyInviteLink} className="flex-1 py-2 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold rounded-lg transition-all cursor-pointer shadow active:scale-[0.98]">{copied ? '✓ Link Copied!' : 'Copy Invite Link'}</button>
+                  <button onClick={showQr} className="py-2 px-3 bg-[#1e2040] hover:bg-[#2a2b4a] text-indigo-300 text-xs font-bold rounded-lg transition-all cursor-pointer border border-indigo-500/30">QR</button>
+                </div>
               </div>
 
               {/* Camera Feeds */}
@@ -693,6 +703,16 @@ export default function WatchPage() {
           <span key={r.id} className="fixed bottom-1/2 left-1/2 -translate-x-1/2 z-30 text-4xl pointer-events-none animate-bounce" style={{ animationDuration: '2s' }}>{r.emoji}</span>
         ))}
       </div>
+      {/* QR Modal */}
+      {qrModal && (
+        <div className="fixed inset-0 z-[200] bg-black/70 flex items-center justify-center" onClick={() => setQrModal(false)}>
+          <div className="bg-[#12142a] rounded-2xl p-6 border border-indigo-500/30 shadow-2xl flex flex-col items-center gap-4" onClick={e => e.stopPropagation()}>
+            <p className="text-sm font-bold text-gray-200">Scan to join Watch Party</p>
+            {qrDataUrl && <img src={qrDataUrl} alt="QR Code" className="w-48 h-48 rounded-lg" />}
+            <button onClick={() => setQrModal(false)} className="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold rounded-lg transition-all cursor-pointer">Close</button>
+          </div>
+        </div>
+      )}
       </div>
     </div>
   )
