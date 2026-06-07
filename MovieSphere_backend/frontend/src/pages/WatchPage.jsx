@@ -199,10 +199,9 @@ export default function WatchPage() {
             pcRef.current.setRemoteDescription(new RTCSessionDescription(sig.data.sdp))
           }
         } else if (sig.type === 'sdp-offer') {
-          if (!pcRef.current) {
-            addLog('Received connection call.')
-            handleSDPOffer(sig.data.sdp, activeStreamRef.current)
-          }
+          addLog('Received connection call.')
+          if (pcRef.current) resetRTC()
+          handleSDPOffer(sig.data.sdp, activeStreamRef.current)
         } else if (sig.type === 'ice-candidate') {
           if (pcRef.current && sig.data.candidate) {
             try { pcRef.current.addIceCandidate(new RTCIceCandidate(sig.data.candidate)) }
@@ -210,7 +209,7 @@ export default function WatchPage() {
           }
         } else if (sig.type === 'peer-joined') {
           addLog('Friend connected!')
-          if (!pcRef.current) initiateWebRTC(true, activeStreamRef.current)
+          if (!pcRef.current && myId < sig.sender) initiateWebRTC(true, activeStreamRef.current)
         } else if (sig.type === 'hangup') {
           addLog('Friend disconnected.')
           resetRTC()
@@ -269,7 +268,6 @@ export default function WatchPage() {
     }
 
     const handleSDPOffer = async (sdp, media) => {
-      if (pcRef.current) return
       pcRef.current = new RTCPeerConnection({
         iceServers: [{ urls: 'stun:stun.l.google.com:19302' }]
       })
