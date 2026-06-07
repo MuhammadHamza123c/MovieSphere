@@ -32,6 +32,7 @@ export default function WatchPage() {
   const [chatInput, setChatInput] = useState('')
   const [isConnected, setIsConnected] = useState(false)
   const [cinemaChatOpen, setCinemaChatOpen] = useState(false)
+  const [chatDisabled, setChatDisabled] = useState(true)
   const liveKitRoomRef = useRef(null)
   const chatScrollRef = useRef(null)
   const localVideoRef = useRef(null)
@@ -229,9 +230,20 @@ export default function WatchPage() {
           } catch {}
         })
 
+        liveKitRoom.on('participantConnected', () => {
+          setChatDisabled(false)
+        })
+
+        liveKitRoom.on('participantDisconnected', () => {
+          if (liveKitRoom.remoteParticipants.size === 0) {
+            setChatDisabled(true)
+          }
+        })
+
         await liveKitRoom.connect(url, token)
         liveKitRoomRef.current = liveKitRoom
         setIsConnected(true)
+        if (liveKitRoom.remoteParticipants.size > 0) setChatDisabled(false)
         addLog('Connected to LiveKit room.')
 
         if (activeStreamRef.current) {
@@ -349,7 +361,7 @@ export default function WatchPage() {
 
   const sendChatMessage = () => {
     const text = chatInput.trim()
-    if (!text || !liveKitRoomRef.current) return
+    if (!text || !liveKitRoomRef.current || chatDisabled) return
     setChatMessages(prev => [...prev, { text, sender: 'You', isMe: true }])
     setChatInput('')
     liveKitRoomRef.current.localParticipant.publishData(new TextEncoder().encode(JSON.stringify({ text })))
@@ -412,11 +424,12 @@ export default function WatchPage() {
                   <input
                     value={chatInput}
                     onChange={e => setChatInput(e.target.value)}
-                    onKeyDown={e => e.key === 'Enter' && sendChatMessage()}
-                    placeholder="Type a message..."
-                    className="flex-1 bg-transparent text-xs text-gray-300 placeholder-gray-600 px-3 py-2 outline-none"
+                    onKeyDown={e => e.key === 'Enter' && !chatDisabled && sendChatMessage()}
+                    placeholder={chatDisabled ? 'Waiting for friend to join...' : 'Type a message...'}
+                    disabled={chatDisabled}
+                    className="flex-1 bg-transparent text-xs text-gray-300 placeholder-gray-600 px-3 py-2 outline-none disabled:opacity-40"
                   />
-                  <button onClick={sendChatMessage} className="px-3 py-2 text-indigo-400 hover:text-indigo-300 text-sm font-bold cursor-pointer">Send</button>
+                  <button onClick={sendChatMessage} disabled={chatDisabled} className="px-3 py-2 text-indigo-400 hover:text-indigo-300 text-sm font-bold cursor-pointer disabled:opacity-40 disabled:cursor-default">Send</button>
                 </div>
               </div>
             )}
@@ -599,11 +612,12 @@ export default function WatchPage() {
                   <input
                     value={chatInput}
                     onChange={e => setChatInput(e.target.value)}
-                    onKeyDown={e => e.key === 'Enter' && sendChatMessage()}
-                    placeholder="Type a message..."
-                    className="flex-1 bg-transparent text-xs text-gray-300 placeholder-gray-600 px-3 py-2 outline-none"
+                    onKeyDown={e => e.key === 'Enter' && !chatDisabled && sendChatMessage()}
+                    placeholder={chatDisabled ? 'Waiting for friend to join...' : 'Type a message...'}
+                    disabled={chatDisabled}
+                    className="flex-1 bg-transparent text-xs text-gray-300 placeholder-gray-600 px-3 py-2 outline-none disabled:opacity-40"
                   />
-                  <button onClick={sendChatMessage} className="px-3 py-2 text-indigo-400 hover:text-indigo-300 text-sm font-bold cursor-pointer">Send</button>
+                  <button onClick={sendChatMessage} disabled={chatDisabled} className="px-3 py-2 text-indigo-400 hover:text-indigo-300 text-sm font-bold cursor-pointer disabled:opacity-40 disabled:cursor-default">Send</button>
                 </div>
               </div>
               )}
