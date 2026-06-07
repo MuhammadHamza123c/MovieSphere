@@ -1,49 +1,26 @@
 from fastapi import APIRouter, HTTPException, Query
-from pydantic import BaseModel
-from typing import Optional, Any
-from app.core.config import SUPABASE_URL, SUPABASE_KEY
-import httpx
+import jwt
+import time
+from app.core.config import LIVEKIT_API_KEY, LIVEKIT_API_SECRET, LIVEKIT_URL
 
 watch_party_app = APIRouter()
 
-SUPABASE_HEADERS = {
-    'apikey': SUPABASE_KEY,
-    'Authorization': f'Bearer {SUPABASE_KEY}',
-    'Content-Type': 'application/json',
-    'Prefer': 'return=representation',
-}
-
-class SignalPayload(BaseModel):
-    room: str
-    sender: str
-    type: str
-    data: Optional[Any] = {}
-
-@watch_party_app.post('/MovieSphere/watch-party/signal')
-async def send_signal(body: SignalPayload):
+@watch_party_app.post('/MovieSphere/watch-party/token')
+async def get_token(room: str = Query(...), identity: str = Query(...)):
     try:
-        async with httpx.AsyncClient() as client:
-            r = await client.post(
-                f'{SUPABASE_URL}/rest/v1/watch_party_signals',
-                headers=SUPABASE_HEADERS,
-                json={'room': body.room, 'sender': body.sender, 'type': body.type, 'data': body.data},
-            )
-            r.raise_for_status()
-            return {'message': 'ok'}
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-
-@watch_party_app.get('/MovieSphere/watch-party/signals/{room}')
-async def get_signals(room: str, since: int = Query(0, ge=0)):
-    try:
-        async with httpx.AsyncClient() as client:
-            r = await client.get(
-                f'{SUPABASE_URL}/rest/v1/watch_party_signals',
-                headers=SUPABASE_HEADERS,
-                params={'room': f'eq.{room}', 'id': f'gt.{since}', 'order': 'id.asc'},
-            )
-            r.raise_for_status()
-            data = r.json()
-        return {'signals': data}
+        now = int(time.time())
+        payload = {
+            'exp': now + 3600,
+            'iss': LIVEKIT_API_KEY,
+            'sub': identity,
+            'name': f'User-{identity[:6]}',
+            'video': {
+                'room': room,
+                'roomJoin': True,
+            },
+        }
+        headers = {'kid': LIVEKIT_API_KEY, 'alg': 'HS256', 'typ': 'JWT'}
+        token = jwt.encode(payload, LIVEKIT_API_SECRET, algorithm='HS256', headers=headers)
+        return {'token': token, 'url': LIVEKIT_URL}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))

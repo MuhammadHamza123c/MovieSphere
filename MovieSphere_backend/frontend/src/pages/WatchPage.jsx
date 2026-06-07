@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo, useRef } from 'react'
 import { useParams, useNavigate, useLocation } from 'react-router-dom'
-import { getStreamUrl, fetchDetail, fetchSeasonEpisodes, saveProgress, sendSignal, fetchSignals } from '../api/endpoints'
+import { getStreamUrl, fetchDetail, fetchSeasonEpisodes, saveProgress, getWatchPartyToken } from '../api/endpoints'
+import { Room } from 'livekit-client'
 import { useRecentlyViewed } from '../hooks/useRecentlyViewed'
 
 export default function WatchPage() {
@@ -27,10 +28,7 @@ export default function WatchPage() {
   const [remoteStream, setRemoteStream] = useState(null)
   const [partyLogs, setPartyLogs] = useState([])
   const [copied, setCopied] = useState(false)
-  const peerIdRef = useRef(null)
-  const pollRef = useRef(null)
-  const lastSignalIdRef = useRef(0)
-  const pcRef = useRef(null)
+  const liveKitRoomRef = useRef(null)
   const localVideoRef = useRef(null)
   const remoteVideoRef = useRef(null)
   const [localCamPos, setLocalCamPos] = useState({ x: 0, y: 0 })
@@ -156,13 +154,11 @@ export default function WatchPage() {
     return () => clearTimeout(t)
   }, [autoNextCountdown, id, nextTarget, navigate, room])
 
-  // Watch Party Signaling with HTTP Polling
+  // Watch Party Signaling with LiveKit
   useEffect(() => {
     if (!room) return
 
     const myId = Math.random().toString(36).substring(2, 10)
-    peerIdRef.current = myId
-    lastSignalIdRef.current = 0
     let mounted = true
 
     const addLog = (msg) => {
@@ -184,135 +180,69 @@ export default function WatchPage() {
       }
     }
 
-    const processSignals = (signals) => {
-      const sorted = [...signals].sort((a, b) => {
-        const order = { 'sdp-answer': 0, 'sdp-offer': 1, 'ice-candidate': 2, 'peer-joined': 3, 'hangup': 4 }
-        return (order[a.type] ?? 5) - (order[b.type] ?? 5)
-      })
-      for (const sig of sorted) {
-        if (sig.sender === myId) continue
-        if (sig.id > lastSignalIdRef.current) lastSignalIdRef.current = sig.id
-
-        if (sig.type === 'sdp-answer') {
-          addLog('Connection accepted.')
-          if (pcRef.current && sig.data.sdp && !pcRef.current.remoteDescription) {
-            pcRef.current.setRemoteDescription(new RTCSessionDescription(sig.data.sdp))
-          }
-        } else if (sig.type === 'sdp-offer') {
-          addLog('Received connection call.')
-          if (pcRef.current) resetRTC()
-          handleSDPOffer(sig.data.sdp, activeStreamRef.current)
-        } else if (sig.type === 'ice-candidate') {
-          if (pcRef.current && sig.data.candidate) {
-            try { pcRef.current.addIceCandidate(new RTCIceCandidate(sig.data.candidate)) }
-            catch (e) { console.error(e) }
-          }
-        } else if (sig.type === 'peer-joined') {
-          addLog('Friend connected!')
-          if (!pcRef.current && myId < sig.sender) initiateWebRTC(true, activeStreamRef.current)
-        } else if (sig.type === 'hangup') {
-          addLog('Friend disconnected.')
-          resetRTC()
-        }
-      }
-    }
-
-    const poll = async () => {
-      try {
-        const signals = await fetchSignals(room, lastSignalIdRef.current)
-        if (mounted && signals.length > 0) processSignals(signals)
-      } catch {}
-    }
-
-    const send = async (type, data = {}) => {
-      try { await sendSignal({ room, sender: myId, type, data }) } catch {}
-    }
-
     ;(async () => {
       await setupCamera()
       if (!mounted) return
-      pollRef.current = setInterval(poll, 1500)
-      setTimeout(() => send('peer-joined'), 500)
+
+      try {
+        const { token, url } = await getWatchPartyToken(room, myId)
+        addLog('Got LiveKit token.')
+
+        const liveKitRoom = new Room({
+          adaptiveStream: true,
+          dynacast: true,
+        })
+
+        liveKitRoom.on('trackSubscribed', (track, publication, participant) => {
+          if (track.kind === 'video') {
+            addLog("Friend's webcam stream active!")
+            const mediaStream = new MediaStream([track.mediaStreamTrack])
+            remoteStreamRef.current = mediaStream
+            setRemoteStream(mediaStream)
+            if (remoteVideoRef.current) {
+              remoteVideoRef.current.srcObject = mediaStream
+            }
+          }
+        })
+
+        liveKitRoom.on('trackUnsubscribed', (track) => {
+          if (track.kind === 'video') {
+            addLog('Friend disconnected.')
+            setRemoteStream(null)
+          }
+        })
+
+        liveKitRoom.on('disconnected', () => {
+          addLog('Disconnected from room.')
+        })
+
+        await liveKitRoom.connect(url, token)
+        liveKitRoomRef.current = liveKitRoom
+        addLog('Connected to LiveKit room.')
+
+        if (activeStreamRef.current) {
+          await liveKitRoom.localParticipant.publishTrack(
+            activeStreamRef.current.getVideoTracks()[0],
+            { source: 1, name: 'camera' }
+          )
+          addLog('Published local camera.')
+        }
+      } catch (err) {
+        addLog(`LiveKit error: ${err.message}`)
+      }
     })()
-
-    const initiateWebRTC = async (isInitiator, media) => {
-      if (pcRef.current) return
-      pcRef.current = new RTCPeerConnection({
-        iceServers: [{ urls: 'stun:stun.l.google.com:19302' }]
-      })
-
-      if (media) {
-        media.getTracks().forEach(track => pcRef.current.addTrack(track, media))
-      }
-
-      pcRef.current.ontrack = (event) => {
-        addLog("Friend's webcam stream active!")
-        remoteStreamRef.current = event.streams[0]
-        setRemoteStream(event.streams[0])
-        if (remoteVideoRef.current) {
-          remoteVideoRef.current.srcObject = event.streams[0]
-        }
-      }
-
-      pcRef.current.onicecandidate = (event) => {
-        if (event.candidate) {
-          send('ice-candidate', { candidate: event.candidate })
-        }
-      }
-
-      if (isInitiator) {
-        const offer = await pcRef.current.createOffer()
-        await pcRef.current.setLocalDescription(offer)
-        send('sdp-offer', { sdp: offer })
-      }
-    }
-
-    const handleSDPOffer = async (sdp, media) => {
-      pcRef.current = new RTCPeerConnection({
-        iceServers: [{ urls: 'stun:stun.l.google.com:19302' }]
-      })
-
-      if (media) {
-        media.getTracks().forEach(track => pcRef.current.addTrack(track, media))
-      }
-
-      pcRef.current.ontrack = (event) => {
-        addLog("Friend's webcam stream active!")
-        remoteStreamRef.current = event.streams[0]
-        setRemoteStream(event.streams[0])
-        if (remoteVideoRef.current) {
-          remoteVideoRef.current.srcObject = event.streams[0]
-        }
-      }
-
-      pcRef.current.onicecandidate = (event) => {
-        if (event.candidate) {
-          send('ice-candidate', { candidate: event.candidate })
-        }
-      }
-
-      await pcRef.current.setRemoteDescription(new RTCSessionDescription(sdp))
-      const answer = await pcRef.current.createAnswer()
-      await pcRef.current.setLocalDescription(answer)
-      send('sdp-answer', { sdp: answer })
-    }
-
-    const resetRTC = () => {
-      if (pcRef.current) {
-        pcRef.current.close()
-        pcRef.current = null
-      }
-      setRemoteStream(null)
-    }
 
     return () => {
       mounted = false
-      if (pollRef.current) clearInterval(pollRef.current)
-      send('hangup').catch(() => {})
-      resetRTC()
+      if (liveKitRoomRef.current) {
+        liveKitRoomRef.current.disconnect()
+        liveKitRoomRef.current = null
+      }
       if (activeStreamRef.current) {
         activeStreamRef.current.getTracks().forEach(track => track.stop())
+        activeStreamRef.current = null
       }
+      setRemoteStream(null)
     }
   }, [room])
 
