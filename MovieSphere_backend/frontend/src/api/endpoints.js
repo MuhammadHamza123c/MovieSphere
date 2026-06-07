@@ -95,6 +95,11 @@ export async function fetchRecommendations(movieName) {
   return data.MovieSphere || []
 }
 
+export async function fetchSimilar(id, type) {
+  const { data } = await client.get('/MovieSphere/similar', { params: { id, type } })
+  return data.MovieSphere || []
+}
+
 export async function fetchDetail(name, id, type) {
   const { data } = await client.get('/MovieSphere/detail', { params: { name, id, type } })
   const raw = data.MovieSphere || data

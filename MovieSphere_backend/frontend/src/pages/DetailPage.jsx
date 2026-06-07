@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { fetchDetail, fetchCast, fetchRecommendations, fetchComments, postComment, deleteComment, checkWatchLater, addWatchLater, removeWatchLater, addFavorite, removeFavorite, fetchFavorites, fetchMedia, fetchSeasonEpisodes } from '../api/endpoints'
+import { fetchDetail, fetchCast, fetchRecommendations, fetchSimilar, fetchComments, postComment, deleteComment, checkWatchLater, addWatchLater, removeWatchLater, addFavorite, removeFavorite, fetchFavorites, fetchMedia, fetchSeasonEpisodes } from '../api/endpoints'
 import { useAuth } from '../hooks/useAuth'
 import CastCard from '../components/CastCard'
 import GenreTag from '../components/GenreTag'
@@ -28,6 +28,7 @@ export default function DetailPage() {
   const [mediaItems, setMediaItems] = useState(null)
   const [lightbox, setLightbox] = useState(null)
   const [videoPlayer, setVideoPlayer] = useState(null)
+  const [similars, setSimilars] = useState([])
 
   useEffect(() => {
     setInWatchLater(false)
@@ -48,6 +49,7 @@ export default function DetailPage() {
         const title = detail.Title || detail.title || ''
         if (title) {
           fetchRecommendations(title).then(setRecs).catch(() => {})
+          fetchSimilar(id, mediaType).then(setSimilars).catch(() => {})
           fetchFavorites().then(favs => {
             const match = favs.find(f => (f.Title || f.title || '').toLowerCase() === title.toLowerCase())
             if (match) setIsFav(true)
@@ -218,6 +220,7 @@ export default function DetailPage() {
           cast.length > 0 && { id: 'cast', label: 'Cast' },
           mediaItems && (mediaItems.trailers?.length > 0 || mediaItems.other_videos?.length > 0 || mediaItems.images?.length > 0) && { id: 'media', label: 'Media' },
           recs.length > 0 && { id: 'recommendations', label: 'Recommendations' },
+          similars.length > 0 && { id: 'similar', label: 'Similar' },
           { id: 'reviews', label: 'Reviews' },
         ].filter(Boolean).map(s => (
           <a key={s.id} href={`#${s.id}`} onClick={e => { e.preventDefault(); document.getElementById(s.id)?.scrollIntoView({ behavior: 'smooth', block: 'start' }) }}
@@ -427,6 +430,18 @@ export default function DetailPage() {
           <h3 className="text-lg font-bold text-gray-200 mb-4">Recommendations</h3>
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-5">
             {recs.slice(0, 10).map((r, i) => <MovieCard key={r.Id || r.id || i} item={r} />)}
+          </div>
+        </div>
+      )}
+
+      {similars.length > 0 && (
+        <div id="similar" className="mt-10 scroll-mt-20">
+          <div className="flex items-center gap-3 mb-5">
+            <h3 className="text-lg font-bold text-gray-100">Similar Titles</h3>
+            <div className="h-px flex-1 bg-gradient-to-r from-indigo-500/20 to-transparent" />
+          </div>
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-5">
+            {similars.slice(0, 10).map((r, i) => <MovieCard key={r.Id || r.id || i} item={r} />)}
           </div>
         </div>
       )}

@@ -177,6 +177,38 @@ def recomend_me(name: str):
     return data_list
 
 
+def get_similar(id: int, type: str):
+    data_list = []
+    tmdb_type = 'tv' if type == 'tv' else 'movie'
+    url = f"https://api.themoviedb.org/3/{tmdb_type}/{id}/similar"
+    response = requests.get(url=url, params={
+        'api_key': TMDB_API_KEY,
+        'language': 'en-US',
+        'page': 1
+    })
+    if response.status_code != 200:
+        return data_list
+    result = response.json().get('results') or []
+    for i in range(min(10, len(result))):
+        item = result[i]
+        data_list.append({
+            'Id': item.get('id'),
+            'Title': item.get('title') or item.get('name'),
+            'Release_date': item.get('release_date') or item.get('first_air_date'),
+            'Genre': '|'.join([
+                tmdb_movie_genres.get(genre_id, tmdb_tv_genres.get(genre_id, 'Unknown'))
+                for genre_id in (item.get('genre_ids') or [])
+            ]) or 'None',
+            'Popularity': item.get('popularity'),
+            'Poster_path': (
+                f"https://image.tmdb.org/t/p/w500{item.get('poster_path')}"
+                if item.get('poster_path')
+                else "https://znuiuhxyhpgqmdftansc.supabase.co/storage/v1/object/public/user_files/images/no_image_avail.png"
+            )
+        })
+    return data_list
+
+
 def get_info(name: str, id: int, type: str = ''):
     data_list = []
     if type:
