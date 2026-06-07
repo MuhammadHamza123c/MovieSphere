@@ -34,6 +34,7 @@ export default function WatchPage() {
   const [cinemaChatOpen, setCinemaChatOpen] = useState(false)
   const [chatDisabled, setChatDisabled] = useState(true)
   const [hasUnread, setHasUnread] = useState(false)
+  const [emojiReactions, setEmojiReactions] = useState([])
   const liveKitRoomRef = useRef(null)
   const chatScrollRef = useRef(null)
   const unreadTimerRef = useRef(null)
@@ -228,8 +229,14 @@ export default function WatchPage() {
         liveKitRoom.on('dataReceived', (payload, participant) => {
           if (!participant) return
           try {
-            const { text } = JSON.parse(new TextDecoder().decode(payload))
-            setChatMessages(prev => [...prev, { text, sender: participant.identity || 'friend', isMe: false }])
+            const msg = JSON.parse(new TextDecoder().decode(payload))
+            if (msg.type === 'emoji') {
+              const id = Date.now() + Math.random()
+              setEmojiReactions(prev => [...prev, { id, emoji: msg.emoji }])
+              setTimeout(() => setEmojiReactions(prev => prev.filter(r => r.id !== id)), 2000)
+              return
+            }
+            setChatMessages(prev => [...prev, { text: msg.text, sender: participant.identity || 'friend', isMe: false }])
             if (unreadTimerRef.current) clearTimeout(unreadTimerRef.current)
             setHasUnread(true)
             unreadTimerRef.current = setTimeout(() => setHasUnread(false), 2500)
@@ -384,6 +391,16 @@ export default function WatchPage() {
     liveKitRoomRef.current.localParticipant.publishData(new TextEncoder().encode(JSON.stringify({ text })))
   }
 
+  const EMOJIS = ['❤️', '😂', '😱', '🔥', '👍']
+
+  const sendEmoji = (emoji) => {
+    if (!liveKitRoomRef.current) return
+    const id = Date.now() + Math.random()
+    setEmojiReactions(prev => [...prev, { id, emoji }])
+    setTimeout(() => setEmojiReactions(prev => prev.filter(r => r.id !== id)), 2000)
+    liveKitRoomRef.current.localParticipant.publishData(new TextEncoder().encode(JSON.stringify({ type: 'emoji', emoji })))
+  }
+
   if (cinema && streamUrl) {
     return (
       <div className="fixed inset-0 z-[100] bg-black flex items-center justify-center group">
@@ -462,6 +479,11 @@ export default function WatchPage() {
                   />
                   <button onClick={sendChatMessage} disabled={chatDisabled} className="px-4 py-2.5 text-indigo-400 hover:text-indigo-300 text-sm font-bold cursor-pointer disabled:opacity-40 disabled:cursor-default">Send</button>
                 </div>
+                <div className="flex gap-2 px-3 py-2 border-t border-gray-700/60">
+                  {EMOJIS.map(e => (
+                    <button key={e} onClick={() => sendEmoji(e)} disabled={chatDisabled} className="text-lg hover:scale-125 transition-transform cursor-pointer disabled:opacity-40">{e}</button>
+                  ))}
+                </div>
               </div>
             )}
           </>
@@ -500,8 +522,11 @@ export default function WatchPage() {
           </div>
         ) : (
           <>
-            <div className="aspect-video rounded-xl overflow-hidden bg-black shadow-xl shadow-black/50">
+            <div className="aspect-video rounded-xl overflow-hidden bg-black shadow-xl shadow-black/50 relative">
               <iframe ref={iframeRef} src={displayUrl} allowFullScreen allow="autoplay; encrypted-media" className="w-full h-full border-0" />
+              {emojiReactions.map(r => (
+                <span key={r.id} className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-5xl pointer-events-none animate-bounce z-10" style={{ animationDuration: '2s' }}>{r.emoji}</span>
+              ))}
             </div>
             {autoNextCountdown !== null && nextTarget && (
               <div className="mt-4 bg-indigo-500/10 border border-indigo-500/30 rounded-xl p-4 flex items-center justify-between">
@@ -654,11 +679,20 @@ export default function WatchPage() {
                   />
                   <button onClick={sendChatMessage} disabled={chatDisabled} className="px-3 py-2 text-indigo-400 hover:text-indigo-300 text-sm font-bold cursor-pointer disabled:opacity-40 disabled:cursor-default">Send</button>
                 </div>
+                <div className="flex gap-1.5 px-2 py-1.5 border-t border-gray-800/50">
+                  {EMOJIS.map(e => (
+                    <button key={e} onClick={() => sendEmoji(e)} disabled={chatDisabled} className="text-sm hover:scale-125 transition-transform cursor-pointer disabled:opacity-40">{e}</button>
+                  ))}
+                </div>
               </div>
               )}
-            </>
-          )}
-        </div>
+          </>
+        )}
+        {/* Floating emoji reactions */}
+        {emojiReactions.map(r => (
+          <span key={r.id} className="fixed bottom-1/2 left-1/2 -translate-x-1/2 z-30 text-4xl pointer-events-none animate-bounce" style={{ animationDuration: '2s' }}>{r.emoji}</span>
+        ))}
+      </div>
       </div>
     </div>
   )
