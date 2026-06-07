@@ -53,6 +53,9 @@ export default function DetailPage() {
           fetchFavorites().then(favs => {
             const match = favs.find(f => (f.Title || f.title || '').toLowerCase() === title.toLowerCase())
             if (match) setIsFav(true)
+            const favTitles = new Set(favs.map(f => (f.Title || f.title || '').toLowerCase()))
+            setRecs(prev => prev.map(item => ({ ...item, _isFav: favTitles.has((item.Title || item.title || item.name || '').toLowerCase()) })))
+            setSimilars(prev => prev.map(item => ({ ...item, _isFav: favTitles.has((item.Title || item.title || item.name || '').toLowerCase()) })))
           }).catch(() => {})
         }
         setLoading(false)
