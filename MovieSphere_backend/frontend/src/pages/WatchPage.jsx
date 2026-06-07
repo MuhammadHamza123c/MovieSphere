@@ -28,6 +28,8 @@ export default function WatchPage() {
   const [remoteStream, setRemoteStream] = useState(null)
   const [partyLogs, setPartyLogs] = useState([])
   const [copied, setCopied] = useState(false)
+  const [chatMessages, setChatMessages] = useState([])
+  const [chatInput, setChatInput] = useState('')
   const liveKitRoomRef = useRef(null)
   const localVideoRef = useRef(null)
   const remoteVideoRef = useRef(null)
@@ -216,6 +218,14 @@ export default function WatchPage() {
           addLog('Disconnected from room.')
         })
 
+        liveKitRoom.on('dataReceived', (payload, participant) => {
+          if (!participant) return
+          try {
+            const { text } = JSON.parse(new TextDecoder().decode(payload))
+            setChatMessages(prev => [...prev, { text, sender: participant.identity || 'friend', isMe: false }])
+          } catch {}
+        })
+
         await liveKitRoom.connect(url, token)
         liveKitRoomRef.current = liveKitRoom
         addLog('Connected to LiveKit room.')
@@ -323,6 +333,14 @@ export default function WatchPage() {
     navigator.clipboard.writeText(inviteUrl)
     setCopied(true)
     setTimeout(() => setCopied(false), 2000)
+  }
+
+  const sendChatMessage = () => {
+    const text = chatInput.trim()
+    if (!text || !liveKitRoomRef.current) return
+    setChatMessages(prev => [...prev, { text, sender: 'You', isMe: true }])
+    setChatInput('')
+    liveKitRoomRef.current.localParticipant.publishData(new TextEncoder().encode(JSON.stringify({ text })))
   }
 
   if (cinema && streamUrl) {
@@ -522,6 +540,29 @@ export default function WatchPage() {
                     )}
                   </div>
                 </div>
+
+              {/* Chat */}
+              <div className="bg-[#181a36]/50 rounded-xl border border-gray-800 overflow-hidden">
+                <div className="h-40 overflow-y-auto p-2 space-y-1 scrollbar-thin">
+                  {chatMessages.map((msg, i) => (
+                    <div key={i} className={`flex ${msg.isMe ? 'justify-end' : 'justify-start'}`}>
+                      <span className={`max-w-[75%] text-xs px-2 py-1 rounded-xl leading-relaxed ${
+                        msg.isMe ? 'bg-indigo-600 text-white' : 'bg-gray-700/60 text-gray-200'
+                      }`}>{msg.text}</span>
+                    </div>
+                  ))}
+                </div>
+                <div className="flex border-t border-gray-800">
+                  <input
+                    value={chatInput}
+                    onChange={e => setChatInput(e.target.value)}
+                    onKeyDown={e => e.key === 'Enter' && sendChatMessage()}
+                    placeholder="Type a message..."
+                    className="flex-1 bg-transparent text-xs text-gray-300 placeholder-gray-600 px-3 py-2 outline-none"
+                  />
+                  <button onClick={sendChatMessage} className="px-3 py-2 text-indigo-400 hover:text-indigo-300 text-sm font-bold cursor-pointer">Send</button>
+                </div>
+              </div>
             </>
           )}
         </div>
