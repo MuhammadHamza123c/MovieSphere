@@ -410,12 +410,16 @@ export default function WatchPage() {
               className="fixed top-16 left-4 z-20 w-9 h-9 flex items-center justify-center bg-white/10 hover:bg-white/20 text-white/70 hover:text-white rounded-full transition-all cursor-pointer backdrop-blur-sm border border-white/10 text-sm opacity-0 hover:opacity-100 group-hover:opacity-100"
               title="Chat">💬</button>
             {cinemaChatOpen && (
-              <div className="fixed top-24 left-4 z-30 w-80 bg-[#12142a]/95 border border-gray-700/60 rounded-xl overflow-hidden shadow-2xl backdrop-blur-md">
+              <div className="fixed top-24 left-4 z-30 w-80 bg-[#12142a]/95 border border-indigo-500/40 rounded-xl overflow-hidden shadow-2xl shadow-indigo-500/10 backdrop-blur-md">
+                <div className="flex items-center gap-2 px-4 py-2.5 border-b border-indigo-500/20 bg-indigo-500/5">
+                  <span className="w-2.5 h-2.5 rounded-full bg-indigo-400 animate-pulse" />
+                  <span className="text-xs font-bold text-indigo-300 uppercase tracking-wider">Live Chat</span>
+                </div>
                 <div ref={chatScrollRef} className="h-60 overflow-y-auto p-3 space-y-1.5 scrollbar-thin">
                   {chatMessages.map((msg, i) => (
                     <div key={i} className={`flex ${msg.isMe ? 'justify-end' : 'justify-start'}`}>
-                      <span className={`max-w-[75%] text-sm px-3 py-1.5 rounded-xl leading-relaxed ${
-                        msg.isMe ? 'bg-indigo-600 text-white' : 'bg-gray-700/60 text-gray-200'
+                      <span className={`max-w-[80%] text-sm px-3 py-1.5 rounded-2xl leading-relaxed shadow-sm ${
+                        msg.isMe ? 'bg-indigo-500 text-white shadow-indigo-500/30' : 'bg-gray-700/80 text-gray-100'
                       }`}>{msg.text}</span>
                     </div>
                   ))}
@@ -598,12 +602,16 @@ export default function WatchPage() {
 
               {/* Chat */}
               {isConnected && (
-              <div className="bg-[#181a36]/50 rounded-xl border border-gray-800 overflow-hidden">
-                <div ref={chatScrollRef} className="h-40 overflow-y-auto p-2 space-y-1 scrollbar-thin">
+              <div className="bg-[#181a36]/50 rounded-xl border border-indigo-500/30 overflow-hidden">
+                <div className="flex items-center gap-2 px-3 py-2 border-b border-indigo-500/20">
+                  <span className="w-2 h-2 rounded-full bg-indigo-400 animate-pulse" />
+                  <span className="text-[10px] font-bold text-indigo-300 uppercase tracking-wider">Chat</span>
+                </div>
+                <div ref={chatScrollRef} className="h-40 overflow-y-auto p-2 space-y-1 scrollbar-thin bg-[#0f1123]/60">
                   {chatMessages.map((msg, i) => (
                     <div key={i} className={`flex ${msg.isMe ? 'justify-end' : 'justify-start'}`}>
-                      <span className={`max-w-[75%] text-xs px-2 py-1 rounded-xl leading-relaxed ${
-                        msg.isMe ? 'bg-indigo-600 text-white' : 'bg-gray-700/60 text-gray-200'
+                      <span className={`max-w-[80%] text-xs px-3 py-1.5 rounded-2xl leading-relaxed shadow-sm ${
+                        msg.isMe ? 'bg-indigo-500 text-white shadow-indigo-500/30' : 'bg-gray-700/80 text-gray-100'
                       }`}>{msg.text}</span>
                     </div>
                   ))}
