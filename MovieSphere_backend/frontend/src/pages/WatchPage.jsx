@@ -30,7 +30,10 @@ export default function WatchPage() {
   const [copied, setCopied] = useState(false)
   const [chatMessages, setChatMessages] = useState([])
   const [chatInput, setChatInput] = useState('')
+  const [isConnected, setIsConnected] = useState(false)
+  const [cinemaChatOpen, setCinemaChatOpen] = useState(false)
   const liveKitRoomRef = useRef(null)
+  const chatScrollRef = useRef(null)
   const localVideoRef = useRef(null)
   const remoteVideoRef = useRef(null)
   const [localCamPos, setLocalCamPos] = useState({ x: 0, y: 0 })
@@ -228,6 +231,7 @@ export default function WatchPage() {
 
         await liveKitRoom.connect(url, token)
         liveKitRoomRef.current = liveKitRoom
+        setIsConnected(true)
         addLog('Connected to LiveKit room.')
 
         if (activeStreamRef.current) {
@@ -244,6 +248,7 @@ export default function WatchPage() {
 
     return () => {
       mounted = false
+      setIsConnected(false)
       if (liveKitRoomRef.current) {
         liveKitRoomRef.current.disconnect()
         liveKitRoomRef.current = null
@@ -309,6 +314,13 @@ export default function WatchPage() {
       window.removeEventListener('touchend', handleUp)
     }
   }, [])
+
+  // Auto-scroll chat
+  useEffect(() => {
+    if (chatScrollRef.current) {
+      chatScrollRef.current.scrollTop = chatScrollRef.current.scrollHeight
+    }
+  }, [chatMessages.length])
 
   const cancelAutoNext = () => setAutoNextCountdown(null)
 
@@ -379,6 +391,36 @@ export default function WatchPage() {
               )}
             </div>
           </div>
+        )}
+        {room && isConnected && (
+          <>
+            <button onClick={() => setCinemaChatOpen(!cinemaChatOpen)}
+              className="fixed bottom-4 right-44 z-20 w-8 h-8 flex items-center justify-center bg-white/10 hover:bg-white/20 text-white/70 hover:text-white rounded-full transition-all cursor-pointer backdrop-blur-sm border border-white/10 text-xs opacity-0 hover:opacity-100 group-hover:opacity-100"
+              title="Chat">💬</button>
+            {cinemaChatOpen && (
+              <div className="fixed bottom-20 right-4 z-30 w-72 bg-[#12142a]/95 border border-gray-700/60 rounded-xl overflow-hidden shadow-2xl backdrop-blur-md">
+                <div ref={chatScrollRef} className="h-48 overflow-y-auto p-2 space-y-1 scrollbar-thin">
+                  {chatMessages.map((msg, i) => (
+                    <div key={i} className={`flex ${msg.isMe ? 'justify-end' : 'justify-start'}`}>
+                      <span className={`max-w-[75%] text-xs px-2 py-1 rounded-xl leading-relaxed ${
+                        msg.isMe ? 'bg-indigo-600 text-white' : 'bg-gray-700/60 text-gray-200'
+                      }`}>{msg.text}</span>
+                    </div>
+                  ))}
+                </div>
+                <div className="flex border-t border-gray-700/60">
+                  <input
+                    value={chatInput}
+                    onChange={e => setChatInput(e.target.value)}
+                    onKeyDown={e => e.key === 'Enter' && sendChatMessage()}
+                    placeholder="Type a message..."
+                    className="flex-1 bg-transparent text-xs text-gray-300 placeholder-gray-600 px-3 py-2 outline-none"
+                  />
+                  <button onClick={sendChatMessage} className="px-3 py-2 text-indigo-400 hover:text-indigo-300 text-sm font-bold cursor-pointer">Send</button>
+                </div>
+              </div>
+            )}
+          </>
         )}
       </div>
     )
@@ -542,8 +584,9 @@ export default function WatchPage() {
                 </div>
 
               {/* Chat */}
+              {isConnected && (
               <div className="bg-[#181a36]/50 rounded-xl border border-gray-800 overflow-hidden">
-                <div className="h-40 overflow-y-auto p-2 space-y-1 scrollbar-thin">
+                <div ref={chatScrollRef} className="h-40 overflow-y-auto p-2 space-y-1 scrollbar-thin">
                   {chatMessages.map((msg, i) => (
                     <div key={i} className={`flex ${msg.isMe ? 'justify-end' : 'justify-start'}`}>
                       <span className={`max-w-[75%] text-xs px-2 py-1 rounded-xl leading-relaxed ${
@@ -563,6 +606,7 @@ export default function WatchPage() {
                   <button onClick={sendChatMessage} className="px-3 py-2 text-indigo-400 hover:text-indigo-300 text-sm font-bold cursor-pointer">Send</button>
                 </div>
               </div>
+              )}
             </>
           )}
         </div>
