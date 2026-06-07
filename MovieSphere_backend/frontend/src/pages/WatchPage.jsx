@@ -100,6 +100,21 @@ export default function WatchPage() {
     }).catch(() => setError('Failed to load stream'))
   }, [id, season, epi, type, seasonNum, epiNum, saveRecentlyViewed, watchTitle, watchPoster])
 
+  // Set default volume to mid level via postMessage to vidlink player
+  useEffect(() => {
+    if (!streamUrl) return
+    const t = setInterval(() => {
+      if (!iframeRef.current?.contentWindow) return
+      try {
+        iframeRef.current.contentWindow.postMessage({ volume: 0.5 }, '*')
+        iframeRef.current.contentWindow.postMessage({ type: 'setVolume', volume: 0.5 }, '*')
+        iframeRef.current.contentWindow.postMessage({ event: 'command', func: 'setVolume', args: [0.5] }, '*')
+      } catch {}
+      clearInterval(t)
+    }, 1000)
+    return () => clearInterval(t)
+  }, [streamUrl])
+
   // TV episodes
   useEffect(() => {
     if (type === 'tv') {
