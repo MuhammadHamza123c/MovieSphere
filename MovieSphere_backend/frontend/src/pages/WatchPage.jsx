@@ -163,7 +163,6 @@ export default function WatchPage() {
     const myId = Math.random().toString(36).substring(2, 10)
     peerIdRef.current = myId
     lastSignalIdRef.current = 0
-    let activeStream = null
     let mounted = true
 
     const addLog = (msg) => {
@@ -174,20 +173,18 @@ export default function WatchPage() {
 
     const setupCamera = async () => {
       try {
-        activeStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true })
-        activeStreamRef.current = activeStream
+        const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true })
+        activeStreamRef.current = stream
         if (localVideoRef.current) {
-          localVideoRef.current.srcObject = activeStream
+          localVideoRef.current.srcObject = stream
         }
         addLog('Webcam and mic active.')
       } catch (err) {
         addLog(`Camera blocked: ${err.message}`)
       }
     }
-    setupCamera()
 
     const processSignals = (signals) => {
-      // Process in priority order: answers/offers before initiations to avoid races
       const sorted = [...signals].sort((a, b) => {
         const order = { 'sdp-answer': 0, 'sdp-offer': 1, 'ice-candidate': 2, 'peer-joined': 3, 'hangup': 4 }
         return (order[a.type] ?? 5) - (order[b.type] ?? 5)
@@ -204,7 +201,7 @@ export default function WatchPage() {
         } else if (sig.type === 'sdp-offer') {
           if (!pcRef.current) {
             addLog('Received connection call.')
-            handleSDPOffer(sig.data.sdp, activeStream)
+            handleSDPOffer(sig.data.sdp, activeStreamRef.current)
           }
         } else if (sig.type === 'ice-candidate') {
           if (pcRef.current && sig.data.candidate) {
@@ -213,7 +210,7 @@ export default function WatchPage() {
           }
         } else if (sig.type === 'peer-joined') {
           addLog('Friend connected!')
-          if (!pcRef.current) initiateWebRTC(true, activeStream)
+          if (!pcRef.current) initiateWebRTC(true, activeStreamRef.current)
         } else if (sig.type === 'hangup') {
           addLog('Friend disconnected.')
           resetRTC()
@@ -232,10 +229,12 @@ export default function WatchPage() {
       try { await sendSignal({ room, sender: myId, type, data }) } catch {}
     }
 
-    pollRef.current = setInterval(poll, 1500)
-
-    // Send peer-joined after a brief delay to ensure other side is polling
-    setTimeout(() => send('peer-joined'), 500)
+    ;(async () => {
+      await setupCamera()
+      if (!mounted) return
+      pollRef.current = setInterval(poll, 1500)
+      setTimeout(() => send('peer-joined'), 500)
+    })()
 
     const initiateWebRTC = async (isInitiator, media) => {
       if (pcRef.current) return
@@ -313,8 +312,8 @@ export default function WatchPage() {
       if (pollRef.current) clearInterval(pollRef.current)
       send('hangup').catch(() => {})
       resetRTC()
-      if (activeStream) {
-        activeStream.getTracks().forEach(track => track.stop())
+      if (activeStreamRef.current) {
+        activeStreamRef.current.getTracks().forEach(track => track.stop())
       }
     }
   }, [room])
