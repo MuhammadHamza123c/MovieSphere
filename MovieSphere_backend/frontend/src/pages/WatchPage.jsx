@@ -36,6 +36,7 @@ export default function WatchPage() {
   const [hasUnread, setHasUnread] = useState(false)
   const liveKitRoomRef = useRef(null)
   const chatScrollRef = useRef(null)
+  const unreadTimerRef = useRef(null)
   const localVideoRef = useRef(null)
   const remoteVideoRef = useRef(null)
   const [localCamPos, setLocalCamPos] = useState({ x: 0, y: 0 })
@@ -228,7 +229,9 @@ export default function WatchPage() {
           try {
             const { text } = JSON.parse(new TextDecoder().decode(payload))
             setChatMessages(prev => [...prev, { text, sender: participant.identity || 'friend', isMe: false }])
+            if (unreadTimerRef.current) clearTimeout(unreadTimerRef.current)
             setHasUnread(true)
+            unreadTimerRef.current = setTimeout(() => setHasUnread(false), 2500)
           } catch {}
         })
 
@@ -263,6 +266,7 @@ export default function WatchPage() {
     return () => {
       mounted = false
       setIsConnected(false)
+      if (unreadTimerRef.current) clearTimeout(unreadTimerRef.current)
       if (liveKitRoomRef.current) {
         liveKitRoomRef.current.disconnect()
         liveKitRoomRef.current = null
