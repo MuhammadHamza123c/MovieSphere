@@ -407,14 +407,14 @@ export default function WatchPage() {
         {room && isConnected && (
           <>
             <button onClick={() => setCinemaChatOpen(!cinemaChatOpen)}
-              className="fixed bottom-4 right-44 z-20 w-8 h-8 flex items-center justify-center bg-white/10 hover:bg-white/20 text-white/70 hover:text-white rounded-full transition-all cursor-pointer backdrop-blur-sm border border-white/10 text-xs opacity-0 hover:opacity-100 group-hover:opacity-100"
+              className="fixed top-16 left-4 z-20 w-9 h-9 flex items-center justify-center bg-white/10 hover:bg-white/20 text-white/70 hover:text-white rounded-full transition-all cursor-pointer backdrop-blur-sm border border-white/10 text-sm opacity-0 hover:opacity-100 group-hover:opacity-100"
               title="Chat">💬</button>
             {cinemaChatOpen && (
-              <div className="fixed bottom-20 right-4 z-30 w-72 bg-[#12142a]/95 border border-gray-700/60 rounded-xl overflow-hidden shadow-2xl backdrop-blur-md">
-                <div ref={chatScrollRef} className="h-48 overflow-y-auto p-2 space-y-1 scrollbar-thin">
+              <div className="fixed top-24 left-4 z-30 w-80 bg-[#12142a]/95 border border-gray-700/60 rounded-xl overflow-hidden shadow-2xl backdrop-blur-md">
+                <div ref={chatScrollRef} className="h-60 overflow-y-auto p-3 space-y-1.5 scrollbar-thin">
                   {chatMessages.map((msg, i) => (
                     <div key={i} className={`flex ${msg.isMe ? 'justify-end' : 'justify-start'}`}>
-                      <span className={`max-w-[75%] text-xs px-2 py-1 rounded-xl leading-relaxed ${
+                      <span className={`max-w-[75%] text-sm px-3 py-1.5 rounded-xl leading-relaxed ${
                         msg.isMe ? 'bg-indigo-600 text-white' : 'bg-gray-700/60 text-gray-200'
                       }`}>{msg.text}</span>
                     </div>
@@ -427,9 +427,9 @@ export default function WatchPage() {
                     onKeyDown={e => e.key === 'Enter' && !chatDisabled && sendChatMessage()}
                     placeholder={chatDisabled ? 'Waiting for friend to join...' : 'Type a message...'}
                     disabled={chatDisabled}
-                    className="flex-1 bg-transparent text-xs text-gray-300 placeholder-gray-600 px-3 py-2 outline-none disabled:opacity-40"
+                    className="flex-1 bg-transparent text-sm text-gray-300 placeholder-gray-600 px-3 py-2.5 outline-none disabled:opacity-40"
                   />
-                  <button onClick={sendChatMessage} disabled={chatDisabled} className="px-3 py-2 text-indigo-400 hover:text-indigo-300 text-sm font-bold cursor-pointer disabled:opacity-40 disabled:cursor-default">Send</button>
+                  <button onClick={sendChatMessage} disabled={chatDisabled} className="px-4 py-2.5 text-indigo-400 hover:text-indigo-300 text-sm font-bold cursor-pointer disabled:opacity-40 disabled:cursor-default">Send</button>
                 </div>
               </div>
             )}
