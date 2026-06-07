@@ -226,7 +226,7 @@ export default function WatchPage() {
           if (!participant) return
           try {
             const { text } = JSON.parse(new TextDecoder().decode(payload))
-            setChatMessages(prev => [...prev, { text, sender: participant.identity || 'friend', isMe: false }])
+            setChatMessages(prev => [...prev, { text, sender: participant.identity || 'friend', isMe: false, isNew: true }])
           } catch {}
         })
 
@@ -334,6 +334,18 @@ export default function WatchPage() {
     }
   }, [chatMessages.length])
 
+  // Flash new messages red for 2s
+  useEffect(() => {
+    if (chatMessages.length === 0) return
+    const lastIdx = chatMessages.length - 1
+    const last = chatMessages[lastIdx]
+    if (!last.isNew) return
+    const timer = setTimeout(() => {
+      setChatMessages(prev => prev.map((m, i) => i === lastIdx ? { ...m, isNew: false } : m))
+    }, 2000)
+    return () => clearTimeout(timer)
+  }, [chatMessages.length])
+
   const cancelAutoNext = () => setAutoNextCountdown(null)
 
   const goTo = (s, e) => {
@@ -362,7 +374,7 @@ export default function WatchPage() {
   const sendChatMessage = () => {
     const text = chatInput.trim()
     if (!text || !liveKitRoomRef.current || chatDisabled) return
-    setChatMessages(prev => [...prev, { text, sender: 'You', isMe: true }])
+    setChatMessages(prev => [...prev, { text, sender: 'You', isMe: true, isNew: true }])
     setChatInput('')
     liveKitRoomRef.current.localParticipant.publishData(new TextEncoder().encode(JSON.stringify({ text })))
   }
@@ -419,7 +431,7 @@ export default function WatchPage() {
                   {chatMessages.map((msg, i) => (
                     <div key={i} className={`flex ${msg.isMe ? 'justify-end' : 'justify-start'}`}>
                       <span className={`max-w-[80%] text-sm px-3 py-1.5 rounded-2xl leading-relaxed shadow-sm ${
-                        msg.isMe ? 'bg-indigo-500 text-white shadow-indigo-500/30' : 'bg-gray-700/80 text-gray-100'
+                        msg.isNew ? 'bg-red-500 text-white shadow-red-500/30' : msg.isMe ? 'bg-indigo-500 text-white shadow-indigo-500/30' : 'bg-gray-700/80 text-gray-100'
                       }`}>{msg.text}</span>
                     </div>
                   ))}
@@ -611,7 +623,7 @@ export default function WatchPage() {
                   {chatMessages.map((msg, i) => (
                     <div key={i} className={`flex ${msg.isMe ? 'justify-end' : 'justify-start'}`}>
                       <span className={`max-w-[80%] text-xs px-3 py-1.5 rounded-2xl leading-relaxed shadow-sm ${
-                        msg.isMe ? 'bg-indigo-500 text-white shadow-indigo-500/30' : 'bg-gray-700/80 text-gray-100'
+                        msg.isNew ? 'bg-red-500 text-white shadow-red-500/30' : msg.isMe ? 'bg-indigo-500 text-white shadow-indigo-500/30' : 'bg-gray-700/80 text-gray-100'
                       }`}>{msg.text}</span>
                     </div>
                   ))}
