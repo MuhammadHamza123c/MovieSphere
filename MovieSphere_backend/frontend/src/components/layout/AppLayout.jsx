@@ -9,7 +9,7 @@ export default function AppLayout() {
   return (
     <div className="flex min-h-screen bg-[#0b0d17]">
       <Sidebar />
-      <main className="flex-1 p-6 pb-12 overflow-x-hidden min-w-0">
+      <main className="flex-1 p-4 md:p-6 pb-12 overflow-x-hidden min-w-0 pt-14 md:pt-6">
         {showSearch && <TopBar />}
         <Outlet />
       </main>

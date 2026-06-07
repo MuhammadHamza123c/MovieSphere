@@ -13,8 +13,8 @@ export default function TopBar() {
   }
 
   return (
-    <div className="mb-4 mt-28">
-      <h1 className="text-5xl md:text-7xl font-black bg-gradient-to-r from-indigo-400 via-purple-400 to-pink-400 bg-clip-text text-transparent text-center mb-6 tracking-tight">MovieSphere</h1>
+    <div className="mb-4 mt-16 md:mt-28">
+      <h1 className="text-3xl sm:text-5xl md:text-7xl font-black bg-gradient-to-r from-indigo-400 via-purple-400 to-pink-400 bg-clip-text text-transparent text-center mb-4 md:mb-6 tracking-tight">MovieSphere</h1>
       <form onSubmit={handleSearch} className="relative max-w-lg mx-auto">
         <svg className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500 pointer-events-none" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
           <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-4.35-4.35M11 19a8 8 0 100-16 8 8 0 000 16z" />

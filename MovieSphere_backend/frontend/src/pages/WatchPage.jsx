@@ -418,7 +418,7 @@ export default function WatchPage() {
             <div ref={localCamRef}
               onMouseDown={(e) => handleCamPointerDown('local', e, 'cinema')}
               onTouchStart={(e) => handleCamPointerDown('local', e, 'cinema')}
-              className="fixed z-20 w-44 aspect-video bg-black/80 rounded-xl overflow-hidden border border-gray-700/60 cursor-grab active:cursor-grabbing select-none group"
+              className="fixed z-20 w-28 sm:w-36 lg:w-44 aspect-video bg-black/80 rounded-xl overflow-hidden border border-gray-700/60 cursor-grab active:cursor-grabbing select-none group"
               style={{ left: `calc(50% + ${cinemaLocalPos.x}px)`, top: `calc(20% + ${cinemaLocalPos.y}px)`, transform: 'translate(-50%, -50%)' }}
             >
               <video ref={localVideoRef} autoPlay playsInline muted className="w-full h-full object-cover scale-x-[-1]"></video>
@@ -430,7 +430,7 @@ export default function WatchPage() {
             <div ref={remoteCamRef}
               onMouseDown={(e) => handleCamPointerDown('remote', e, 'cinema')}
               onTouchStart={(e) => handleCamPointerDown('remote', e, 'cinema')}
-              className="fixed z-20 w-44 aspect-video bg-black/80 rounded-xl overflow-hidden border border-gray-700/60 cursor-grab active:cursor-grabbing select-none group flex items-center justify-center"
+              className="fixed z-20 w-28 sm:w-36 lg:w-44 aspect-video bg-black/80 rounded-xl overflow-hidden border border-gray-700/60 cursor-grab active:cursor-grabbing select-none group flex items-center justify-center"
               style={{ left: `calc(50% + ${cinemaRemotePos.x}px)`, top: `calc(45% + ${cinemaRemotePos.y}px)`, transform: 'translate(-50%, -50%)' }}
             >
               <video ref={remoteVideoRef} autoPlay playsInline className="w-full h-full object-cover"></video>
@@ -454,7 +454,7 @@ export default function WatchPage() {
               }`}
               title="Chat">💬</button>
             {cinemaChatOpen && (
-              <div className="fixed top-24 left-4 z-30 w-80 bg-[#12142a]/95 border border-indigo-500/40 rounded-xl overflow-hidden shadow-2xl shadow-indigo-500/10 backdrop-blur-md">
+              <div className="fixed top-24 left-1/2 -translate-x-1/2 md:left-4 md:translate-x-0 z-30 w-[calc(100vw-2rem)] sm:w-72 md:w-80 bg-[#12142a]/95 border border-indigo-500/40 rounded-xl overflow-hidden shadow-2xl shadow-indigo-500/10 backdrop-blur-md">
                 <div className="flex items-center gap-2 px-4 py-2.5 border-b border-indigo-500/20 bg-indigo-500/5">
                   <span className="w-2.5 h-2.5 rounded-full bg-indigo-400 animate-pulse" />
                   <span className="text-xs font-bold text-indigo-300 uppercase tracking-wider">Live Chat</span>
@@ -547,7 +547,7 @@ export default function WatchPage() {
               <div className="mt-4 bg-[#12142a]/40 rounded-2xl border border-dashed border-gray-800/50 hover:border-indigo-500/30 transition-all cursor-pointer overflow-hidden"
                    onClick={() => goTo(nextTarget.season, nextTarget.episode)}>
                 <div className="flex items-center gap-4 p-4">
-                  <div className="w-28 aspect-video bg-[#1e2040] rounded-lg overflow-hidden flex-shrink-0 relative">
+                  <div className="w-20 sm:w-28 aspect-video bg-[#1e2040] rounded-lg overflow-hidden flex-shrink-0 relative">
                     {nextTarget.stillPath ? (
                       <img src={nextTarget.stillPath} alt={nextTarget.name || ''} className="w-full h-full object-cover" />
                     ) : (

@@ -1,5 +1,6 @@
 ﻿import { NavLink, useNavigate } from 'react-router-dom'
 import { useAuth } from '../../hooks/useAuth'
+import { useState } from 'react'
 
 const nav = [
   { to: '/home', label: 'Home', icon: 'M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6' },
@@ -11,70 +12,121 @@ const nav = [
   { to: '/recommend', label: 'Recommend', icon: 'M13 7h8m0 0v8m0-8l-8 8-4-4-6 6' },
 ]
 
-function timeAgo(date) {
-  const diff = Date.now() - new Date(date).getTime()
-  const mins = Math.floor(diff / 60000)
-  if (mins < 1) return 'now'
-  if (mins < 60) return `${mins}m`
-  const hours = Math.floor(mins / 60)
-  if (hours < 24) return `${hours}h`
-  return `${Math.floor(hours / 24)}d`
-}
-
 export default function Sidebar() {
   const { user, logout } = useAuth()
+  const [mobileOpen, setMobileOpen] = useState(false)
+
+  const navLinkClasses = ({ isActive }) =>
+    `flex items-center h-10 rounded-lg text-sm font-medium transition-all duration-200 ${
+      isActive
+        ? 'bg-indigo-500/15 text-indigo-400'
+        : 'text-gray-400 hover:text-gray-200 hover:bg-[#1e2040]'
+    }`
 
   return (
-    <aside className="group w-14 hover:w-56 bg-[#12142a] border-r border-[#1e2040] flex flex-col flex-shrink-0 h-screen sticky top-0 transition-all duration-200 z-50">
-      <div className="flex items-center h-16 border-b border-[#1e2040]">
-        <div className="flex items-center justify-center w-14 min-w-[56px]">
-          <div className="w-5 h-5 rounded bg-gradient-to-br from-indigo-400 to-purple-400" />
-        </div>
-        <h1 className="text-lg font-extrabold bg-gradient-to-r from-indigo-400 to-purple-400 bg-clip-text text-transparent whitespace-nowrap hidden group-hover:block">
-          MovieSphere
-        </h1>
-      </div>
-      <nav className="flex-1 py-4 flex flex-col gap-1">
-        {nav.map(item => (
-          <NavLink
-            key={item.to}
-            to={item.to}
-            className={({ isActive }) =>
-              `flex items-center h-10 rounded-lg text-sm font-medium transition-all duration-200 ${
-                isActive
-                  ? 'bg-indigo-500/15 text-indigo-400'
-                  : 'text-gray-400 hover:text-gray-200 hover:bg-[#1e2040]'
-              }`
-            }
-          >
-            <div className="flex items-center justify-center w-14 min-w-[56px]">
-              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-                <path strokeLinecap="round" strokeLinejoin="round" d={item.icon} />
-              </svg>
+    <>
+      {/* Mobile hamburger */}
+      <button
+        onClick={() => setMobileOpen(true)}
+        className="md:hidden fixed top-3 left-3 z-50 w-10 h-10 flex items-center justify-center bg-[#12142a] border border-[#1e2040] rounded-lg text-gray-400 hover:text-gray-200 cursor-pointer"
+      >
+        <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h16" />
+        </svg>
+      </button>
+
+      {/* Mobile drawer overlay */}
+      {mobileOpen && (
+        <div className="md:hidden fixed inset-0 z-40 bg-black/60" onClick={() => setMobileOpen(false)}>
+          <div className="fixed left-0 top-0 bottom-0 w-64 bg-[#12142a] border-r border-[#1e2040] shadow-2xl flex flex-col" onClick={e => e.stopPropagation()}>
+            <div className="flex items-center gap-3 h-16 border-b border-[#1e2040] px-4">
+              <div className="w-8 h-8 rounded bg-gradient-to-br from-indigo-400 to-purple-400" />
+              <h1 className="text-lg font-extrabold bg-gradient-to-r from-indigo-400 to-purple-400 bg-clip-text text-transparent">MovieSphere</h1>
             </div>
-            <span className="hidden group-hover:inline">{item.label}</span>
-          </NavLink>
-        ))}
-      </nav>
-      {user && (
-        <div className="border-t border-[#1e2040]">
-          <div className="py-3">
-            <div className="flex items-center h-10 mb-2">
-              <div className="flex items-center justify-center w-14 min-w-[56px]">
-                <div className="w-8 h-8 rounded-full bg-indigo-500 flex items-center justify-center text-white font-bold text-xs">
-                  {(user.username || user.email || 'U')[0].toUpperCase()}
+            <nav className="flex-1 py-4 px-2 flex flex-col gap-1">
+              {nav.map(item => (
+                <NavLink
+                  key={item.to}
+                  to={item.to}
+                  onClick={() => setMobileOpen(false)}
+                  className={({ isActive }) =>
+                    `flex items-center gap-3 h-12 rounded-lg text-sm font-medium transition-all ${
+                      isActive
+                        ? 'bg-indigo-500/15 text-indigo-400'
+                        : 'text-gray-400 hover:text-gray-200 hover:bg-[#1e2040]'
+                    }`
+                  }
+                >
+                  <svg className="w-5 h-5 ml-2 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d={item.icon} />
+                  </svg>
+                  {item.label}
+                </NavLink>
+              ))}
+            </nav>
+            {user && (
+              <div className="border-t border-[#1e2040] px-4 py-4">
+                <div className="flex items-center gap-3 mb-3">
+                  <div className="w-8 h-8 rounded-full bg-indigo-500 flex items-center justify-center text-white font-bold text-xs flex-shrink-0">
+                    {(user.username || user.email || 'U')[0].toUpperCase()}
+                  </div>
+                  <span className="text-sm text-gray-400 truncate">{user.username || user.email}</span>
                 </div>
+                <button onClick={logout} className="w-full text-sm px-3 py-2 rounded-lg border border-gray-700 text-gray-400 hover:text-gray-200 hover:bg-[#1e2040] transition-all cursor-pointer">
+                  Sign Out
+                </button>
               </div>
-              <span className="text-sm text-gray-400 truncate hidden group-hover:block">{user.username || user.email}</span>
-            </div>
-            <div className="hidden group-hover:block px-3.5">
-              <button onClick={logout} className="w-full text-sm px-3 py-2 rounded-lg border border-gray-700 text-gray-400 hover:text-gray-200 hover:bg-[#1e2040] transition-all cursor-pointer">
-                Sign Out
-              </button>
-            </div>
+            )}
           </div>
         </div>
       )}
-    </aside>
+
+      {/* Desktop sidebar */}
+      <aside className="hidden md:flex group w-14 hover:w-56 bg-[#12142a] border-r border-[#1e2040] flex-col flex-shrink-0 h-screen sticky top-0 transition-all duration-200 z-50">
+        <div className="flex items-center h-16 border-b border-[#1e2040]">
+          <div className="flex items-center justify-center w-14 min-w-[56px]">
+            <div className="w-5 h-5 rounded bg-gradient-to-br from-indigo-400 to-purple-400" />
+          </div>
+          <h1 className="text-lg font-extrabold bg-gradient-to-r from-indigo-400 to-purple-400 bg-clip-text text-transparent whitespace-nowrap hidden group-hover:block">
+            MovieSphere
+          </h1>
+        </div>
+        <nav className="flex-1 py-4 flex flex-col gap-1">
+          {nav.map(item => (
+            <NavLink
+              key={item.to}
+              to={item.to}
+              className={navLinkClasses}
+            >
+              <div className="flex items-center justify-center w-14 min-w-[56px]">
+                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d={item.icon} />
+                </svg>
+              </div>
+              <span className="hidden group-hover:inline">{item.label}</span>
+            </NavLink>
+          ))}
+        </nav>
+        {user && (
+          <div className="border-t border-[#1e2040]">
+            <div className="py-3">
+              <div className="flex items-center h-10 mb-2">
+                <div className="flex items-center justify-center w-14 min-w-[56px]">
+                  <div className="w-8 h-8 rounded-full bg-indigo-500 flex items-center justify-center text-white font-bold text-xs">
+                    {(user.username || user.email || 'U')[0].toUpperCase()}
+                  </div>
+                </div>
+                <span className="text-sm text-gray-400 truncate hidden group-hover:block">{user.username || user.email}</span>
+              </div>
+              <div className="hidden group-hover:block px-3.5">
+                <button onClick={logout} className="w-full text-sm px-3 py-2 rounded-lg border border-gray-700 text-gray-400 hover:text-gray-200 hover:bg-[#1e2040] transition-all cursor-pointer">
+                  Sign Out
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+      </aside>
+    </>
   )
 }

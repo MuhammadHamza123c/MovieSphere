@@ -151,12 +151,12 @@ export default function DetailPage() {
   return (
     <div>
       <button onClick={() => navigate(-1)} className="mb-4 px-3.5 py-2 border border-gray-700/50 rounded-lg text-sm text-gray-500 hover:text-gray-200 hover:border-gray-600 hover:bg-[#1e2040]/50 transition-all cursor-pointer bg-transparent">&larr; Back</button>
-      <div className="relative rounded-2xl overflow-hidden mb-8 min-h-[420px] shadow-2xl shadow-black/30" style={backdropUrl ? { backgroundImage: `url(${backdropUrl})`, backgroundSize: 'cover', backgroundPosition: 'center' } : {}}>
-        <div className="absolute inset-0 bg-gradient-to-r from-[#0b0d17] via-[#0b0d17]/80 to-[#0b0d17]/30" />
-        <div className="relative flex gap-8 p-8 md:p-10 items-center min-h-[420px] flex-col md:flex-row">
+      <div className="relative rounded-2xl overflow-hidden mb-8 min-h-[250px] md:min-h-[420px] shadow-2xl shadow-black/30" style={backdropUrl ? { backgroundImage: `url(${backdropUrl})`, backgroundSize: 'cover', backgroundPosition: 'center' } : {}}>
+        <div className="absolute inset-0 bg-gradient-to-t md:bg-gradient-to-r from-[#0b0d17] via-[#0b0d17]/80 to-[#0b0d17]/30" />
+        <div className="relative flex gap-4 sm:gap-6 md:gap-8 p-4 sm:p-6 md:p-10 items-center min-h-[250px] md:min-h-[420px] flex-col md:flex-row">
           {posterUrl && (
             <div className="flex-shrink-0">
-              <img src={posterUrl} alt={title} className="w-80 rounded-xl shadow-2xl shadow-black/60 border border-gray-700/30" />
+              <img src={posterUrl} alt={title} className="w-full max-w-[220px] sm:max-w-[260px] md:w-80 rounded-xl shadow-2xl shadow-black/60 border border-gray-700/30" />
             </div>
           )}
           <div className="flex-1">
@@ -211,7 +211,7 @@ export default function DetailPage() {
         </div>
       )}
 
-      <div className="sticky top-0 z-30 bg-[#0b0d17]/90 backdrop-blur-md border-b border-gray-800/30 -mx-8 px-8 py-3 mb-8 overflow-x-auto scrollbar-thin flex items-center gap-2">
+      <div className="sticky top-0 z-30 bg-[#0b0d17]/90 backdrop-blur-md border-b border-gray-800/30 -mx-4 md:-mx-6 px-4 md:px-6 py-3 mb-8 overflow-x-auto scrollbar-thin flex items-center gap-2">
         {[
           mediaType === 'tv' && seasons.length > 0 && { id: 'seasons', label: 'Episodes' },
           data.Crew && { id: 'crew', label: 'Crew' },
