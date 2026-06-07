@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo, useRef } from 'react'
 import { useParams, useNavigate, useLocation } from 'react-router-dom'
-import { getStreamUrl, fetchDetail, fetchSeasonEpisodes, saveProgress } from '../api/endpoints'
+import { getStreamUrl, fetchDetail, fetchSeasonEpisodes, saveProgress, sendSignal, fetchSignals } from '../api/endpoints'
 import { useRecentlyViewed } from '../hooks/useRecentlyViewed'
 
 export default function WatchPage() {
@@ -25,9 +25,11 @@ export default function WatchPage() {
 
   // Watch Party States
   const [remoteStream, setRemoteStream] = useState(null)
-  const [partyLogs, setPartyLogs] = useState(['Signaling initialized. Ready for friends.'])
+  const [partyLogs, setPartyLogs] = useState([])
   const [copied, setCopied] = useState(false)
-  const wsRef = useRef(null)
+  const peerIdRef = useRef(null)
+  const pollRef = useRef(null)
+  const lastSignalIdRef = useRef(0)
   const pcRef = useRef(null)
   const localVideoRef = useRef(null)
   const remoteVideoRef = useRef(null)
@@ -154,16 +156,21 @@ export default function WatchPage() {
     return () => clearTimeout(t)
   }, [autoNextCountdown, id, nextTarget, navigate, room])
 
-  // Watch Party Signaling and WebRTC Connection Effect
+  // Watch Party Signaling with HTTP Polling
   useEffect(() => {
     if (!room) return
 
+    const myId = Math.random().toString(36).substring(2, 10)
+    peerIdRef.current = myId
+    lastSignalIdRef.current = 0
     let activeStream = null
-    const wsUrl = `ws://127.0.0.1:8000/MovieSphere/watch-party/${room}`
-    addLog(`Connecting to room: ${room}`)
+    let mounted = true
 
-    const socket = new WebSocket(wsUrl)
-    wsRef.current = socket
+    const addLog = (msg) => {
+      setPartyLogs(prev => [...prev.slice(-15), `[${new Date().toLocaleTimeString()}] ${msg}`])
+    }
+
+    addLog(`Joined room: ${room}`)
 
     const setupCamera = async () => {
       try {
@@ -172,49 +179,68 @@ export default function WatchPage() {
         if (localVideoRef.current) {
           localVideoRef.current.srcObject = activeStream
         }
-        addLog("Webcam and mic active.")
+        addLog('Webcam and mic active.')
       } catch (err) {
-        addLog(`Camera block: ${err.message}. running without local feed.`)
+        addLog(`Camera blocked: ${err.message}`)
       }
     }
     setupCamera()
 
-    socket.onopen = () => {
-      addLog("Successfully joined the watch room.")
-      socket.send(JSON.stringify({ type: "peer-joined" }))
-    }
+    const processSignals = (signals) => {
+      // Process in priority order: answers/offers before initiations to avoid races
+      const sorted = [...signals].sort((a, b) => {
+        const order = { 'sdp-answer': 0, 'sdp-offer': 1, 'ice-candidate': 2, 'peer-joined': 3, 'hangup': 4 }
+        return (order[a.type] ?? 5) - (order[b.type] ?? 5)
+      })
+      for (const sig of sorted) {
+        if (sig.sender === myId) continue
+        if (sig.id > lastSignalIdRef.current) lastSignalIdRef.current = sig.id
 
-    socket.onmessage = async (event) => {
-      const message = JSON.parse(event.data)
-
-      if (message.type === "peer-joined") {
-        addLog("Friend connected!")
-        initiateWebRTC(true, activeStream)
-      } else if (message.type === "sdp-offer") {
-        addLog("Received inbound connection call.")
-        await handleSDPOffer(message.sdp, activeStream)
-      } else if (message.type === "sdp-answer") {
-        addLog("Connection accepted by friend.")
-        if (pcRef.current) {
-          await pcRef.current.setRemoteDescription(new RTCSessionDescription(message.sdp))
-        }
-      } else if (message.type === "ice-candidate") {
-        if (pcRef.current && message.candidate) {
-          try {
-            await pcRef.current.addIceCandidate(new RTCIceCandidate(message.candidate))
-          } catch (e) {
-            console.error(e)
+        if (sig.type === 'sdp-answer') {
+          addLog('Connection accepted.')
+          if (pcRef.current && sig.data.sdp && !pcRef.current.remoteDescription) {
+            pcRef.current.setRemoteDescription(new RTCSessionDescription(sig.data.sdp))
           }
+        } else if (sig.type === 'sdp-offer') {
+          if (!pcRef.current) {
+            addLog('Received connection call.')
+            handleSDPOffer(sig.data.sdp, activeStream)
+          }
+        } else if (sig.type === 'ice-candidate') {
+          if (pcRef.current && sig.data.candidate) {
+            try { pcRef.current.addIceCandidate(new RTCIceCandidate(sig.data.candidate)) }
+            catch (e) { console.error(e) }
+          }
+        } else if (sig.type === 'peer-joined') {
+          addLog('Friend connected!')
+          if (!pcRef.current) initiateWebRTC(true, activeStream)
+        } else if (sig.type === 'hangup') {
+          addLog('Friend disconnected.')
+          resetRTC()
         }
-      } else if (message.type === "hangup") {
-        addLog("Friend disconnected.")
-        resetRTC()
       }
     }
 
+    const poll = async () => {
+      try {
+        const signals = await fetchSignals(room, lastSignalIdRef.current)
+        if (mounted && signals.length > 0) processSignals(signals)
+      } catch {}
+    }
+
+    const send = async (type, data = {}) => {
+      try { await sendSignal({ room, sender: myId, type, data }) } catch {}
+    }
+
+    pollRef.current = setInterval(poll, 1500)
+
+    // Send peer-joined after a brief delay to ensure other side is polling
+    setTimeout(() => send('peer-joined'), 500)
+
     const initiateWebRTC = async (isInitiator, media) => {
+      if (pcRef.current) return
       pcRef.current = new RTCPeerConnection({
-        iceServers: [{ urls: "stun:stun.l.google.com:19302" }]
+        iceServers: [{ urls: 'stun:stun.l.google.com:19302' }]
       })
 
       if (media) {
@@ -231,21 +257,22 @@ export default function WatchPage() {
       }
 
       pcRef.current.onicecandidate = (event) => {
-        if (event.candidate && socket.readyState === WebSocket.OPEN) {
-          socket.send(JSON.stringify({ type: "ice-candidate", candidate: event.candidate }))
+        if (event.candidate) {
+          send('ice-candidate', { candidate: event.candidate })
         }
       }
 
       if (isInitiator) {
         const offer = await pcRef.current.createOffer()
         await pcRef.current.setLocalDescription(offer)
-        socket.send(JSON.stringify({ type: "sdp-offer", sdp: offer }))
+        send('sdp-offer', { sdp: offer })
       }
     }
 
     const handleSDPOffer = async (sdp, media) => {
+      if (pcRef.current) return
       pcRef.current = new RTCPeerConnection({
-        iceServers: [{ urls: "stun:stun.l.google.com:19302" }]
+        iceServers: [{ urls: 'stun:stun.l.google.com:19302' }]
       })
 
       if (media) {
@@ -262,15 +289,15 @@ export default function WatchPage() {
       }
 
       pcRef.current.onicecandidate = (event) => {
-        if (event.candidate && socket.readyState === WebSocket.OPEN) {
-          socket.send(JSON.stringify({ type: "ice-candidate", candidate: event.candidate }))
+        if (event.candidate) {
+          send('ice-candidate', { candidate: event.candidate })
         }
       }
 
       await pcRef.current.setRemoteDescription(new RTCSessionDescription(sdp))
       const answer = await pcRef.current.createAnswer()
       await pcRef.current.setLocalDescription(answer)
-      socket.send(JSON.stringify({ type: "sdp-answer", sdp: answer }))
+      send('sdp-answer', { sdp: answer })
     }
 
     const resetRTC = () => {
@@ -282,7 +309,9 @@ export default function WatchPage() {
     }
 
     return () => {
-      socket.close()
+      mounted = false
+      if (pollRef.current) clearInterval(pollRef.current)
+      send('hangup').catch(() => {})
       resetRTC()
       if (activeStream) {
         activeStream.getTracks().forEach(track => track.stop())

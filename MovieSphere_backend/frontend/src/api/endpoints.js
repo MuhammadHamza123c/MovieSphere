@@ -174,3 +174,12 @@ export async function fetchMedia(id, type) {
   const { data } = await client.get('/MovieSphere/media', { params: { id, type } })
   return data.MovieSphere || { images: [], videos: [] }
 }
+
+export async function sendSignal(payload) {
+  await client.post('/MovieSphere/watch-party/signal', payload)
+}
+
+export async function fetchSignals(room, since = 0) {
+  const { data } = await client.get(`/MovieSphere/watch-party/signals/${room}`, { params: { since } })
+  return data.signals || []
+}
