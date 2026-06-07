@@ -361,6 +361,30 @@ export default function WatchPage() {
     }
   }, [chatMessages.length])
 
+  // Keyboard shortcuts
+  useEffect(() => {
+    const handleKey = (e) => {
+      if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return
+      switch (e.key.toLowerCase()) {
+        case 'f':
+          if (!document.fullscreenElement) iframeRef.current?.requestFullscreen()
+          else document.exitFullscreen()
+          break
+        case 'c':
+          setCinema(c => !c)
+          break
+        case 'arrowleft':
+          if (type === 'tv' && prevEpi >= 1) goTo(seasonNum, prevEpi)
+          break
+        case 'arrowright':
+          if (type === 'tv' && nextTarget) goTo(nextTarget.season, nextTarget.episode)
+          break
+      }
+    }
+    window.addEventListener('keydown', handleKey)
+    return () => window.removeEventListener('keydown', handleKey)
+  }, [type, prevEpi, nextTarget, seasonNum])
+
   const cancelAutoNext = () => setAutoNextCountdown(null)
 
   const goTo = (s, e) => {
