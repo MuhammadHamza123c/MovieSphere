@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { fetchDetail, fetchCast, fetchRecommendations, fetchComments, postComment, deleteComment, checkWatchLater, addWatchLater, removeWatchLater, addFavorite, removeFavorite, fetchFavorites, fetchMedia } from '../api/endpoints'
-import { getMe } from '../api/auth'
+import { fetchDetail, fetchCast, fetchRecommendations, fetchComments, postComment, deleteComment, checkWatchLater, addWatchLater, removeWatchLater, addFavorite, removeFavorite, fetchFavorites, fetchMedia, fetchSeasonEpisodes } from '../api/endpoints'
+import { useAuth } from '../hooks/useAuth'
 import CastCard from '../components/CastCard'
 import GenreTag from '../components/GenreTag'
 import MovieCard from '../components/MovieCard'
@@ -9,6 +9,7 @@ import MovieCard from '../components/MovieCard'
 export default function DetailPage() {
   const { id } = useParams()
   const navigate = useNavigate()
+  const { user } = useAuth()
   const mediaType = window.location.pathname.startsWith('/tv') ? 'tv' : 'movie'
   const [data, setData] = useState(null)
   const [cast, setCast] = useState([])
@@ -21,6 +22,7 @@ export default function DetailPage() {
   const [loading, setLoading] = useState(true)
   const [selectedSeason, setSelectedSeason] = useState(1)
   const [selectedEpisode, setSelectedEpisode] = useState(1)
+  const [seasonEpisodes, setSeasonEpisodes] = useState([])
   const [inWatchLater, setInWatchLater] = useState(false)
   const [isFav, setIsFav] = useState(false)
   const [mediaItems, setMediaItems] = useState(null)
@@ -31,14 +33,12 @@ export default function DetailPage() {
     setInWatchLater(false)
     setIsFav(false)
     setLoading(true)
-    getMe().then(u => {
-      setCurrentUserId(u?.id)
-      if (u?.id) {
-        checkWatchLater(id, mediaType).then(res => {
-          if (res?.in_watch_later) setInWatchLater(true)
-        }).catch(() => {})
-      }
-    }).catch(() => {})
+    setCurrentUserId(user?.id)
+    if (user?.id) {
+      checkWatchLater(id, mediaType).then(res => {
+        if (res?.in_watch_later) setInWatchLater(true)
+      }).catch(() => {})
+    }
     Promise.all([fetchDetail('', id, mediaType), fetchCast('', id, mediaType), fetchComments(id, mediaType), fetchMedia(id, mediaType)])
       .then(([detail, castData, commentData, mediaData]) => {
         setData(detail)
@@ -56,7 +56,15 @@ export default function DetailPage() {
         setLoading(false)
       })
       .catch(() => setLoading(false))
-  }, [id])
+  }, [id, user])
+
+  useEffect(() => {
+    if (mediaType !== 'tv') return
+
+    fetchSeasonEpisodes(id, selectedSeason)
+      .then(setSeasonEpisodes)
+      .catch(() => setSeasonEpisodes([]))
+  }, [id, mediaType, selectedSeason])
 
   if (loading) {
     return (
@@ -82,8 +90,19 @@ export default function DetailPage() {
   const genres = data.Genre || data.genres || ''
   const genreArr = typeof genres === 'string' ? genres.split('|').filter(Boolean) : (Array.isArray(genres) ? genres.map(g => g.name || g) : [])
   const seasons = data['Seasons/Episode'] || data.Seasons || data.seasons || []
+  const availableSeasons = seasons
+    .map(s => ({
+      number: s.season_number || s.Season_number,
+      name: s.name || s.Name,
+      episodeCount: s.episode_count || s.Episode_count,
+      posterPath: s.poster_path || s.Poster_path,
+    }))
+    .filter(s => s.number != null && !s.name?.toLowerCase().includes('specials'))
   const activeSeason = seasons.find(s => (s.season_number || s.Season_number) === selectedSeason)
   const episodeCount = activeSeason?.episode_count || activeSeason?.Episode_count || 1
+  const visibleEpisodes = seasonEpisodes.length
+    ? seasonEpisodes
+    : Array.from({ length: episodeCount }, (_, i) => ({ episode_number: i + 1, name: `Episode ${i + 1}` }))
 
   const runtime = data.runtime
   const runtimeDisplay = runtime ? `${Math.floor(runtime / 60)}h ${runtime % 60}m` : null
@@ -154,22 +173,6 @@ export default function DetailPage() {
             <div className="flex flex-wrap gap-1.5 mb-4">{genreArr.map((g, i) => <GenreTag key={i} name={g} />)}</div>
             <p className="text-sm text-gray-400 leading-relaxed max-w-2xl mb-5 line-clamp-4">{overview}</p>
             <div className="flex flex-wrap items-center gap-3">
-              {mediaType === 'tv' && seasons.length > 0 && (
-                <>
-                  <select value={selectedSeason} onChange={e => { setSelectedSeason(Number(e.target.value)); setSelectedEpisode(1) }} className="px-3 py-2 bg-[#12142a] border border-gray-700 rounded-lg text-sm text-gray-200 outline-none focus:border-indigo-500 cursor-pointer">
-                    {seasons.filter(s => !s.name?.includes('Specials')).map(s => (
-                      <option key={s.season_number || s.Season_number} value={s.season_number || s.Season_number}>
-                        Season {s.season_number || s.Season_number}
-                      </option>
-                    ))}
-                  </select>
-                  <select value={Math.min(selectedEpisode, episodeCount)} onChange={e => setSelectedEpisode(Number(e.target.value))} className="px-3 py-2 bg-[#12142a] border border-gray-700 rounded-lg text-sm text-gray-200 outline-none focus:border-indigo-500 cursor-pointer">
-                    {Array.from({ length: episodeCount }, (_, i) => (
-                      <option key={i + 1} value={i + 1}>Episode {i + 1}</option>
-                    ))}
-                  </select>
-                </>
-              )}
               <button onClick={() => {
                 if (mediaType === 'tv' && seasons.length) {
                   navigate(`/watch/tv/${id}/${selectedSeason}/${selectedEpisode}`)
@@ -177,6 +180,7 @@ export default function DetailPage() {
                   navigate(`/watch/${mediaType}/${id}`)
                 }
               }} className="px-6 py-2.5 bg-indigo-500 hover:bg-indigo-600 text-white text-sm font-bold rounded-lg transition-all cursor-pointer shadow-lg shadow-indigo-500/25">Play Now</button>
+
               <button onClick={toggleFavorite} className="flex items-center gap-1.5 px-4 py-2.5 border border-gray-700/50 rounded-lg text-sm font-medium transition-all cursor-pointer bg-transparent hover:border-gray-600" style={{ color: isFav ? '#ef4444' : '#9ca3af' }}>
                 <svg className="w-5 h-5" fill={isFav ? 'currentColor' : 'none'} stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
@@ -207,8 +211,113 @@ export default function DetailPage() {
         </div>
       )}
 
+      <div className="sticky top-0 z-30 bg-[#0b0d17]/90 backdrop-blur-md border-b border-gray-800/30 -mx-8 px-8 py-3 mb-8 overflow-x-auto scrollbar-thin flex items-center gap-2">
+        {[
+          mediaType === 'tv' && seasons.length > 0 && { id: 'seasons', label: 'Episodes' },
+          data.Crew && { id: 'crew', label: 'Crew' },
+          cast.length > 0 && { id: 'cast', label: 'Cast' },
+          mediaItems && (mediaItems.trailers?.length > 0 || mediaItems.other_videos?.length > 0 || mediaItems.images?.length > 0) && { id: 'media', label: 'Media' },
+          recs.length > 0 && { id: 'recommendations', label: 'Recommendations' },
+          { id: 'reviews', label: 'Reviews' },
+        ].filter(Boolean).map(s => (
+          <a key={s.id} href={`#${s.id}`} onClick={e => { e.preventDefault(); document.getElementById(s.id)?.scrollIntoView({ behavior: 'smooth', block: 'start' }) }}
+             className="flex-shrink-0 px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer border border-gray-700/50 text-gray-400 hover:text-gray-200 hover:border-gray-600 hover:bg-[#1e2040]/50">
+            {s.label}
+          </a>
+        ))}
+      </div>
+
+      {mediaType === 'tv' && availableSeasons.length > 0 && (
+        <div id="seasons" className="mb-10 scroll-mt-20">
+          <div className="flex items-center gap-3 mb-5">
+            <h3 className="text-lg font-bold text-gray-100">Episodes</h3>
+            <div className="h-px flex-1 bg-gradient-to-r from-indigo-500/20 to-transparent" />
+          </div>
+          <div className="bg-[#12142a]/60 border border-gray-800/40 rounded-2xl overflow-hidden">
+            <div className="p-5 border-b border-gray-800/60">
+              <div className="flex gap-4 overflow-x-auto pb-1">
+                {availableSeasons.map(s => {
+                  const active = Number(s.number) === selectedSeason
+                  return (
+                    <button
+                      key={s.number}
+                      onClick={() => { setSelectedSeason(Number(s.number)); setSelectedEpisode(1) }}
+                      className={`group relative flex-shrink-0 w-28 overflow-hidden rounded-xl border transition-all cursor-pointer ${
+                        active
+                          ? 'border-indigo-400 shadow-lg shadow-indigo-500/20'
+                          : 'border-gray-800 hover:border-indigo-500/50'
+                      }`}
+                    >
+                      <div className="aspect-[2/3] bg-[#181a36]">
+                        {(s.posterPath || posterUrl) ? (
+                          <img src={s.posterPath || posterUrl} alt={`Season ${s.number}`} className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105" loading="lazy" />
+                        ) : (
+                          <div className="h-full w-full bg-gradient-to-br from-[#181a36] to-[#0b0d17]" />
+                        )}
+                      </div>
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent" />
+                      <div className="absolute bottom-0 left-0 right-0 p-2 text-left">
+                        <p className="text-xs font-extrabold text-white">Season {s.number}</p>
+                        {s.episodeCount && <p className="text-[10px] text-gray-300">{s.episodeCount} episodes</p>}
+                      </div>
+                    </button>
+                  )
+                })}
+              </div>
+            </div>
+            <div className="p-5 grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
+              {visibleEpisodes.map(ep => {
+                const episodeNumber = ep.episode_number
+                const active = episodeNumber === selectedEpisode
+                const episodeImage = ep.still_path || posterUrl || backdropUrl
+                return (
+                  <div
+                    key={episodeNumber}
+                    className={`group overflow-hidden rounded-xl border transition-all ${
+                      active
+                        ? 'bg-indigo-500/15 border-indigo-400/70 shadow-lg shadow-indigo-500/10'
+                        : 'bg-[#181a36]/70 border-gray-800/70 hover:border-indigo-500/40 hover:bg-[#1d2042]'
+                    }`}
+                  >
+                    <div className="relative aspect-video bg-black overflow-hidden">
+                      {episodeImage ? (
+                        <img src={episodeImage} alt={ep.name || `Episode ${episodeNumber}`} className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105" loading="lazy" />
+                      ) : (
+                        <div className="h-full w-full bg-gradient-to-br from-[#1d2042] to-black" />
+                      )}
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/20 to-transparent" />
+                      <span className="absolute left-3 top-3 rounded-lg bg-black/70 px-2.5 py-1 text-xs font-extrabold text-white backdrop-blur-sm">
+                        Episode {episodeNumber}
+                      </span>
+                      <button
+                        onClick={() => {
+                          setSelectedEpisode(episodeNumber)
+                          navigate(`/watch/tv/${id}/${selectedSeason}/${episodeNumber}`)
+                        }}
+                        className="absolute inset-x-4 bottom-4 px-4 py-2.5 bg-indigo-500 hover:bg-indigo-600 text-white text-xs font-bold rounded-lg transition-all cursor-pointer shadow-lg shadow-indigo-500/25"
+                      >
+                        Play Episode
+                      </button>
+                    </div>
+                    <div className="p-4">
+                      <div className="min-w-0 pr-1">
+                        <p className="text-sm font-bold text-gray-100 line-clamp-1">{ep.name || `Episode ${episodeNumber}`}</p>
+                        {ep.runtime && <p className="text-xs text-gray-500 mt-1">{ep.runtime} min</p>}
+                      </div>
+                      {ep.overview && (
+                        <p className="text-xs text-gray-500 leading-relaxed line-clamp-3 mt-3">{ep.overview}</p>
+                      )}
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+          </div>
+        </div>
+      )}
+
       {data.Crew && (
-        <div className="mb-8">
+        <div id="crew" className="mb-8 scroll-mt-20">
           <h3 className="text-lg font-bold text-gray-200 mb-4">Crew</h3>
           <div className="flex flex-wrap gap-2">
             {data.Crew.split('|').map((entry, i) => {
@@ -226,7 +335,7 @@ export default function DetailPage() {
       )}
 
       {cast.length > 0 && (
-        <div className="mb-10">
+        <div id="cast" className="mb-10 scroll-mt-20">
           <h3 className="text-lg font-bold text-gray-200 mb-4">Cast</h3>
           <div className="flex gap-4 overflow-x-auto pb-3 scrollbar-thin">
             {cast.map((c, i) => <CastCard key={c.Id || c.id || i} cast={c} />)}
@@ -235,7 +344,7 @@ export default function DetailPage() {
       )}
 
       {mediaItems && (mediaItems.trailers?.length > 0 || mediaItems.other_videos?.length > 0 || mediaItems.images?.length > 0) && (
-        <div className="mb-10">
+        <div id="media" className="mb-10 scroll-mt-20">
           <div className="flex items-center gap-3 mb-6">
             <h3 className="text-lg font-bold text-gray-100">Media</h3>
             <div className="h-px flex-1 bg-gradient-to-r from-indigo-500/20 to-transparent" />
@@ -273,7 +382,7 @@ export default function DetailPage() {
                 More Videos
               </h4>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                {mediaItems.other_videos.map((v, i) => (
+                {mediaItems.other_videos.slice(0, 4).map((v, i) => (
                   <button key={i} onClick={() => setVideoPlayer(v.key)} className="group relative overflow-hidden rounded-xl bg-black/40 border border-gray-800/50 hover:border-indigo-500/30 transition-all cursor-pointer text-left w-full">
                     <div className="aspect-video relative">
                       <img src={`https://img.youtube.com/vi/${v.key}/maxresdefault.jpg`} alt={v.name} className="w-full h-full object-cover" loading="lazy" />
@@ -314,7 +423,7 @@ export default function DetailPage() {
       )}
 
       {recs.length > 0 && (
-        <div>
+        <div id="recommendations" className="scroll-mt-20">
           <h3 className="text-lg font-bold text-gray-200 mb-4">Recommendations</h3>
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-5">
             {recs.slice(0, 10).map((r, i) => <MovieCard key={r.Id || r.id || i} item={r} />)}
@@ -322,7 +431,7 @@ export default function DetailPage() {
         </div>
       )}
 
-      <div className="mt-10 mb-12">
+      <div id="reviews" className="mt-10 mb-12 scroll-mt-20">
         <div className="flex items-center gap-3 mb-6">
           <h3 className="text-xl font-bold text-gray-100">Reviews</h3>
           <span className="px-2.5 py-0.5 bg-indigo-500/20 text-indigo-300 rounded-md text-xs font-semibold">{comments.length}</span>

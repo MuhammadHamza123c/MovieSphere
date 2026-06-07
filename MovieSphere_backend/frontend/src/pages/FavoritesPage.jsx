@@ -1,5 +1,5 @@
 ﻿import { useState, useEffect } from 'react'
-import { fetchFavorites } from '../api/endpoints'
+import { fetchFavorites, fetchContinueWatching } from '../api/endpoints'
 import MovieGrid from '../components/MovieGrid'
 
 export default function FavoritesPage() {
@@ -8,7 +8,11 @@ export default function FavoritesPage() {
 
   const load = () => {
     setLoading(true)
-    fetchFavorites().then(data => { setItems(data.map(i => ({ ...i, _isFav: true }))); setLoading(false) }).catch(() => setLoading(false))
+    Promise.all([fetchFavorites(), fetchContinueWatching()]).then(([data, cw]) => {
+      const cwMap = new Map(cw.map(i => [String(i.media_id), i]))
+      setItems(data.map(i => ({ ...i, _isFav: true, _progress: cwMap.get(String(i.Id || i.id))?.total_seconds > 0 ? cwMap.get(String(i.Id || i.id)).progress_seconds / cwMap.get(String(i.Id || i.id)).total_seconds : 0 })))
+      setLoading(false)
+    }).catch(() => setLoading(false))
   }
 
   useEffect(() => { load() }, [])

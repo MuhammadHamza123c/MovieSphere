@@ -46,17 +46,17 @@ export async function addFavorite(name) {
 }
 
 export async function removeFavorite(name) {
-  const { data } = await client.get('/MovieSphere/remove_fav', { params: { name } })
+  const { data } = await client.post('/MovieSphere/remove_fav', null, { params: { name } })
   return data
-}
-
-export async function fetchRecommendations(movieName) {
-  const { data } = await client.get('/MovieSphere/Recommend', { params: { movie_name: movieName } })
-  return data.MovieSphere || []
 }
 
 export async function fetchWatchLater() {
   const { data } = await client.get('/MovieSphere/watch_later')
+  return data.MovieSphere || []
+}
+
+export async function checkReleasedItems() {
+  const { data } = await client.get('/MovieSphere/watch_later/releases')
   return data.MovieSphere || []
 }
 
@@ -90,22 +90,9 @@ export async function checkWatchLater(mediaId, mediaType) {
   return data.MovieSphere
 }
 
-export async function fetchMedia(id, type) {
-  const { data } = await client.get('/MovieSphere/media', { params: { id, type } })
-  return data.MovieSphere || { images: [], videos: [] }
-}
-
-export async function fetchContinueWatching() {
-  const { data } = await client.get('/MovieSphere/continue-watching')
+export async function fetchRecommendations(movieName) {
+  const { data } = await client.get('/MovieSphere/Recommend', { params: { movie_name: movieName } })
   return data.MovieSphere || []
-}
-
-export async function saveProgress(payload) {
-  await client.put('/MovieSphere/continue-watching/progress', payload)
-}
-
-export async function removeContinueWatching(mediaId) {
-  await client.delete(`/MovieSphere/continue-watching/${mediaId}`)
 }
 
 export async function fetchDetail(name, id, type) {
@@ -167,4 +154,23 @@ export async function askAiWithImage(file) {
   formData.append('f1', file)
   const { data } = await client.post('/MovieSphere/streamit/ask_it', formData)
   return data.MovieSphere
+}
+
+export async function fetchSeasonEpisodes(id, season) {
+  const { data } = await client.get('/MovieSphere/season_episodes', { params: { id, season } })
+  return data.episodes || []
+}
+
+export async function fetchContinueWatching() {
+  const { data } = await client.get('/MovieSphere/continue-watching')
+  return data.MovieSphere || []
+}
+
+export async function saveProgress(payload) {
+  await client.put('/MovieSphere/continue-watching/progress', payload)
+}
+
+export async function fetchMedia(id, type) {
+  const { data } = await client.get('/MovieSphere/media', { params: { id, type } })
+  return data.MovieSphere || { images: [], videos: [] }
 }

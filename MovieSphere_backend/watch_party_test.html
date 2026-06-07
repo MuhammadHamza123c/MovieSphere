@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MovieSphere - Watch Party & WebRTC Call Test</title>
+    <!-- Tailwind CSS for modern responsive styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            background-color: #0b0d17;
+            background-image: radial-gradient(circle at top right, rgba(99, 102, 241, 0.15), transparent 40%),
+                              radial-gradient(circle at bottom left, rgba(168, 85, 247, 0.15), transparent 40%);
+        }
+    </style>
+</head>
+<body class="min-h-screen text-gray-100 flex flex-col font-sans">
+
+    <!-- Header -->
+    <header class="border-b border-gray-800/80 bg-[#0b0d17]/80 backdrop-blur-md sticky top-0 z-50">
+        <div class="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <span class="text-2xl font-black bg-gradient-to-r from-indigo-400 to-purple-500 bg-clip-text text-transparent">MovieSphere</span>
+                <span class="px-2.5 py-0.5 text-xs font-semibold rounded-full bg-indigo-500/10 border border-indigo-500/25 text-indigo-300">Watch Party Lab</span>
+            </div>
+            <div class="text-sm text-gray-400 font-medium">Local Server Mode</div>
+        </div>
+    </header>
+
+    <!-- Main Workspace -->
+    <main class="flex-1 max-w-6xl w-full mx-auto p-6 grid grid-cols-1 lg:grid-cols-3 gap-6">
+        
+        <!-- Controls & Settings Pane -->
+        <div class="lg:col-span-1 space-y-6">
+            <div class="bg-gray-900/40 border border-gray-800/80 rounded-2xl p-6 backdrop-blur-sm">
+                <h3 class="text-lg font-bold text-gray-200 mb-4 flex items-center gap-2">
+                    🔑 Party Settings
+                </h3>
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">Room ID</label>
+                        <input id="roomIdInput" type="text" value="chill-party-room" class="w-full bg-[#12142a]/60 border border-gray-800 rounded-xl px-4 py-2.5 text-sm font-semibold text-gray-100 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-all">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">Your Username</label>
+                        <input id="usernameInput" type="text" placeholder="Enter username..." class="w-full bg-[#12142a]/60 border border-gray-800 rounded-xl px-4 py-2.5 text-sm font-semibold text-gray-100 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-all">
+                    </div>
+                    <button id="joinBtn" onclick="initiateParty()" class="w-full py-3 bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white font-bold rounded-xl transition-all shadow-lg shadow-indigo-500/20 active:scale-[0.98] cursor-pointer">
+                        Connect & Join Room
+                    </button>
+                    <button id="hangupBtn" onclick="hangup()" class="hidden w-full py-3 bg-red-500/20 hover:bg-red-500/30 border border-red-500/40 text-red-300 font-bold rounded-xl transition-all active:scale-[0.98] cursor-pointer">
+                        Disconnect
+                    </button>
+                </div>
+            </div>
+
+            <!-- Playback Sync Test Simulator -->
+            <div class="bg-gray-900/40 border border-gray-800/80 rounded-2xl p-6 backdrop-blur-sm">
+                <h3 class="text-lg font-bold text-gray-200 mb-4 flex items-center gap-2">
+                    🎬 Playback Sync Test
+                </h3>
+                <div class="space-y-4">
+                    <p class="text-xs text-gray-400 leading-relaxed">
+                        Clicking these triggers events representing movie player actions. Any peers in the same room will update instantly.
+                    </p>
+                    <div class="grid grid-cols-2 gap-3">
+                        <button onclick="sendPlaybackSync('play')" class="py-2.5 bg-indigo-500/10 hover:bg-indigo-500/20 border border-indigo-500/20 hover:border-indigo-500/40 text-indigo-300 text-sm font-semibold rounded-xl transition-all cursor-pointer">
+                            ▶ Play Movie
+                        </button>
+                        <button onclick="sendPlaybackSync('pause')" class="py-2.5 bg-purple-500/10 hover:bg-purple-500/20 border border-purple-500/20 hover:border-purple-500/40 text-purple-300 text-sm font-semibold rounded-xl transition-all cursor-pointer">
+                            ⏸ Pause Movie
+                        </button>
+                    </div>
+                    <div class="flex items-center gap-3">
+                        <input id="seekTime" type="number" value="120" class="w-24 bg-[#12142a]/60 border border-gray-800 rounded-xl px-3 py-2 text-sm font-semibold text-center focus:outline-none">
+                        <button onclick="sendPlaybackSync('seek')" class="flex-1 py-2 bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-semibold rounded-xl transition-all cursor-pointer">
+                            ⏩ Seek (Seconds)
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Video & Console Workspace -->
+        <div class="lg:col-span-2 space-y-6">
+            <!-- Video Grid -->
+            <div class="bg-gray-900/40 border border-gray-800/80 rounded-2xl p-6 backdrop-blur-sm">
+                <h3 class="text-lg font-bold text-gray-200 mb-4">📹 Live Video Stream Calls</h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <!-- Local stream -->
+                    <div class="bg-black/60 rounded-xl overflow-hidden border border-gray-800/50 aspect-video relative flex items-center justify-center">
+                        <video id="localVideo" autoplay playsinline muted class="w-full h-full object-cover scale-x-[-1]"></video>
+                        <div class="absolute bottom-3 left-3 bg-black/60 backdrop-blur-md px-2.5 py-1 rounded-lg text-xs font-semibold border border-white/5">
+                            You (Local Video)
+                        </div>
+                    </div>
+                    <!-- Remote stream -->
+                    <div class="bg-black/60 rounded-xl overflow-hidden border border-gray-800/50 aspect-video relative flex items-center justify-center">
+                        <video id="remoteVideo" autoplay playsinline class="w-full h-full object-cover"></video>
+                        <div class="absolute bottom-3 left-3 bg-black/60 backdrop-blur-md px-2.5 py-1 rounded-lg text-xs font-semibold border border-white/5">
+                            Friend (Remote Video)
+                        </div>
+                        <div id="noRemoteLabel" class="absolute inset-0 flex items-center justify-center text-sm font-semibold text-gray-500 bg-gray-950/80 transition-opacity">
+                            Waiting for peer connection...
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Log Console -->
+            <div class="bg-gray-900/40 border border-gray-800/80 rounded-2xl p-6 backdrop-blur-sm flex flex-col h-72">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-lg font-bold text-gray-200">🖥️ Signaling Logs</h3>
+                    <button onclick="clearLogs()" class="text-xs font-semibold text-gray-500 hover:text-indigo-400 transition-all cursor-pointer">Clear Logs</button>
+                </div>
+                <div id="logConsole" class="flex-1 bg-black/80 font-mono text-xs p-4 rounded-xl overflow-y-auto space-y-1.5 border border-gray-800 select-all">
+                    <div class="text-gray-500">[System] Diagnostics loaded. Ready to join.</div>
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <footer class="border-t border-gray-900 bg-black/20 text-center py-6 text-xs text-gray-600">
+        MovieSphere Watch Party Technology Preview. Powered by WebRTC and FastAPI WebSockets.
+    </footer>
+
+    <!-- WebRTC and Signaling Logic -->
+    <script>
+        let localStream = null;
+        let peerConnection = null;
+        let ws = null;
+        let myUsername = "Anonymous";
+        let currentRoom = "";
+
+        const logConsole = document.getElementById("logConsole");
+        const localVideo = document.getElementById("localVideo");
+        const remoteVideo = document.getElementById("remoteVideo");
+        const noRemoteLabel = document.getElementById("noRemoteLabel");
+
+        // Google Free STUN Servers config
+        const rtcConfig = {
+            iceServers: [
+                { urls: "stun:stun.l.google.com:19302" },
+                { urls: "stun:stun1.l.google.com:19302" }
+            ]
+        };
+
+        function addLog(message, type = "info") {
+            const time = new Date().toLocaleTimeString();
+            const logEl = document.createElement("div");
+            
+            let color = "text-gray-400";
+            if (type === "success") color = "text-green-400 font-semibold";
+            if (type === "warning") color = "text-yellow-400";
+            if (type === "error") color = "text-red-400 font-semibold";
+            if (type === "event") color = "text-indigo-400";
+
+            logEl.className = `${color}`;
+            logEl.textContent = `[${time}] ${message}`;
+            logConsole.appendChild(logEl);
+            logConsole.scrollTop = logConsole.scrollHeight;
+        }
+
+        function clearLogs() {
+            logConsole.innerHTML = '<div class="text-gray-500">[System] Logs cleared.</div>';
+        }
+
+        async function initiateParty() {
+            const roomId = document.getElementById("roomIdInput").value.trim();
+            const username = document.getElementById("usernameInput").value.trim();
+            if (!roomId) return alert("Please enter a Room ID");
+            
+            myUsername = username || "User_" + Math.floor(Math.random() * 1000);
+            currentRoom = roomId;
+
+            addLog(`Initializing party connection for user: ${myUsername}...`, "info");
+
+            // 1. Get Camera Media stream
+            try {
+                localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+                localVideo.srcObject = localStream;
+                addLog("Local media camera stream acquired successfully.", "success");
+            } catch (err) {
+                addLog(`Media access error: ${err.message}. Running call test in sync-only mode (no video).`, "warning");
+            }
+
+            // 2. Connect to local FastAPI WebSocket Signaling server
+            const wsUrl = `ws://127.0.0.1:8000/MovieSphere/watch-party/${roomId}`;
+            addLog(`Connecting to WebSocket signaling: ${wsUrl}...`, "info");
+            
+            ws = new WebSocket(wsUrl);
+
+            ws.onopen = () => {
+                addLog(`Connected to Watch Party Room: "${roomId}"!`, "success");
+                document.getElementById("joinBtn").classList.add("hidden");
+                document.getElementById("hangupBtn").classList.remove("hidden");
+                
+                // Let other peers in the room know we joined and invite them to initiate the WebRTC handshake
+                sendMessage({ type: "peer-joined", sender: myUsername });
+            };
+
+            ws.onmessage = async (event) => {
+                const message = JSON.parse(event.data);
+                handleSignalingMessage(message);
+            };
+
+            ws.onerror = (err) => {
+                addLog(`WebSocket connection error. Is the server running?`, "error");
+            };
+
+            ws.onclose = () => {
+                addLog("Signaling connection closed.", "warning");
+                cleanup();
+            };
+        }
+
+        function sendMessage(msg) {
+            if (ws && ws.readyState === WebSocket.OPEN) {
+                ws.send(JSON.stringify(msg));
+            }
+        }
+
+        // Handle signaling and coordination messages
+        async function handleSignalingMessage(message) {
+            // Log incoming coordination signals (excluding large SDP payloads for clean logging)
+            if (message.type !== "sdp-offer" && message.type !== "sdp-answer" && message.type !== "ice-candidate") {
+                addLog(`Signal received: ${JSON.stringify(message)}`, "event");
+            }
+
+            switch (message.type) {
+                case "peer-joined":
+                    addLog(`New peer "${message.sender}" joined the room! Setting up WebRTC Connection...`, "info");
+                    // Create peer connection as the call initiator (offerer)
+                    await setupWebRTC(true);
+                    break;
+                case "sdp-offer":
+                    addLog(`Received video call connection offer.`, "info");
+                    if (!peerConnection) await setupWebRTC(false);
+                    await peerConnection.setRemoteDescription(new RTCSessionDescription(message.sdp));
+                    const answer = await peerConnection.createAnswer();
+                    await peerConnection.setLocalDescription(answer);
+                    sendMessage({ type: "sdp-answer", sdp: answer });
+                    break;
+                case "sdp-answer":
+                    addLog(`Video call connection offer accepted. Completing handshake...`, "info");
+                    if (peerConnection) {
+                        await peerConnection.setRemoteDescription(new RTCSessionDescription(message.sdp));
+                    }
+                    break;
+                case "ice-candidate":
+                    if (peerConnection && message.candidate) {
+                        try {
+                            await peerConnection.addIceCandidate(new RTCIceCandidate(message.candidate));
+                        } catch (e) {
+                            console.error("Error adding ICE Candidate", e);
+                        }
+                    }
+                    break;
+                case "playback-sync":
+                    addLog(`🎬 Remote playback action triggered: "${message.action.toUpperCase()}" at time: ${message.currentTime}s`, "warning");
+                    alert(`Movie Player Synced: Action "${message.action.toUpperCase()}" at ${message.currentTime} seconds!`);
+                    break;
+                case "hangup":
+                    addLog("Remote peer disconnected.", "warning");
+                    resetPeerConnection();
+                    break;
+            }
+        }
+
+        // Setup RTCPeerConnection for Video/Audio
+        async function setupWebRTC(isInitiator) {
+            peerConnection = new RTCPeerConnection(rtcConfig);
+
+            // Add local stream tracks to WebRTC
+            if (localStream) {
+                localStream.getTracks().forEach(track => peerConnection.addTrack(track, localStream));
+            }
+
+            // Remote stream listener
+            peerConnection.ontrack = (event) => {
+                addLog("Remote audio/video stream track connected successfully!", "success");
+                remoteVideo.srcObject = event.streams[0];
+                noRemoteLabel.classList.add("opacity-0");
+            };
+
+            // Ice Candidate gathering
+            peerConnection.onicecandidate = (event) => {
+                if (event.candidate) {
+                    sendMessage({ type: "ice-candidate", candidate: event.candidate });
+                }
+            };
+
+            peerConnection.onconnectionstatechange = () => {
+                addLog(`WebRTC Connection State: ${peerConnection.connectionState}`, "event");
+                if (peerConnection.connectionState === "disconnected" || peerConnection.connectionState === "failed") {
+                    resetPeerConnection();
+                }
+            };
+
+            if (isInitiator) {
+                const offer = await peerConnection.createOffer();
+                await peerConnection.setLocalDescription(offer);
+                sendMessage({ type: "sdp-offer", sdp: offer });
+            }
+        }
+
+        // Trigger movie sync simulation events to other clients
+        function sendPlaybackSync(action) {
+            if (!ws || ws.readyState !== WebSocket.OPEN) {
+                return alert("Please connect to a room first!");
+            }
+            const time = parseFloat(document.getElementById("seekTime").value) || 0;
+            const msg = {
+                type: "playback-sync",
+                action: action,
+                currentTime: time,
+                sender: myUsername
+            };
+            sendMessage(msg);
+            addLog(`🎬 Sent playback action: "${action.toUpperCase()}" (Simulated Movie Time: ${time}s)`, "success");
+        }
+
+        function resetPeerConnection() {
+            if (peerConnection) {
+                peerConnection.close();
+                peerConnection = null;
+            }
+            remoteVideo.srcObject = null;
+            noRemoteLabel.classList.remove("opacity-0");
+            addLog("WebRTC Peer connection reset.", "info");
+        }
+
+        function hangup() {
+            sendMessage({ type: "hangup", sender: myUsername });
+            if (ws) ws.close();
+            cleanup();
+        }
+
+        function cleanup() {
+            resetPeerConnection();
+            if (localStream) {
+                localStream.getTracks().forEach(track => track.stop());
+                localStream = null;
+            }
+            localVideo.srcObject = null;
+            document.getElementById("joinBtn").classList.remove("hidden");
+            document.getElementById("hangupBtn").classList.add("hidden");
+        }
+    </script>
+</body>
+</html>

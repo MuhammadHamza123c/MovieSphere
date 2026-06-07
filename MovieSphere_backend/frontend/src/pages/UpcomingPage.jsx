@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { fetchUpcoming } from '../api/endpoints'
+import { fetchUpcoming, fetchFavorites, fetchContinueWatching } from '../api/endpoints'
 import MovieGrid from '../components/MovieGrid'
 import Pagination from '../components/Pagination'
 
@@ -10,14 +10,20 @@ export default function UpcomingPage() {
 
   useEffect(() => {
     setLoading(true)
-    Promise.all([fetchUpcoming('movie', page), fetchUpcoming('tv', page)]).then(([movies, tv]) => {
+    Promise.all([fetchUpcoming('movie', page), fetchUpcoming('tv', page), fetchFavorites(), fetchContinueWatching()]).then(([movies, tv, favs, cw]) => {
+      const cwMap = new Map(cw.map(i => [String(i.media_id), i]))
       const merged = []
       const max = Math.max(movies.length, tv.length)
       for (let i = 0; i < max; i++) {
         if (i < movies.length) merged.push(movies[i])
         if (i < tv.length) merged.push(tv[i])
       }
-      setItems(merged)
+      const favTitles = new Set(favs.map(f => (f.Title || f.title || '').toLowerCase()))
+      const marked = merged.map(item => ({
+        ...item, _isFav: favTitles.has((item.Title || item.title || item.name || '').toLowerCase()),
+        _progress: cwMap.get(String(item.Id || item.id))?.total_seconds > 0 ? cwMap.get(String(item.Id || item.id)).progress_seconds / cwMap.get(String(item.Id || item.id)).total_seconds : 0,
+      }))
+      setItems(marked)
       setLoading(false)
     }).catch(() => setLoading(false))
   }, [page])

@@ -1,5 +1,5 @@
 ﻿import { useState, useEffect } from 'react'
-import { fetchHistoryRecs } from '../api/endpoints'
+import { fetchHistoryRecs, fetchFavorites, fetchContinueWatching } from '../api/endpoints'
 import MovieGrid from '../components/MovieGrid'
 
 export default function RecommendPage() {
@@ -7,7 +7,18 @@ export default function RecommendPage() {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    fetchHistoryRecs().then(data => { setHistory(data); setLoading(false) }).catch(() => setLoading(false))
+    Promise.all([fetchHistoryRecs(), fetchFavorites(), fetchContinueWatching()])
+      .then(([data, favs, cw]) => {
+        const cwMap = new Map(cw.map(i => [String(i.media_id), i]))
+        const favTitles = new Set(favs.map(f => (f.Title || f.title || '').toLowerCase()))
+        const marked = (data || []).map(item => ({
+          ...item,
+          _isFav: favTitles.has((item.Title || item.title || item.name || '').toLowerCase()),
+          _progress: cwMap.get(String(item.Id || item.id))?.total_seconds > 0 ? cwMap.get(String(item.Id || item.id)).progress_seconds / cwMap.get(String(item.Id || item.id)).total_seconds : 0,
+        }))
+        setHistory(marked)
+        setLoading(false)
+      }).catch(() => setLoading(false))
   }, [])
 
   return (

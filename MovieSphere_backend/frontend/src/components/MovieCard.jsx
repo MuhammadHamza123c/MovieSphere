@@ -1,5 +1,5 @@
-﻿import { useNavigate } from 'react-router-dom'
-import { useState, useEffect } from 'react'
+﻿import { useState, useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { addFavorite, removeFavorite } from '../api/endpoints'
 import { useAuth } from '../hooks/useAuth'
 
@@ -7,11 +7,12 @@ export default function MovieCard({ item, onFavChange, mediaType: forceMediaType
   const navigate = useNavigate()
   const { user } = useAuth()
   const [isFav, setIsFav] = useState(false)
+  const [imgFailed, setImgFailed] = useState(false)
 
   const id = item.Id || item.id
   const title = item.Title || item.title || item.name || 'Untitled'
   const poster = item.Poster_path || item.poster_path || ''
-  const posterUrl = poster ? (poster.startsWith('http') ? poster : `https://image.tmdb.org/t/p/w342${poster}`) : ''
+  const posterUrl = poster && !imgFailed ? (poster.startsWith('http') ? poster : `https://image.tmdb.org/t/p/w400${poster}`) : ''
   const date = item.Release_date || item['Starting Date'] || item.release_date || ''
   const year = date.split('-')[0]
   const rating = item.Popularity || item.vote_average || 0
@@ -36,29 +37,51 @@ export default function MovieCard({ item, onFavChange, mediaType: forceMediaType
   }
 
   return (
-    <div onClick={() => navigate(`/${mediaType === 'tv' ? 'tv' : 'movie'}/${id}`)} className="group rounded-xl overflow-hidden bg-[#1a1b32] cursor-pointer transition-all duration-300 hover:-translate-y-1.5 hover:shadow-xl hover:shadow-black/40 border border-transparent hover:border-gray-700/50">
-      <div className="relative aspect-[2/3] overflow-hidden bg-[#12142a]">
+    <div onClick={() => navigate(`/${mediaType === 'tv' ? 'tv' : 'movie'}/${id}`)}
+         className="group relative rounded-xl overflow-hidden bg-[#12142a] cursor-pointer transition-all duration-500 hover:shadow-2xl hover:shadow-indigo-500/15 border border-[#1e2040] hover:border-indigo-500/30">
+      <div className="relative aspect-[2/3] overflow-hidden bg-gradient-to-br from-[#1a1c36] to-[#0f1123]">
         {posterUrl ? (
-          <img src={posterUrl} alt={title} loading="lazy" className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105" />
+          <img src={posterUrl} alt=""
+               onError={() => setImgFailed(true)}
+               className="w-full h-full object-cover transition-all duration-500 group-hover:scale-105" />
         ) : (
-          <div className="w-full h-full flex items-center justify-center text-4xl font-bold text-gray-700">{title[0]}</div>
+          <div className="w-full h-full flex items-center justify-center">
+            <svg className="w-10 h-10 text-gray-700" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 10.5l4.72-4.72a.75.75 0 011.28.53v11.38a.75.75 0 01-1.28.53l-4.72-4.72M4.5 18.75h9a2.25 2.25 0 002.25-2.25v-9a2.25 2.25 0 00-2.25-2.25h-9A2.25 2.25 0 002.25 7.5v9a2.25 2.25 0 002.25 2.25z" />
+            </svg>
+          </div>
         )}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-250 flex items-end justify-center gap-2.5 pb-4">
-          <button onClick={handleFav} className={`w-9 h-9 rounded-full border-0 flex items-center justify-center cursor-pointer transition-all duration-200 hover:scale-110 ${isFav ? 'bg-red-500/20 text-red-500' : 'bg-white/20 backdrop-blur-sm text-white hover:bg-indigo-500'}`} title={isFav ? 'Remove' : 'Favorite'}>
-            {isFav ? (
-              <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
-            ) : (
-              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" /></svg>
-            )}
+        <div className="absolute inset-0 bg-gradient-to-t from-[#0b0d17]/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+        <div className="absolute inset-0 flex items-center justify-center gap-3 opacity-0 group-hover:opacity-100 transition-all duration-300 translate-y-2 group-hover:translate-y-0">
+          <button onClick={handleWatch}
+                  className="w-12 h-12 rounded-full bg-indigo-500/90 hover:bg-indigo-500 border-0 flex items-center justify-center text-white cursor-pointer transition-all duration-200 hover:scale-110 shadow-xl shadow-indigo-500/30">
+            <svg className="w-5 h-5 ml-0.5" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
           </button>
-          <button onClick={handleWatch} className="w-9 h-9 rounded-full bg-white/20 backdrop-blur-sm border-0 flex items-center justify-center text-white cursor-pointer transition-all duration-200 hover:bg-indigo-500 hover:scale-110" title="Watch">
-            <svg className="w-4 h-4 ml-0.5" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+          <button onClick={handleFav}
+                  className={`w-10 h-10 rounded-full border-0 flex items-center justify-center cursor-pointer transition-all duration-200 hover:scale-110 backdrop-blur-sm shadow-lg ${isFav ? 'bg-red-500/30 text-red-400' : 'bg-white/10 hover:bg-white/20 text-white'}`}>
+            <svg className="w-4 h-4" fill={isFav ? 'currentColor' : 'none'} stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+            </svg>
           </button>
         </div>
+        {displayRating && (
+          <div className="absolute top-2 left-2 px-2 py-0.5 rounded-md text-[11px] font-bold text-white bg-gradient-to-br from-yellow-500 to-orange-600 shadow-lg">
+            {displayRating}
+          </div>
+        )}
+        {year && (
+          <div className="absolute top-2 right-2 px-2 py-0.5 rounded-md text-[11px] font-medium text-gray-300 bg-black/60 backdrop-blur-sm">
+            {year}
+          </div>
+        )}
+        {item._progress > 0 && (
+          <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-gray-800/60 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+            <div className="h-full bg-indigo-500 transition-all" style={{ width: `${Math.min(item._progress * 100, 100)}%` }} />
+          </div>
+        )}
       </div>
-      <div className="px-3 py-2.5">
-        <h3 className="text-sm font-semibold text-gray-200 truncate">{title}</h3>
-        <p className="text-xs text-gray-500 mt-1">{year}{displayRating ? ` · ${displayRating}` : ''}</p>
+      <div className="p-3">
+        <h3 className="text-sm font-semibold text-gray-100 truncate leading-snug">{title}</h3>
       </div>
     </div>
   )

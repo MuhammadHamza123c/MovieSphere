@@ -21,7 +21,8 @@ def get_movies_series(page_number: int, genre_id: str = ''):
             'Release_date': result[i]['release_date'],
             'Genre': '|'.join([tmdb_movie_genres.get(genre_id, 'Unknown') for genre_id in result[i]['genre_ids']]),
             'Popularity': result[i]['popularity'],
-            'Poster_path': f"https://image.tmdb.org/t/p/w500{result[i]['poster_path']}"
+            'Poster_path': f"https://image.tmdb.org/t/p/w500{result[i]['poster_path']}",
+            'Backdrop_path': f"https://image.tmdb.org/t/p/w1280{result[i]['backdrop_path']}" if result[i].get('backdrop_path') else None
         }
         for i in range(0, min(16, len(result)))]
     return data_list
@@ -50,6 +51,7 @@ def tv_shows_get(page_number: int, genre_id: str = ''):
                 if result[i].get('poster_path')
                 else "https://znuiuhxyhpgqmdftansc.supabase.co/storage/v1/object/public/user_files/images/no_image_avail.png"
             ),
+            'Backdrop_path': f"https://image.tmdb.org/t/p/w1280{result[i]['backdrop_path']}" if result[i].get('backdrop_path') else None,
             'media_type': 'tv'
         }
         for i in range(0, min(16, len(result)))]
@@ -70,19 +72,19 @@ def search_it(q: str):
     result = data['results']
     length_total = len(result)
     if length_total > 0:
-        if length_total > 3:
-            length_total = 3
+        if length_total > 4:
+            length_total = 4
         data_list = [
             {
                 'Id': result[i]['id'],
                 'Title': result[i].get('title') or result[i].get('name'),
-                'media_type': result[i].get('media_type', []),
+                'media_type': result[i].get('media_type', ''),
                 'Release_date': result[i].get('release_date') or result[i].get('first_air_date'),
                 'Genre': '|'.join([
                     tmdb_movie_genres.get(genre_id, tmdb_tv_genres.get(genre_id, 'Unknown'))
                     for genre_id in (result[i].get('genre_ids') or [])
                 ]) or 'None',
-                'Popularity': result[i]['popularity'],
+                'Popularity': result[i].get('popularity', 0),
                 'Poster_path': (
                     f"https://image.tmdb.org/t/p/w500{result[i]['poster_path']}"
                     if result[i].get('poster_path')
@@ -107,7 +109,7 @@ def single_detail(names: list[str]):
         data = response.json()
         result = data['results']
         genre_ids = result[0].get('genre_ids', [])
-        media_type = result[0].get('media_type', [])
+        media_type = result[0].get('media_type', '')
         if media_type == 'tv':
             genre_real = [tmdb_tv_genres.get(kk, 'Unknown') for kk in genre_ids]
         else:
@@ -118,6 +120,7 @@ def single_detail(names: list[str]):
             'Release_date': result[0].get('release_date') or result[0].get('first_air_date'),
             'Genre': '|'.join(genre_real),
             'Popularity': result[0].get('popularity'),
+            'media_type': media_type,
             'Poster_path': (
                 f"https://image.tmdb.org/t/p/w500{result[0].get('poster_path')}"
                 if result[0].get('poster_path')
@@ -224,23 +227,16 @@ def get_info(name: str, id: int, type: str = ''):
     return data_list
 
 
-def info_now(name: str, id: int):
+def info_now(name: str, id: int, media_type: str = ''):
     data_list = []
     seasons_list = []
 
-    if not name or not name.strip():
+    if media_type not in ('tv', 'movie'):
         r = requests.get(f"https://api.themoviedb.org/3/tv/{id}", params={'api_key': TMDB_API_KEY})
         if r.ok and r.json().get('id'):
             media_type = 'tv'
         else:
             media_type = 'movie'
-    else:
-        url = "https://api.themoviedb.org/3/search/multi"
-        response = requests.get(url=url, params={'api_key': TMDB_API_KEY, 'query': name})
-        data = response.json()
-        if not data.get('results'):
-            return data_list
-        media_type = data['results'][0]['media_type']
     if media_type == "tv":
         tv_url = f"https://api.themoviedb.org/3/tv/{id}"
         response_tv = requests.get(
@@ -255,19 +251,32 @@ def info_now(name: str, id: int):
                 season_info = {
                     "season_number": season.get('season_number'),
                     "episode_count": season.get('episode_count'),
+                    "name": season.get('name'),
+                    "overview": season.get('overview'),
+                    "air_date": season.get('air_date'),
+                    "poster_path": f"https://image.tmdb.org/t/p/w300{season.get('poster_path')}" if season.get('poster_path') else None,
                 }
                 seasons_list.append(season_info)
+        credits_resp = requests.get(f"https://api.themoviedb.org/3/tv/{id}/credits", params={'api_key': TMDB_API_KEY})
+        credits_data = credits_resp.json() if credits_resp.ok else {}
+        crew_list = credits_data.get('crew', [])
+        crew_str = '|'.join([f"{c.get('job', '')}: {c.get('name', '')}" for c in crew_list[:10]])
         data_list.append(
             {
                 'Title': data.get('name') or data.get('original_name'),
                 'Id': data.get('id'),
                 'Popularity': data.get('popularity'),
+                'Backdrop_path': f"https://image.tmdb.org/t/p/w1280{data.get('backdrop_path')}" if data.get('backdrop_path') else None,
                 'Poster_path': f"https://image.tmdb.org/t/p/w500{data.get('poster_path')}" if data.get('poster_path') else None,
                 'Overview': data.get('overview'),
                 'Genre': '|'.join([genre.get('name') for genre in data.get('genres', [])]),
                 'Status': data.get('status'),
                 'Tagline': data.get('tagline'),
-                'Seasons/Episode': seasons_list
+                'Seasons/Episode': seasons_list,
+                'vote_average': data.get('vote_average'),
+                'vote_count': data.get('vote_count'),
+                'Language': data.get('original_language'),
+                'Crew': crew_str or None
             }
         )
     else:
@@ -279,16 +288,29 @@ def info_now(name: str, id: int):
             }
         )
         data = response_movie.json()
+        credits_resp = requests.get(f"https://api.themoviedb.org/3/movie/{id}/credits", params={'api_key': TMDB_API_KEY})
+        credits_data = credits_resp.json() if credits_resp.ok else {}
+        crew_list = credits_data.get('crew', [])
+        crew_str = '|'.join([f"{c.get('job', '')}: {c.get('name', '')}" for c in crew_list[:10]])
         data_list.append(
             {
-                'Title': data.get('title') or data.get('original_title()'),
+                'Title': data.get('title') or data.get('original_title'),
                 'Id': id,
                 'Popularity': data.get('popularity'),
+                'Backdrop_path': f"https://image.tmdb.org/t/p/w1280{data.get('backdrop_path')}" if data.get('backdrop_path') else None,
                 'Poster_path': f"https://image.tmdb.org/t/p/w500{data.get('poster_path')}" if data.get('poster_path') else None,
                 'Overview': data.get('overview'),
                 'Genre': '|'.join([genre.get('name') for genre in data.get('genres', [])]),
                 'Status': data.get('status'),
-                'Tagline': data.get('tagline')
+                'Tagline': data.get('tagline'),
+                'runtime': data.get('runtime'),
+                'Language': data.get('original_language'),
+                'Budget': data.get('budget'),
+                'Revenue': data.get('revenue'),
+                'Production': ', '.join([c.get('name', '') for c in data.get('production_companies', [])]) or None,
+                'vote_average': data.get('vote_average'),
+                'vote_count': data.get('vote_count'),
+                'Crew': crew_str or None
             }
         )
     return data_list
@@ -324,11 +346,11 @@ def get_top_rated(type: str, page: int):
 
 
 def watch_movie(id: int):
-    return f"https://vidlink.pro/movie/{id}?poster=true&title=true"
+    return f"https://vidlink.pro/movie/{id}?poster=true&title=true&autoplay=true"
 
 
 def watch_tv(id: int, season: int, epi: int):
-    return f"https://vidlink.pro/tv/{id}/{season}/{epi}?poster=true&title=true"
+    return f"https://vidlink.pro/tv/{id}/{season}/{epi}?poster=true&title=true&autoplay=true&nextbutton=true"
 
 
 def actor_it(id: int):
@@ -455,3 +477,72 @@ def get_like(id_list: list):
                 "Poster_path": f"https://image.tmdb.org/t/p/w500{rec.get('poster_path')}" if rec.get('poster_path') else None
             })
     return store_list
+
+
+def watch_later_details(items: list):
+    enriched = []
+    for item in items:
+        media_id = item.get('media_id')
+        media_type = item.get('media_type')
+        r = requests.get(f"https://api.themoviedb.org/3/{media_type}/{media_id}", params={'api_key': TMDB_API_KEY})
+        if r.ok:
+            data = r.json()
+            title = data.get('title') or data.get('name') or ''
+            poster = data.get('poster_path')
+            enriched.append({
+                'Id': item.get('id'),
+                'media_id': media_id,
+                'media_type': media_type,
+                'Title': title,
+                'Poster_path': f"https://image.tmdb.org/t/p/w500{poster}" if poster else None,
+                'added_at': item.get('added_at')
+            })
+    return enriched
+
+
+def get_season_episodes(tv_id: int, season_number: int):
+    url = f"https://api.themoviedb.org/3/tv/{tv_id}/season/{season_number}"
+    response = requests.get(url, params={'api_key': TMDB_API_KEY, 'language': 'en-US'})
+    if not response.ok:
+        return []
+    data = response.json()
+    episodes = []
+    for ep in data.get('episodes', []):
+        episodes.append({
+            'episode_number': ep.get('episode_number'),
+            'name': ep.get('name'),
+            'overview': ep.get('overview'),
+            'air_date': ep.get('air_date'),
+            'still_path': f"https://image.tmdb.org/t/p/w400{ep.get('still_path')}" if ep.get('still_path') else None,
+            'vote_average': ep.get('vote_average'),
+        })
+    return episodes
+
+
+def get_upcoming(type: str, page: int):
+    data_list = []
+    if type == 'tv':
+        url = "https://api.themoviedb.org/3/tv/on_the_air"
+        genre_map = tmdb_tv_genres
+        title_key = 'name'
+        date_key = 'first_air_date'
+    else:
+        url = "https://api.themoviedb.org/3/movie/upcoming"
+        genre_map = tmdb_movie_genres
+        title_key = 'title'
+        date_key = 'release_date'
+    response = requests.get(url, params={'api_key': TMDB_API_KEY, 'page': page, 'language': 'en-US'})
+    data = response.json()
+    result = data.get('results') or []
+    for i in range(min(16, len(result))):
+        item = result[i]
+        data_list.append({
+            'Id': item.get('id'),
+            'Title': item.get(title_key),
+            'Release_date': item.get(date_key),
+            'Genre': '|'.join([genre_map.get(gid, 'Unknown') for gid in item.get('genre_ids', [])]),
+            'Popularity': item.get('vote_average', 0),
+            'Poster_path': f"https://image.tmdb.org/t/p/w500{item.get('poster_path')}" if item.get('poster_path') else None,
+            'media_type': type
+        })
+    return data_list
