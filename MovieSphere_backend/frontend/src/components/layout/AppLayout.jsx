@@ -14,7 +14,7 @@ export default function AppLayout() {
       fetchTrending('day', 1).then(data => {
         if (data?.length) {
           const poster = data[0].Poster_path || data[0].poster_path
-          if (poster) setTrendingPoster(`https://image.tmdb.org/t/p/w500${poster}`)
+          if (poster) setTrendingPoster(poster)
         }
       }).catch(() => {})
     }
