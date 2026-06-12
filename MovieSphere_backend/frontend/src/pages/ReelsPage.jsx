@@ -273,7 +273,6 @@ export default function ReelsPage() {
             >
               <div className="relative h-full w-full flex items-center justify-center bg-black">
                 <div className="relative h-full w-full max-w-[56.25vh]">
-                  <div className="absolute top-0 left-0 z-20 w-28 h-14 bg-black" />
                   <div id={`reel-player-${i}`} className="h-full w-full" />
 
                   {paused && isActive && (
