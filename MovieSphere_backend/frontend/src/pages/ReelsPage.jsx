@@ -341,7 +341,7 @@ export default function ReelsPage() {
               <button
                 onClick={() => navigate('/home')}
                 onTouchStart={(e) => e.stopPropagation()}
-                className="absolute top-12 left-3 z-20 w-9 h-9 flex items-center justify-center bg-black/40 hover:bg-black/70 text-white/80 hover:text-white rounded-full transition-all cursor-pointer backdrop-blur-sm"
+                className="absolute top-12 right-3 z-20 w-9 h-9 flex items-center justify-center bg-black/40 hover:bg-black/70 text-white/80 hover:text-white rounded-full transition-all cursor-pointer backdrop-blur-sm"
                 title="Close Reels"
               >
                 <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
