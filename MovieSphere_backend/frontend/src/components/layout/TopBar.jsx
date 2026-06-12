@@ -79,10 +79,10 @@ export default function TopBar({ trendingPoster }) {
       <div className="relative mb-4 md:mb-6">
         {trendingPoster && (
           <div className="absolute inset-0 -top-8 -bottom-8 overflow-hidden pointer-events-none">
-            <div className="absolute inset-0 bg-gradient-to-r from-[var(--bg-primary)] via-transparent to-[var(--bg-primary)] z-10" />
-            <div className="absolute inset-0 bg-gradient-to-b from-[var(--bg-primary)] via-transparent to-[var(--bg-primary)] z-10" />
+            <div className="absolute inset-0 bg-gradient-to-r from-[var(--bg-primary)] via-transparent to-[var(--bg-primary)]" />
+            <div className="absolute inset-0 bg-gradient-to-b from-[var(--bg-primary)] via-transparent to-[var(--bg-primary)]" />
             <div
-              className="w-full h-full bg-cover bg-center opacity-10"
+              className="absolute inset-0 bg-cover bg-center opacity-15"
               style={{ backgroundImage: `url(${trendingPoster})` }}
             />
           </div>
