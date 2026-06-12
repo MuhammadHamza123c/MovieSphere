@@ -565,6 +565,28 @@ def get_season_episodes(tv_id: int, season_number: int):
     return episodes
 
 
+def get_trending(time_window: str = 'day', page: int = 1):
+    data_list = []
+    url = "https://api.themoviedb.org/3/trending/all/{time_window}"
+    response = requests.get(url.format(time_window=time_window), params={'api_key': TMDB_API_KEY, 'page': page, 'language': 'en-US'})
+    data = response.json()
+    result = data.get('results') or []
+    for i in range(min(16, len(result))):
+        item = result[i]
+        media_type = item.get('media_type', 'movie')
+        genre_map = tmdb_movie_genres if media_type == 'movie' else tmdb_tv_genres
+        data_list.append({
+            'Id': item.get('id'),
+            'Title': item.get('title') or item.get('name'),
+            'Release_date': item.get('release_date') or item.get('first_air_date'),
+            'Genre': '|'.join([genre_map.get(gid, 'Unknown') for gid in item.get('genre_ids', [])]),
+            'Popularity': item.get('vote_average', 0),
+            'Poster_path': f"https://image.tmdb.org/t/p/w500{item.get('poster_path')}" if item.get('poster_path') else None,
+            'media_type': media_type
+        })
+    return data_list
+
+
 def get_upcoming(type: str, page: int):
     data_list = []
     if type == 'tv':

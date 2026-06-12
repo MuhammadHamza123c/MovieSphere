@@ -15,6 +15,11 @@ export async function fetchGenres() {
   return data.MovieSphere || { movie: [], tv: [] }
 }
 
+export async function fetchTrending(timeWindow = 'day', page = 1) {
+  const { data } = await client.get('/MovieSphere/trending', { params: { time_window: timeWindow, page } })
+  return data.MovieSphere || []
+}
+
 export async function fetchTopRated(type = 'movie', page = 1) {
   const { data } = await client.get('/MovieSphere/top_rated', { params: { type, page } })
   return data.MovieSphere || []

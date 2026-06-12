@@ -27,6 +27,7 @@ from app.api.upcoming import upcoming_app
 from app.api.watch_later import watch_later_app
 from app.api.seasons import seasons_app
 from app.api.reels import reels_app
+from app.api.trending import trending_app
 
 app = FastAPI()
 
@@ -60,6 +61,7 @@ app.include_router(upcoming_app)
 app.include_router(watch_later_app)
 app.include_router(seasons_app)
 app.include_router(reels_app)
+app.include_router(trending_app)
 
 FRONTEND_DIST = os.path.join(os.path.dirname(os.path.dirname(__file__)), "frontend", "dist")
 if os.path.isdir(FRONTEND_DIST):
