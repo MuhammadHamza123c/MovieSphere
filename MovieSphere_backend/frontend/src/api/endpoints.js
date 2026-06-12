@@ -186,3 +186,8 @@ export async function getWatchPartyToken(room, identity) {
   const { data } = await client.post('/MovieSphere/watch-party/token', null, { params: { room, identity } })
   return data
 }
+
+export async function fetchReels(page = 1) {
+  const { data } = await client.get('/MovieSphere/reels', { params: { page } })
+  return data.MovieSphere || []
+}

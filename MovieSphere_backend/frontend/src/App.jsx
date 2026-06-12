@@ -14,6 +14,7 @@ import ActorPage from './pages/ActorPage'
 import TopRatedPage from './pages/TopRatedPage'
 import UpcomingPage from './pages/UpcomingPage'
 import WatchLaterPage from './pages/WatchLaterPage'
+import ReelsPage from './pages/ReelsPage'
 
 function ProtectedRoute({ children }) {
   const { user, loading } = useAuth()
@@ -52,6 +53,7 @@ export default function App() {
         <Route path="/upcoming" element={<UpcomingPage />} />
         <Route path="/watch-later" element={<WatchLaterPage />} />
         <Route path="/top-rated" element={<TopRatedPage />} />
+        <Route path="/reels" element={<ReelsPage />} />
         <Route path="/" element={<Navigate to="/home" replace />} />
         <Route path="*" element={<Navigate to="/home" replace />} />
       </Route>
