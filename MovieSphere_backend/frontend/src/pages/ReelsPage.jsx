@@ -171,10 +171,11 @@ export default function ReelsPage() {
 
               <button
                 onClick={() => navigate(-1)}
-                className="absolute top-12 left-3 z-20 w-9 h-9 flex items-center justify-center bg-black/30 hover:bg-black/50 text-white/80 hover:text-white rounded-full transition-all cursor-pointer backdrop-blur-sm"
+                className="absolute top-12 left-3 z-20 w-9 h-9 flex items-center justify-center bg-black/40 hover:bg-black/70 text-white/80 hover:text-white rounded-full transition-all cursor-pointer backdrop-blur-sm"
+                title="Close Reels"
               >
                 <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
                 </svg>
               </button>
             </div>
