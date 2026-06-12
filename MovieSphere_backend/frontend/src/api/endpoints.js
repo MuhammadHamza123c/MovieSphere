@@ -20,11 +20,6 @@ export async function fetchTrending(timeWindow = 'day', page = 1) {
   return data.MovieSphere || []
 }
 
-export async function fetchDidYouKnow() {
-  const { data } = await client.get('/MovieSphere/did-you-know')
-  return data.MovieSphere || []
-}
-
 export async function fetchTopRated(type = 'movie', page = 1) {
   const { data } = await client.get('/MovieSphere/top_rated', { params: { type, page } })
   return data.MovieSphere || []

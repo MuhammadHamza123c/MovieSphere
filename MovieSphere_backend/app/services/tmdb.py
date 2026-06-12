@@ -259,60 +259,6 @@ def get_info(name: str, id: int, type: str = ''):
     return data_list
 
 
-def get_movie_trivia():
-    facts = []
-    trending_url = "https://api.themoviedb.org/3/trending/all/day"
-    resp = requests.get(trending_url, params={'api_key': TMDB_API_KEY, 'page': 1, 'language': 'en-US'})
-    data = resp.json()
-    results = data.get('results') or []
-    if not results:
-        return facts
-    top = results[0]
-    media_type = top.get('media_type', 'movie')
-    item_id = top.get('id')
-    title = top.get('title') or top.get('name') or 'Unknown'
-    if media_type == 'tv':
-        detail_url = f"https://api.themoviedb.org/3/tv/{item_id}"
-    else:
-        detail_url = f"https://api.themoviedb.org/3/movie/{item_id}"
-    detail_resp = requests.get(detail_url, params={'api_key': TMDB_API_KEY, 'language': 'en-US'})
-    detail = detail_resp.json()
-    if media_type == 'movie':
-        budget = detail.get('budget', 0)
-        revenue = detail.get('revenue', 0)
-        runtime = detail.get('runtime', 0)
-        tagline = detail.get('tagline', '')
-        vote = detail.get('vote_average', 0)
-        if budget and revenue:
-            facts.append(f"{title} had a budget of ${budget:,} and grossed ${revenue:,} worldwide")
-        elif budget:
-            facts.append(f"{title} had a budget of ${budget:,}")
-        elif revenue:
-            facts.append(f"{title} grossed ${revenue:,} worldwide")
-        if runtime:
-            h, m = divmod(runtime, 60)
-            facts.append(f"{title} runs for {h}h {m}m" if m else f"{title} runs for {h}h")
-        if tagline:
-            facts.append(f"{title}'s tagline: \"{tagline}\"")
-        if vote:
-            facts.append(f"{title} scores {vote}/10 on TMDB")
-    else:
-        seasons = detail.get('number_of_seasons', 0)
-        episodes = detail.get('number_of_episodes', 0)
-        tagline = detail.get('tagline', '')
-        vote = detail.get('vote_average', 0)
-        status = detail.get('status', '')
-        if seasons or episodes:
-            facts.append(f"{title} spans {seasons} season{'s' if seasons != 1 else ''} with {episodes} episode{'s' if episodes != 1 else ''}")
-        if tagline:
-            facts.append(f"{title}'s tagline: \"{tagline}\"")
-        if vote:
-            facts.append(f"{title} scores {vote}/10 on TMDB")
-        if status:
-            facts.append(f"{title} is {status}")
-    return facts
-
-
 def info_now(name: str, id: int, media_type: str = ''):
     data_list = []
     seasons_list = []

@@ -28,7 +28,6 @@ from app.api.watch_later import watch_later_app
 from app.api.seasons import seasons_app
 from app.api.reels import reels_app
 from app.api.trending import trending_app
-from app.api.trivia import trivia_app
 
 app = FastAPI()
 
@@ -67,7 +66,6 @@ app.include_router(watch_later_app)
 app.include_router(seasons_app)
 app.include_router(reels_app)
 app.include_router(trending_app)
-app.include_router(trivia_app)
 
 # Catch-all OPTIONS handler for Vercel CORS preflight
 @app.options("/{rest_of_path:path}")
