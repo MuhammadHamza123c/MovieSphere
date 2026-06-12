@@ -6,13 +6,13 @@ from datetime import datetime, timezone, timedelta
 from app.core.config import YOUTUBE_API_KEY, SUPABASE_URL, SUPABASE_KEY
 
 CATEGORIES = {
-    "trailers": ["new movie trailer", "upcoming movie trailer", "tv series trailer 2025", "movie teaser trailer", "final trailer"],
-    "fan_edits": ["fan edit movie", "movie edit aesthetic", "cinematic edit movie", "movie amv", "fan made movie trailer", "movie character edit", "movie tribute"],
-    "behind_scenes": ["behind the scenes movie", "making of movie scene", "movie visual effects behind the scenes", "behind the scenes tv show", "movie stunt behind the scenes", "movie bts"],
-    "actor_content": ["actor best scenes", "actor interview", "actor funny moments", "actor movie moments", "celebrity interview", "actor career"],
-    "bloopers": ["movie bloopers", "funny movie moments", "movie outtakes", "tv show bloopers"],
-    "clips": ["best movie scenes", "most iconic movie scenes", "movie clip", "tv show clip", "best cinematic moments"],
-    "explainer": ["movie explained", "movie breakdown", "movie ending explained", "movie details you missed"],
+    "trailers": ["new movie trailer shorts", "upcoming movie trailer shorts", "tv series trailer shorts", "movie teaser shorts", "final trailer shorts"],
+    "fan_edits": ["fan edit movie shorts", "movie edit aesthetic shorts", "cinematic edit shorts", "movie amv shorts", "fan made movie trailer shorts", "movie character edit shorts", "movie tribute shorts"],
+    "behind_scenes": ["behind the scenes movie shorts", "making of movie shorts", "movie vfx shorts", "behind the scenes tv shorts", "movie stunt shorts", "movie bts shorts"],
+    "actor_content": ["actor best scenes shorts", "actor interview shorts", "actor funny moments shorts", "actor movie moments shorts", "celebrity interview shorts"],
+    "bloopers": ["movie bloopers shorts", "funny movie moments shorts", "movie outtakes shorts", "tv show bloopers shorts"],
+    "clips": ["best movie scenes shorts", "iconic movie scenes shorts", "movie clip shorts", "tv show clip shorts", "cinematic moments shorts"],
+    "explainer": ["movie explained shorts", "movie breakdown shorts", "movie ending explained shorts", "movie details shorts"],
 }
 
 ALL_QUERIES = [q for cat in CATEGORIES.values() for q in cat]
