@@ -20,7 +20,10 @@ export default function ReelsPage() {
   const apiReadyRef = useRef(false)
   const lastTapRef = useRef(0)
   const [doubleTapHeart, setDoubleTapHeart] = useState(null)
+  const soundOnRef = useRef(false)
   const navigate = useNavigate()
+
+  useEffect(() => { soundOnRef.current = soundOn }, [soundOn])
 
   const loadReels = useCallback(async (page) => {
     if (loadedPages.current.has(page)) return
@@ -97,9 +100,8 @@ export default function ReelsPage() {
       },
       events: {
         onReady: (e) => {
-          e.target.mute()
+          if (!soundOnRef.current) e.target.mute()
           e.target.playVideo()
-          setSoundOn(false)
           setPaused(false)
         },
         onStateChange: (e) => {
