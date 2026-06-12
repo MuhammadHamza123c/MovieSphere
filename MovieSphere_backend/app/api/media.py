@@ -9,6 +9,7 @@ def fetch_media(id: int, type: str = 'movie'):
     videos = []
     images = []
     trailers = []
+    behind_scenes = []
     other_videos = []
 
     if type == 'tv':
@@ -21,8 +22,11 @@ def fetch_media(id: int, type: str = 'movie'):
     if video_resp.ok:
         for v in video_resp.json().get('results', []):
             item = {'key': v.get('key'), 'name': v.get('name'), 'type': v.get('type')}
-            if v.get('type') == 'Trailer':
+            t = v.get('type', '')
+            if t == 'Trailer':
                 trailers.append(item)
+            elif t in ('Behind the Scenes', 'Featurette'):
+                behind_scenes.append(item)
             else:
                 other_videos.append(item)
 
@@ -32,6 +36,7 @@ def fetch_media(id: int, type: str = 'movie'):
     return {
         'MovieSphere': {
             'trailers': trailers,
+            'behind_scenes': behind_scenes,
             'other_videos': other_videos,
             'images': images
         }

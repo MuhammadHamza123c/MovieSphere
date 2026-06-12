@@ -221,7 +221,7 @@ export default function DetailPage() {
           mediaType === 'tv' && seasons.length > 0 && { id: 'seasons', label: 'Episodes' },
           data.Crew && { id: 'crew', label: 'Crew' },
           cast.length > 0 && { id: 'cast', label: 'Cast' },
-          mediaItems && (mediaItems.trailers?.length > 0 || mediaItems.other_videos?.length > 0 || mediaItems.images?.length > 0) && { id: 'media', label: 'Media' },
+          mediaItems && (mediaItems.trailers?.length > 0 || mediaItems.behind_scenes?.length > 0 || mediaItems.other_videos?.length > 0 || mediaItems.images?.length > 0) && { id: 'media', label: 'Media' },
           recs.length > 0 && { id: 'recommendations', label: 'Recommendations' },
           similars.length > 0 && { id: 'similar', label: 'Similar' },
           { id: 'reviews', label: 'Reviews' },
@@ -349,7 +349,7 @@ export default function DetailPage() {
         </div>
       )}
 
-      {mediaItems && (mediaItems.trailers?.length > 0 || mediaItems.other_videos?.length > 0 || mediaItems.images?.length > 0) && (
+      {mediaItems && (mediaItems.trailers?.length > 0 || mediaItems.behind_scenes?.length > 0 || mediaItems.other_videos?.length > 0 || mediaItems.images?.length > 0) && (
         <div id="media" className="mb-10 scroll-mt-20">
           <div className="flex items-center gap-3 mb-6">
             <h3 className="text-lg font-bold text-gray-100">Media</h3>
@@ -401,6 +401,32 @@ export default function DetailPage() {
                     <div className="p-3">
                       <p className="text-sm font-medium text-gray-300 truncate">{v.name}</p>
                       <p className="text-xs text-gray-500 mt-0.5 capitalize">{v.type}</p>
+                    </div>
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+          {mediaItems.behind_scenes?.length > 0 && (
+            <div className="mb-8">
+              <h4 className="text-xs font-semibold text-amber-400 uppercase tracking-wider mb-4 flex items-center gap-2">
+                <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M10 6H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V8a2 2 0 00-2-2h-5m-4 0V5a2 2 0 114 0v1m-4 0a2 2 0 104 0m-5 8a3 3 0 100-6 3 3 0 000 6zm0 0c.765 0 1.472.248 2.04.667" /></svg>
+                Behind The Scenes
+              </h4>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {mediaItems.behind_scenes.slice(0, 4).map((v, i) => (
+                  <button key={i} onClick={() => setVideoPlayer(v.key)} className="group relative overflow-hidden rounded-xl bg-black/40 border border-amber-900/30 hover:border-amber-500/40 transition-all cursor-pointer text-left w-full">
+                    <div className="aspect-video relative">
+                      <img src={`https://img.youtube.com/vi/${v.key}/maxresdefault.jpg`} alt={v.name} className="w-full h-full object-cover" loading="lazy" />
+                      <div className="absolute inset-0 bg-black/40 group-hover:bg-black/20 transition-all flex items-center justify-center">
+                        <div className="w-14 h-14 rounded-full bg-amber-500/90 group-hover:bg-amber-500 flex items-center justify-center shadow-lg shadow-amber-500/30 transition-all group-hover:scale-110">
+                          <svg className="w-6 h-6 text-white ml-0.5" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="p-3">
+                      <p className="text-sm font-medium text-gray-300 truncate">{v.name}</p>
+                      <p className="text-xs text-amber-400/80 mt-0.5 capitalize">{v.type}</p>
                     </div>
                   </button>
                 ))}
