@@ -1,4 +1,5 @@
 import random
+import re
 import httpx
 from datetime import datetime, timezone, timedelta
 from app.core.config import YOUTUBE_API_KEY, SUPABASE_URL, SUPABASE_KEY
@@ -92,6 +93,14 @@ async def _set_cache(query: str, page: int, data: list):
     except:
         pass
 
+def _parse_duration(iso_duration: str) -> int:
+    match = re.match(r'PT(?:(\d+)M)?(?:(\d+)S)?', iso_duration)
+    if not match:
+        return 999
+    minutes = int(match.group(1) or 0)
+    seconds = int(match.group(2) or 0)
+    return minutes * 60 + seconds
+
 def _parse_video(item):
     return {
         "videoId": item["id"]["videoId"],
@@ -104,7 +113,7 @@ def _parse_video(item):
         "publishedAt": item["snippet"]["publishedAt"],
     }
 
-async def _fetch_query(query: str, max_results: int = 5):
+async def _fetch_query(query: str, max_results: int = 8):
     cached = await _get_cached(query, 1)
     if cached:
         return cached[:max_results]
@@ -114,7 +123,8 @@ async def _fetch_query(query: str, max_results: int = 5):
         "part": "snippet",
         "type": "video",
         "videoEmbeddable": "true",
-        "maxResults": max_results,
+        "videoDuration": "short",
+        "maxResults": max_results + 5,
         "q": query,
         "key": YOUTUBE_API_KEY,
     }
@@ -125,13 +135,37 @@ async def _fetch_query(query: str, max_results: int = 5):
             return []
         data = r.json()
 
-    results = [
-        _parse_video(item)
-        for item in data.get("items", [])
+    items = [
+        item for item in data.get("items", [])
         if item["id"]["kind"] == "youtube#video"
     ]
+    if not items:
+        return []
+
+    video_ids = [item["id"]["videoId"] for item in items]
+    dur_url = "https://www.googleapis.com/youtube/v3/videos"
+    dur_params = {
+        "part": "contentDetails",
+        "id": ",".join(video_ids),
+        "key": YOUTUBE_API_KEY,
+    }
+
+    async with httpx.AsyncClient(timeout=15) as client:
+        dr = await client.get(dur_url, params=dur_params)
+        if dr.status_code == 200:
+            dur_map = {}
+            for v in dr.json().get("items", []):
+                dur = _parse_duration(v["contentDetails"]["duration"])
+                dur_map[v["id"]] = dur
+            results = [
+                _parse_video(item) for item in items
+                if dur_map.get(item["id"]["videoId"], 999) < 40
+            ]
+        else:
+            results = [_parse_video(item) for item in items]
+
     await _set_cache(query, 1, results)
-    return results
+    return results[:max_results]
 
 async def get_reels(page: int = 1):
     global _TABLE_CHECKED
@@ -144,8 +178,10 @@ async def get_reels(page: int = 1):
 
     all_results = []
     for q in queries:
-        results = await _fetch_query(q, 5)
+        results = await _fetch_query(q, 8)
         all_results.extend(results)
+        if len(all_results) >= 15:
+            break
 
     random.shuffle(all_results)
     return all_results[:15]
