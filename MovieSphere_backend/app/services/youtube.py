@@ -160,7 +160,7 @@ async def _fetch_query(query: str, max_results: int = 8):
                 dur_map[v["id"]] = dur
             results = [
                 _parse_video(item) for item in items
-                if dur_map.get(item["id"]["videoId"], 999) < 40
+                if dur_map.get(item["id"]["videoId"], 999) < 60
             ]
         else:
             results = [_parse_video(item) for item in items]
