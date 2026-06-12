@@ -9,9 +9,10 @@ export default function ReelsPage() {
   const [liked, setLiked] = useState(new Set())
   const containerRef = useRef(null)
   const touchStartRef = useRef(null)
-  const touchStartTime = useRef(0)
+  const touchStartTimeRef = useRef(0)
   const loadedPages = useRef(new Set())
   const currentPageRef = useRef(1)
+  const wheelThrottleRef = useRef(false)
   const navigate = useNavigate()
 
   const loadReels = useCallback(async (page) => {
@@ -29,12 +30,14 @@ export default function ReelsPage() {
   }, [loadReels])
 
   const goTo = useCallback((index) => {
-    const clamped = Math.max(0, Math.min(index, reels.length - 1))
-    setCurrentIndex(clamped)
-    if (clamped >= reels.length - 3) {
-      currentPageRef.current += 1
-      loadReels(currentPageRef.current)
-    }
+    setCurrentIndex(prev => {
+      const next = Math.max(0, Math.min(index, reels.length - 1))
+      if (next >= reels.length - 3) {
+        currentPageRef.current += 1
+        loadReels(currentPageRef.current)
+      }
+      return next
+    })
   }, [reels.length, loadReels])
 
   const toggleLike = (videoId) => {
@@ -46,47 +49,47 @@ export default function ReelsPage() {
     })
   }
 
-  const handleTouchStart = (e) => {
-    touchStartRef.current = e.touches[0].clientY
-    touchStartTime.current = Date.now()
-  }
+  const handleWheel = useCallback((e) => {
+    if (wheelThrottleRef.current) return
+    wheelThrottleRef.current = true
+    requestAnimationFrame(() => {
+      if (Math.abs(e.deltaY) > 20) {
+        goTo(currentIndex + (e.deltaY > 0 ? 1 : -1))
+      }
+      wheelThrottleRef.current = false
+    })
+  }, [currentIndex, goTo])
 
-  const handleTouchEnd = (e) => {
+  const handleTouchStart = useCallback((e) => {
+    touchStartRef.current = e.changedTouches[0].clientY
+    touchStartTimeRef.current = Date.now()
+  }, [])
+
+  const handleTouchEnd = useCallback((e) => {
     if (!touchStartRef.current) return
     const diff = touchStartRef.current - e.changedTouches[0].clientY
-    const elapsed = Date.now() - touchStartTime.current
-    if (Math.abs(diff) > 40 && elapsed < 500) {
+    const elapsed = Date.now() - touchStartTimeRef.current
+    if (Math.abs(diff) > 30 && elapsed < 600) {
       goTo(currentIndex + (diff > 0 ? 1 : -1))
     }
     touchStartRef.current = null
-  }
+  }, [currentIndex, goTo])
+
+  const handleKey = useCallback((e) => {
+    if (e.key === 'ArrowDown') { e.preventDefault(); goTo(currentIndex + 1) }
+    if (e.key === 'ArrowUp') { e.preventDefault(); goTo(currentIndex - 1) }
+  }, [currentIndex, goTo])
 
   useEffect(() => {
-    let ticking = false
-    const handleWheel = (e) => {
-      if (ticking) return
-      ticking = true
-      requestAnimationFrame(() => {
-        if (Math.abs(e.deltaY) > 30) {
-          goTo(currentIndex + (e.deltaY > 0 ? 1 : -1))
-        }
-        ticking = false
-      })
-    }
-    const handleKey = (e) => {
-      if (e.key === 'ArrowDown') { e.preventDefault(); goTo(currentIndex + 1) }
-      if (e.key === 'ArrowUp') { e.preventDefault(); goTo(currentIndex - 1) }
-    }
     const el = containerRef.current
-    if (el) {
-      el.addEventListener('wheel', handleWheel, { passive: true })
-      window.addEventListener('keydown', handleKey)
-    }
+    if (!el) return
+    el.addEventListener('wheel', handleWheel, { passive: true })
+    window.addEventListener('keydown', handleKey)
     return () => {
-      if (el) el.removeEventListener('wheel', handleWheel)
+      el.removeEventListener('wheel', handleWheel)
       window.removeEventListener('keydown', handleKey)
     }
-  }, [currentIndex, goTo])
+  }, [handleWheel, handleKey])
 
   if (loading) {
     return (
@@ -109,32 +112,33 @@ export default function ReelsPage() {
   }
 
   return (
-    <div
-      ref={containerRef}
-      className="fixed inset-0 z-50 bg-black overflow-hidden select-none"
-      onTouchStart={handleTouchStart}
-      onTouchEnd={handleTouchEnd}
-    >
-      <div className="relative h-full w-full">
+    <div className="fixed inset-0 z-50 bg-black overflow-hidden">
+      <div
+        ref={containerRef}
+        className="absolute inset-0"
+        onTouchStart={handleTouchStart}
+        onTouchEnd={handleTouchEnd}
+      >
         {reels.map((reel, i) => {
           const isActive = i === currentIndex
           const offset = (i - currentIndex) * 100
           return (
             <div
               key={`${reel.videoId}-${i}`}
-              className="absolute inset-0 transition-transform duration-300 ease-out bg-black"
+              className="absolute inset-0 transition-transform duration-[400ms] ease-out bg-black"
               style={{ transform: `translateY(${offset}%)` }}
             >
-              <div className="h-full w-full flex items-center justify-center bg-black">
+              <div className="h-full w-full flex items-center justify-center bg-black pointer-events-none">
                 <iframe
                   src={`https://www.youtube.com/embed/${reel.videoId}?autoplay=${isActive ? 1 : 0}&controls=0&rel=0&showinfo=0&modestbranding=1&iv_load_policy=3`}
                   allow="autoplay; encrypted-media; fullscreen"
                   className="h-full w-full max-w-[56.25vh] pointer-events-none"
-                  style={{ pointerEvents: isActive ? 'auto' : 'none' }}
                 />
               </div>
 
-              <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent px-5 pt-20 pb-6">
+              <div className="absolute inset-0 z-10" />
+
+              <div className="absolute bottom-0 left-0 right-0 z-20 bg-gradient-to-t from-black/80 via-black/20 to-transparent px-5 pt-20 pb-6 pointer-events-none">
                 <div className="max-w-[56.25vh] mx-auto w-full">
                   <div className="flex items-center gap-3 mb-2">
                     <div className="w-9 h-9 rounded-full bg-gradient-to-br from-indigo-400 to-purple-500 flex items-center justify-center text-white text-xs font-bold flex-shrink-0">
@@ -148,7 +152,7 @@ export default function ReelsPage() {
                 </div>
               </div>
 
-              <div className="absolute right-3 bottom-28 flex flex-col items-center gap-4 z-10">
+              <div className="absolute right-3 bottom-28 flex flex-col items-center gap-4 z-20">
                 <button
                   onClick={() => toggleLike(reel.videoId)}
                   className="flex flex-col items-center gap-0.5 group cursor-pointer"
@@ -179,7 +183,7 @@ export default function ReelsPage() {
       </div>
 
       {reels.length > 1 && (
-        <div className="absolute top-0 right-0 bottom-0 flex flex-col justify-center gap-[3px] pr-1.5 z-20">
+        <div className="absolute top-0 right-0 bottom-0 flex flex-col justify-center gap-[3px] pr-1.5 z-30 pointer-events-none">
           {reels.slice(0, 10).map((_, dotIdx) => (
             <div
               key={dotIdx}
