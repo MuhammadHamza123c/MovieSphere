@@ -1,11 +1,12 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, Query
 import requests
 from app.core.config import TMDB_API_KEY
+from app.services.youtube import get_behind_scenes
 
 media_app = APIRouter()
 
 @media_app.get('/MovieSphere/media')
-def fetch_media(id: int, type: str = 'movie'):
+def fetch_media(id: int = Query(...), type: str = Query('movie'), title: str = Query('')):
     videos = []
     images = []
     trailers = []
@@ -25,13 +26,16 @@ def fetch_media(id: int, type: str = 'movie'):
             t = v.get('type', '')
             if t == 'Trailer':
                 trailers.append(item)
-            elif t in ('Behind the Scenes', 'Featurette'):
-                behind_scenes.append(item)
             else:
                 other_videos.append(item)
 
     if image_resp.ok:
         images = [{'file_path': b.get('file_path')} for b in image_resp.json().get('backdrops', [])[:12]]
+
+    if title:
+        behind_scenes = get_behind_scenes(title, type)
+    else:
+        behind_scenes = []
 
     return {
         'MovieSphere': {

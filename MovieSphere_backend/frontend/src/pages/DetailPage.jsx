@@ -40,13 +40,15 @@ export default function DetailPage() {
         if (res?.in_watch_later) setInWatchLater(true)
       }).catch(() => {})
     }
-    Promise.all([fetchDetail('', id, mediaType), fetchCast('', id, mediaType), fetchComments(id, mediaType), fetchMedia(id, mediaType)])
-      .then(([detail, castData, commentData, mediaData]) => {
+    Promise.all([fetchDetail('', id, mediaType), fetchCast('', id, mediaType), fetchComments(id, mediaType)])
+      .then(([detail, castData, commentData]) => {
         setData(detail)
         setCast(castData)
         setComments(commentData)
-        if (mediaData?.images?.length || mediaData?.trailers?.length || mediaData?.other_videos?.length) setMediaItems(mediaData)
         const title = detail.Title || detail.title || ''
+        fetchMedia(id, mediaType, title).then(mediaData => {
+          if (mediaData?.images?.length || mediaData?.trailers?.length || mediaData?.behind_scenes?.length || mediaData?.other_videos?.length) setMediaItems(mediaData)
+        }).catch(() => {})
         if (title) {
           fetchRecommendations(title).then(setRecs).catch(() => {})
           fetchSimilar(id, mediaType).then(setSimilars).catch(() => {})

@@ -177,8 +177,8 @@ export async function saveProgress(payload) {
   await client.put('/MovieSphere/continue-watching/progress', payload)
 }
 
-export async function fetchMedia(id, type) {
-  const { data } = await client.get('/MovieSphere/media', { params: { id, type } })
+export async function fetchMedia(id, type, title = '') {
+  const { data } = await client.get('/MovieSphere/media', { params: { id, type, title } })
   return data.MovieSphere || { images: [], videos: [] }
 }
 

@@ -1,5 +1,6 @@
 import random
 import re
+import requests
 import httpx
 from datetime import datetime, timezone, timedelta
 from app.core.config import YOUTUBE_API_KEY, SUPABASE_URL, SUPABASE_KEY
@@ -185,3 +186,47 @@ async def get_reels(page: int = 1):
 
     random.shuffle(all_results)
     return all_results[:15]
+
+
+def get_behind_scenes(title: str, media_type: str, max_results: int = 4):
+    query = f"{title} behind the scenes"
+    if media_type == 'tv':
+        query = f"{title} behind the scenes tv show"
+
+    url = "https://www.googleapis.com/youtube/v3/search"
+    params = {
+        "part": "snippet",
+        "type": "video",
+        "videoEmbeddable": "true",
+        "maxResults": max_results + 2,
+        "q": query,
+        "key": YOUTUBE_API_KEY,
+    }
+
+    r = requests.get(url, params=params, timeout=10)
+    if r.status_code != 200:
+        return []
+
+    items = r.json().get("items", [])
+    results = []
+    for item in items:
+        if item["id"]["kind"] != "youtube#video":
+            continue
+        vid = item["id"]["videoId"]
+        dur_params = {"part": "contentDetails", "id": vid, "key": YOUTUBE_API_KEY}
+        dr = requests.get("https://www.googleapis.com/youtube/v3/videos", params=dur_params, timeout=10)
+        if dr.status_code == 200:
+            dur_items = dr.json().get("items", [])
+            if dur_items:
+                secs = _parse_duration(dur_items[0]["contentDetails"]["duration"])
+                if secs > 600:
+                    continue
+        results.append({
+            "key": vid,
+            "name": item["snippet"]["title"],
+            "type": "Behind the Scenes",
+        })
+        if len(results) >= max_results:
+            break
+
+    return results
