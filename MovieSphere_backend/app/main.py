@@ -69,6 +69,11 @@ app.include_router(reels_app)
 app.include_router(trending_app)
 app.include_router(trivia_app)
 
+# Catch-all OPTIONS handler for Vercel CORS preflight
+@app.options("/{rest_of_path:path}")
+async def preflight_handler(rest_of_path: str):
+    return {}
+
 FRONTEND_DIST = os.path.join(os.path.dirname(os.path.dirname(__file__)), "frontend", "dist")
 if os.path.isdir(FRONTEND_DIST):
     @app.get("/logo.png")
