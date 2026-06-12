@@ -225,6 +225,37 @@ def get_info(name: str, id: int, type: str = ''):
         response = requests.get(url=url, params={'api_key': TMDB_API_KEY, 'query': name})
         data = response.json()
         if not data.get('results'):
+            return data_list
+        media_type = data['results'][0]['media_type']
+        id = data['results'][0]['id']
+    if media_type == 'tv':
+        url_tv = f"https://api.themoviedb.org/3/tv/{id}/credits"
+        response_tv = requests.get(
+            url=url_tv,
+            params={
+                'api_key': TMDB_API_KEY
+            }
+        )
+        data = response_tv.json()
+    else:
+        url_movie = f"https://api.themoviedb.org/3/movie/{id}/credits"
+        response_movie = requests.get(
+            url=url_movie, params={
+                'api_key': TMDB_API_KEY
+            }
+        )
+        data = response_movie.json()
+    result = data.get('cast') or []
+    data_list = [
+        {
+            'Id': result[i].get('id'),
+            'Name': result[i].get('original_name', 'Unknown'),
+            'Gender': 'Male' if result[i].get('gender') == 2 else 'Female',
+            'Popularity': result[i].get('popularity', 'Unknown'),
+            'Profile_path': f"https://image.tmdb.org/t/p/w500{result[i].get('profile_path', 'Unknown')}",
+            'Character_play': result[i].get('character', 'Unknown')
+        }
+        for i in range(min(8, len(result)))]
     return data_list
 
 
@@ -280,37 +311,6 @@ def get_movie_trivia():
         if status:
             facts.append(f"{title} is {status}")
     return facts
-        media_type = data['results'][0]['media_type']
-        id = data['results'][0]['id']
-    if media_type == 'tv':
-        url_tv = f"https://api.themoviedb.org/3/tv/{id}/credits"
-        response_tv = requests.get(
-            url=url_tv,
-            params={
-                'api_key': TMDB_API_KEY
-            }
-        )
-        data = response_tv.json()
-    else:
-        url_movie = f"https://api.themoviedb.org/3/movie/{id}/credits"
-        response_movie = requests.get(
-            url=url_movie, params={
-                'api_key': TMDB_API_KEY
-            }
-        )
-        data = response_movie.json()
-    result = data.get('cast') or []
-    data_list = [
-        {
-            'Id': result[i].get('id'),
-            'Name': result[i].get('original_name', 'Unknown'),
-            'Gender': 'Male' if result[i].get('gender') == 2 else 'Female',
-            'Popularity': result[i].get('popularity', 'Unknown'),
-            'Profile_path': f"https://image.tmdb.org/t/p/w500{result[i].get('profile_path', 'Unknown')}",
-            'Character_play': result[i].get('character', 'Unknown')
-        }
-        for i in range(min(8, len(result)))]
-    return data_list
 
 
 def info_now(name: str, id: int, media_type: str = ''):
