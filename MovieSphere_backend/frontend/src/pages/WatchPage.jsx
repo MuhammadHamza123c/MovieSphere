@@ -101,7 +101,7 @@ export default function WatchPage() {
       else {
         setStreamUrl(res.url || res.sources?.[0] || '')
         setStreamSources(res.sources || [res.url || ''])
-        setCurrentServer(0)
+        setCurrentServer(Number(queryParams.get('server')) || 0)
       }
     }).catch(() => setError('Failed to load stream'))
   }, [id, season, epi, type, seasonNum, epiNum, saveRecentlyViewed, watchTitle, watchPoster])
@@ -410,10 +410,14 @@ export default function WatchPage() {
 
   const goTo = (s, e) => {
     setAutoNextCountdown(null)
+    const params = new URLSearchParams()
+    if (room) params.set('room', room)
+    if (currentServer > 0) params.set('server', String(currentServer))
+    const qs = params.toString()
     if (type === 'tv') {
-      navigate(`/watch/tv/${id}/${s}/${e}${room ? `?room=${room}` : ''}`)
+      navigate(`/watch/tv/${id}/${s}/${e}${qs ? `?${qs}` : ''}`)
     } else {
-      navigate(`/watch/${type}/${id}${room ? `?room=${room}` : ''}`)
+      navigate(`/watch/${type}/${id}${qs ? `?${qs}` : ''}`)
     }
   }
 
@@ -425,20 +429,26 @@ export default function WatchPage() {
   }
 
   const copyInviteLink = () => {
-    const inviteUrl = window.location.href
-    navigator.clipboard.writeText(inviteUrl)
+    const base = window.location.href.split('?')[0]
+    const params = new URLSearchParams()
+    if (room) params.set('room', room)
+    if (currentServer > 0) params.set('server', String(currentServer))
+    navigator.clipboard.writeText(`${base}?${params.toString()}`)
     setCopied(true)
     setTimeout(() => setCopied(false), 2000)
   }
 
   const showQr = useCallback(async () => {
-    const url = window.location.href
-    if (!qrDataUrl) {
-      const dataUrl = await QRCode.toDataURL(url, { width: 300, margin: 2, color: { dark: '#6366f1', light: '#ffffff' } })
-      setQrDataUrl(dataUrl)
-    }
+    const base = window.location.href.split('?')[0]
+    const params = new URLSearchParams()
+    if (room) params.set('room', room)
+    if (currentServer > 0) params.set('server', String(currentServer))
+    const url = `${base}?${params.toString()}`
+    setQrDataUrl(null)
+    const dataUrl = await QRCode.toDataURL(url, { width: 300, margin: 2, color: { dark: '#6366f1', light: '#ffffff' } })
+    setQrDataUrl(dataUrl)
     setQrModal(true)
-  }, [qrDataUrl])
+  }, [qrDataUrl, room, currentServer])
 
   const sendChatMessage = () => {
     const text = chatInput.trim()
