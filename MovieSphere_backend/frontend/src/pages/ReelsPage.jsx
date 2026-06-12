@@ -170,7 +170,8 @@ export default function ReelsPage() {
               </div>
 
               <button
-                onClick={() => navigate(-1)}
+                onClick={() => navigate('/home')}
+                onTouchStart={(e) => e.stopPropagation()}
                 className="absolute top-12 left-3 z-20 w-9 h-9 flex items-center justify-center bg-black/40 hover:bg-black/70 text-white/80 hover:text-white rounded-full transition-all cursor-pointer backdrop-blur-sm"
                 title="Close Reels"
               >
