@@ -4,7 +4,7 @@ import { searchMovies, searchAiText } from '../../api/endpoints'
 import { useDebounce } from '../../hooks/useDebounce'
 import { useTheme } from '../../context/ThemeContext'
 
-export default function TopBar() {
+export default function TopBar({ trendingPoster }) {
   const navigate = useNavigate()
   const { theme } = useTheme()
   const [query, setQuery] = useState('')
@@ -76,7 +76,19 @@ export default function TopBar() {
 
   return (
     <div className="mb-4 mt-16 md:mt-28" ref={containerRef}>
-      <h1 className="text-3xl sm:text-5xl md:text-7xl font-black bg-gradient-to-r from-indigo-400 via-purple-400 to-pink-400 bg-clip-text text-transparent text-center mb-4 md:mb-6 tracking-tight">MovieSphere</h1>
+      <div className="relative mb-4 md:mb-6">
+        {trendingPoster && (
+          <div className="absolute inset-0 -top-8 -bottom-8 overflow-hidden pointer-events-none">
+            <div className="absolute inset-0 bg-gradient-to-r from-[var(--bg-primary)] via-transparent to-[var(--bg-primary)] z-10" />
+            <div className="absolute inset-0 bg-gradient-to-b from-[var(--bg-primary)] via-transparent to-[var(--bg-primary)] z-10" />
+            <div
+              className="w-full h-full bg-cover bg-center opacity-10"
+              style={{ backgroundImage: `url(${trendingPoster})` }}
+            />
+          </div>
+        )}
+        <h1 className="relative z-20 text-3xl sm:text-5xl md:text-7xl font-black bg-gradient-to-r from-indigo-400 via-purple-400 to-pink-400 bg-clip-text text-transparent text-center tracking-tight">MovieSphere</h1>
+      </div>
       <form onSubmit={handleSubmit} className="relative max-w-lg mx-auto">
         <svg className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500 pointer-events-none" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
           <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-4.35-4.35M11 19a8 8 0 100-16 8 8 0 000 16z" />
