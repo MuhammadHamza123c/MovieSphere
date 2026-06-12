@@ -2,9 +2,11 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { searchMovies, searchAiText } from '../../api/endpoints'
 import { useDebounce } from '../../hooks/useDebounce'
+import { useTheme } from '../../context/ThemeContext'
 
 export default function TopBar() {
   const navigate = useNavigate()
+  const { theme } = useTheme()
   const [query, setQuery] = useState('')
   const [suggestions, setSuggestions] = useState([])
   const [showDropdown, setShowDropdown] = useState(false)
@@ -87,7 +89,7 @@ export default function TopBar() {
           onFocus={() => { if (suggestions.length && debouncedQuery.trim()) setShowDropdown(true) }}
           onKeyDown={handleKeyDown}
           placeholder="Search movies & shows..."
-          className="w-full pl-11 pr-12 py-3 bg-[#12142a]/80 border border-[#1e2040] rounded-xl text-sm text-gray-200 placeholder-gray-500 outline-none focus:border-indigo-500/50 focus:bg-[#12142a] focus:shadow-[0_0_20px_-8px_#6366f1] transition-all"
+          className="w-full pl-11 pr-12 py-3 bg-[var(--bg-input)] border border-[var(--border-primary)] rounded-xl text-sm text-[var(--text-primary)] placeholder-[var(--text-muted)] outline-none focus:border-indigo-500/50 focus:bg-[var(--bg-input)] focus:shadow-[0_0_20px_-8px_#6366f1] transition-all"
         />
         <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-1.5">
           <button type="submit" className="w-7 h-7 flex items-center justify-center rounded-md bg-indigo-500/20 hover:bg-indigo-500/40 text-indigo-400 transition-all cursor-pointer">
@@ -108,13 +110,12 @@ export default function TopBar() {
           </button>
         </div>
 
-        {/* Autocomplete dropdown */}
         {showDropdown && (
-          <div className="absolute top-full left-0 right-0 mt-1 bg-[#12142a] border border-[#1e2040] rounded-xl overflow-hidden shadow-2xl shadow-black/50 z-50">
+          <div className="absolute top-full left-0 right-0 mt-1 bg-[var(--bg-secondary)] border border-[var(--border-primary)] rounded-xl overflow-hidden shadow-2xl shadow-[var(--shadow-color)] z-50">
             {loading && (
               <div className="flex items-center gap-2 px-4 py-3">
                 <div className="w-4 h-4 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin" />
-                <span className="text-xs text-gray-500">Searching...</span>
+                <span className="text-xs text-[var(--text-muted)]">Searching...</span>
               </div>
             )}
             {!loading && suggestions.map((item, i) => {
@@ -127,24 +128,24 @@ export default function TopBar() {
                   onClick={() => selectSuggestion(item)}
                   onMouseEnter={() => setActiveIndex(i)}
                   className={`w-full flex items-center gap-3 px-3 py-2.5 text-left transition-colors cursor-pointer ${
-                    i === activeIndex ? 'bg-indigo-500/15' : 'hover:bg-[#1e2040]'
+                    i === activeIndex ? 'bg-indigo-500/15' : 'hover:bg-[var(--bg-tertiary)]'
                   }`}
-                  style={{ borderTop: i > 0 ? '1px solid rgba(30, 32, 64, 0.5)' : 'none' }}
+                  style={{ borderTop: i > 0 ? '1px solid var(--border-primary)' : 'none' }}
                 >
-                  <div className="w-9 h-[54px] rounded-md overflow-hidden bg-[#1e2040] flex-shrink-0">
+                  <div className="w-9 h-[54px] rounded-md overflow-hidden bg-[var(--bg-tertiary)] flex-shrink-0">
                     {poster ? (
                       <img src={poster} alt="" className="w-full h-full object-cover" />
                     ) : (
-                      <div className="w-full h-full flex items-center justify-center text-gray-600 text-xs">N/A</div>
+                      <div className="w-full h-full flex items-center justify-center text-[var(--text-muted)] text-xs">N/A</div>
                     )}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-gray-200 truncate">{item.Title || item.title || item.name}</p>
+                    <p className="text-sm font-medium text-[var(--text-primary)] truncate">{item.Title || item.title || item.name}</p>
                     <div className="flex items-center gap-2 mt-0.5">
                       <span className="text-[11px] font-semibold uppercase tracking-wider px-1.5 py-0.5 rounded border text-indigo-300 border-indigo-500/30 bg-indigo-500/10">
                         {item.media_type === 'tv' ? 'TV' : 'Movie'}
                       </span>
-                      {year && <span className="text-xs text-gray-500">{year}</span>}
+                      {year && <span className="text-xs text-[var(--text-muted)]">{year}</span>}
                     </div>
                   </div>
                 </button>
@@ -153,10 +154,10 @@ export default function TopBar() {
           </div>
         )}
       </form>
-      <div className="flex items-center justify-center gap-2 mt-3 text-xs text-gray-500">
+      <div className="flex items-center justify-center gap-2 mt-3 text-xs text-[var(--text-muted)]">
         <span className="text-[10px] tracking-wider uppercase">AI search:</span>
-        <button type="button" onClick={() => { setQuery('a movie about dreams'); navigate('/search?text=a movie about dreams') }} className="px-2.5 py-1 bg-[#1e1f37] border border-[#2a2b4a] rounded-md text-indigo-400 hover:bg-[#2a2b4a] transition-colors cursor-pointer">dreams</button>
-        <button type="button" onClick={() => { setQuery('time travel love story'); navigate('/search?text=time travel love story') }} className="px-2.5 py-1 bg-[#1e1f37] border border-[#2a2b4a] rounded-md text-indigo-400 hover:bg-[#2a2b4a] transition-colors cursor-pointer">time travel</button>
+        <button type="button" onClick={() => { setQuery('a movie about dreams'); navigate('/search?text=a movie about dreams') }} className="px-2.5 py-1 bg-[var(--bg-tertiary)] border border-[var(--border-secondary)] rounded-md text-indigo-400 hover:bg-[var(--bg-tertiary)] transition-colors cursor-pointer">dreams</button>
+        <button type="button" onClick={() => { setQuery('time travel love story'); navigate('/search?text=time travel love story') }} className="px-2.5 py-1 bg-[var(--bg-tertiary)] border border-[var(--border-secondary)] rounded-md text-indigo-400 hover:bg-[var(--bg-tertiary)] transition-colors cursor-pointer">time travel</button>
       </div>
     </div>
   )

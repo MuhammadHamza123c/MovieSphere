@@ -137,7 +137,9 @@ export async function getStreamUrl(id, season, epi) {
   if (season != null) params.season = season
   if (epi != null) params.epi = epi
   const { data } = await client.get('/MovieSphere/streamit', { params })
-  return data.MovieSphere
+  const result = data.MovieSphere
+  if (typeof result === 'string') return { url: result, sources: [result] }
+  return result
 }
 
 export async function fetchHistoryRecs() {

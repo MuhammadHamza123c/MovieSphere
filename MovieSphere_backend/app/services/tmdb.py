@@ -378,11 +378,25 @@ def get_top_rated(type: str, page: int):
 
 
 def watch_movie(id: int):
-    return f"https://vidlink.pro/movie/{id}?poster=true&title=true&autoplay=true"
+    return {
+        'url': f"https://vidlink.pro/movie/{id}?poster=true&title=true&autoplay=true",
+        'sources': [
+            f"https://vidlink.pro/movie/{id}?poster=true&title=true&autoplay=true",
+            f"https://vidsrc.pro/embed/movie/{id}",
+            f"https://vidsrc.cc/embed/movie/{id}"
+        ]
+    }
 
 
 def watch_tv(id: int, season: int, epi: int):
-    return f"https://vidlink.pro/tv/{id}/{season}/{epi}?poster=true&title=true&autoplay=true&nextbutton=true"
+    return {
+        'url': f"https://vidlink.pro/tv/{id}/{season}/{epi}?poster=true&title=true&autoplay=true&nextbutton=true",
+        'sources': [
+            f"https://vidlink.pro/tv/{id}/{season}/{epi}?poster=true&title=true&autoplay=true&nextbutton=true",
+            f"https://vidsrc.pro/embed/tv/{id}/{season}/{epi}",
+            f"https://vidsrc.cc/embed/tv/{id}/{season}/{epi}"
+        ]
+    }
 
 
 def actor_it(id: int):

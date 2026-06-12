@@ -23,6 +23,8 @@ export default function WatchPage() {
   const [autoNextCountdown, setAutoNextCountdown] = useState(null)
   const [watchTitle, setWatchTitle] = useState('')
   const [watchPoster, setWatchPoster] = useState('')
+  const [streamSources, setStreamSources] = useState([])
+  const [currentServer, setCurrentServer] = useState(0)
   const { saveRecentlyViewed } = useRecentlyViewed()
 
   // Watch Party States
@@ -76,7 +78,7 @@ export default function WatchPage() {
     return null
   }, [nextEpisode, nextSeason, nextEpi, seasonNum])
 
-  const displayUrl = streamUrl
+  const displayUrl = streamSources[currentServer] || streamUrl
 
   const addLog = (msg) => {
     setPartyLogs(prev => [...prev.slice(-15), `[${new Date().toLocaleTimeString()}] ${msg}`])
@@ -94,9 +96,13 @@ export default function WatchPage() {
       year: '',
       timestamp: Date.now(),
     })
-    getStreamUrl(id, season, epi).then(url => {
-      if (!url || url.startsWith('Error')) { setError('Stream not available for this title') }
-      else { setStreamUrl(url) }
+    getStreamUrl(id, season, epi).then(res => {
+      if (!res || res.url?.startsWith('Error')) { setError('Stream not available for this title') }
+      else {
+        setStreamUrl(res.url || res.sources?.[0] || '')
+        setStreamSources(res.sources || [res.url || ''])
+        setCurrentServer(0)
+      }
     }).catch(() => setError('Failed to load stream'))
   }, [id, season, epi, type, seasonNum, epiNum, saveRecentlyViewed, watchTitle, watchPoster])
 
@@ -460,6 +466,12 @@ export default function WatchPage() {
           className="absolute top-5 right-5 z-20 w-9 h-9 flex items-center justify-center bg-white/10 hover:bg-white/20 text-white/70 hover:text-white rounded-full transition-all cursor-pointer backdrop-blur-sm border border-white/10 text-sm opacity-0 hover:opacity-100 group-hover:opacity-100"
           title="Exit Cinema Mode"
         >✕</button>
+        {streamSources.length > 1 && (
+          <div className="absolute top-5 left-5 z-20 flex items-center gap-2 opacity-0 hover:opacity-100 group-hover:opacity-100 transition-opacity">
+            <span className="text-[11px] text-gray-400 font-medium bg-black/60 px-2 py-1 rounded-md backdrop-blur-sm">Server {currentServer + 1}/{streamSources.length}</span>
+            <button onClick={() => setCurrentServer(i => (i + 1) % streamSources.length)} className="px-2.5 py-1 bg-black/60 hover:bg-black/80 text-gray-300 hover:text-white text-xs rounded-md transition-all cursor-pointer backdrop-blur-sm border border-white/10">Switch</button>
+          </div>
+        )}
         <div className="w-full h-full max-w-[98vw] max-h-[98vh] p-4">
           <iframe ref={iframeRef} src={displayUrl} allowFullScreen allow="autoplay; encrypted-media" className="w-full h-full border-0 rounded-lg" />
         </div>
@@ -559,6 +571,12 @@ export default function WatchPage() {
             <button onClick={() => setCinema(true)} className="ml-auto flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white text-sm font-semibold rounded-lg transition-all cursor-pointer shadow-lg shadow-indigo-500/25">
               Cinema Mode
             </button>
+          )}
+          {streamSources.length > 1 && (
+            <div className="flex items-center gap-2">
+              <span className="text-[11px] text-gray-500 font-medium">Server {currentServer + 1}/{streamSources.length}</span>
+              <button onClick={() => setCurrentServer(i => (i + 1) % streamSources.length)} className="px-3 py-1.5 border border-gray-700 rounded-lg text-xs text-gray-400 hover:text-gray-200 hover:bg-[#1e2040] transition-all cursor-pointer bg-transparent">Switch</button>
+            </div>
           )}
         </div>
 

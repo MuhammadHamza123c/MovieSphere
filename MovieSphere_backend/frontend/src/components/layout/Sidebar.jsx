@@ -1,6 +1,7 @@
-﻿import { NavLink, useNavigate } from 'react-router-dom'
+﻿import { NavLink } from 'react-router-dom'
 import { useAuth } from '../../hooks/useAuth'
 import { useState } from 'react'
+import { useTheme } from '../../context/ThemeContext'
 
 const nav = [
   { to: '/home', label: 'Home', icon: 'M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6' },
@@ -14,13 +15,14 @@ const nav = [
 
 export default function Sidebar() {
   const { user, logout } = useAuth()
+  const { theme, toggleTheme } = useTheme()
   const [mobileOpen, setMobileOpen] = useState(false)
 
   const navLinkClasses = ({ isActive }) =>
     `flex items-center h-10 rounded-lg text-sm font-medium transition-all duration-200 ${
       isActive
         ? 'bg-indigo-500/15 text-indigo-400'
-        : 'text-gray-400 hover:text-gray-200 hover:bg-[#1e2040]'
+        : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-tertiary)]'
     }`
 
   return (
@@ -28,7 +30,7 @@ export default function Sidebar() {
       {/* Mobile hamburger */}
       <button
         onClick={() => setMobileOpen(true)}
-        className="md:hidden fixed top-3 left-3 z-50 w-10 h-10 flex items-center justify-center bg-[#12142a] border border-[#1e2040] rounded-lg text-gray-400 hover:text-gray-200 cursor-pointer"
+        className="md:hidden fixed top-3 left-3 z-50 w-10 h-10 flex items-center justify-center bg-[var(--bg-secondary)] border border-[var(--border-primary)] rounded-lg text-[var(--text-secondary)] hover:text-[var(--text-primary)] cursor-pointer"
       >
         <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
           <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h16" />
@@ -38,8 +40,8 @@ export default function Sidebar() {
       {/* Mobile drawer overlay */}
       {mobileOpen && (
         <div className="md:hidden fixed inset-0 z-40 bg-black/60" onClick={() => setMobileOpen(false)}>
-          <div className="fixed left-0 top-0 bottom-0 w-64 bg-[#12142a] border-r border-[#1e2040] shadow-2xl flex flex-col" onClick={e => e.stopPropagation()}>
-            <div className="flex items-center gap-3 h-16 border-b border-[#1e2040] px-4">
+          <div className="fixed left-0 top-0 bottom-0 w-64 bg-[var(--bg-secondary)] border-r border-[var(--border-primary)] shadow-2xl flex flex-col" onClick={e => e.stopPropagation()}>
+            <div className="flex items-center gap-3 h-16 border-b border-[var(--border-primary)] px-4">
               <div className="w-8 h-8 rounded bg-gradient-to-br from-indigo-400 to-purple-400" />
               <h1 className="text-lg font-extrabold bg-gradient-to-r from-indigo-400 to-purple-400 bg-clip-text text-transparent">MovieSphere</h1>
             </div>
@@ -53,7 +55,7 @@ export default function Sidebar() {
                     `flex items-center gap-3 h-12 rounded-lg text-sm font-medium transition-all ${
                       isActive
                         ? 'bg-indigo-500/15 text-indigo-400'
-                        : 'text-gray-400 hover:text-gray-200 hover:bg-[#1e2040]'
+                        : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-tertiary)]'
                     }`
                   }
                 >
@@ -64,15 +66,20 @@ export default function Sidebar() {
                 </NavLink>
               ))}
             </nav>
+            <div className="border-t border-[var(--border-primary)] px-4 py-3 flex gap-2">
+              <button onClick={toggleTheme} className="flex-1 flex items-center justify-center gap-2 h-10 rounded-lg border border-[var(--border-primary)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-tertiary)] transition-all cursor-pointer text-sm">
+                {theme === 'dark' ? '☀️' : '🌙'} {theme === 'dark' ? 'Light' : 'Dark'}
+              </button>
+            </div>
             {user && (
-              <div className="border-t border-[#1e2040] px-4 py-4">
+              <div className="border-t border-[var(--border-primary)] px-4 py-4">
                 <div className="flex items-center gap-3 mb-3">
                   <div className="w-8 h-8 rounded-full bg-indigo-500 flex items-center justify-center text-white font-bold text-xs flex-shrink-0">
                     {(user.username || user.email || 'U')[0].toUpperCase()}
                   </div>
-                  <span className="text-sm text-gray-400 truncate">{user.username || user.email}</span>
+                  <span className="text-sm text-[var(--text-secondary)] truncate">{user.username || user.email}</span>
                 </div>
-                <button onClick={logout} className="w-full text-sm px-3 py-2 rounded-lg border border-gray-700 text-gray-400 hover:text-gray-200 hover:bg-[#1e2040] transition-all cursor-pointer">
+                <button onClick={logout} className="w-full text-sm px-3 py-2 rounded-lg border border-[var(--border-primary)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-tertiary)] transition-all cursor-pointer">
                   Sign Out
                 </button>
               </div>
@@ -82,8 +89,8 @@ export default function Sidebar() {
       )}
 
       {/* Desktop sidebar */}
-      <aside className="hidden md:flex group w-14 hover:w-56 bg-[#12142a] border-r border-[#1e2040] flex-col flex-shrink-0 h-screen sticky top-0 transition-all duration-200 z-50">
-        <div className="flex items-center h-16 border-b border-[#1e2040]">
+      <aside className="hidden md:flex group w-14 hover:w-56 bg-[var(--bg-secondary)] border-r border-[var(--border-primary)] flex-col flex-shrink-0 h-screen sticky top-0 transition-all duration-200 z-50">
+        <div className="flex items-center h-16 border-b border-[var(--border-primary)]">
           <div className="flex items-center justify-center w-14 min-w-[56px]">
             <div className="w-5 h-5 rounded bg-gradient-to-br from-indigo-400 to-purple-400" />
           </div>
@@ -107,8 +114,19 @@ export default function Sidebar() {
             </NavLink>
           ))}
         </nav>
+        {/* Theme toggle */}
+        <div className="px-3.5 mb-2 hidden group-hover:block">
+          <button onClick={toggleTheme} className="w-full flex items-center gap-2 h-10 rounded-lg border border-[var(--border-primary)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-tertiary)] transition-all cursor-pointer text-sm justify-center">
+            {theme === 'dark' ? '☀️ Light' : '🌙 Dark'}
+          </button>
+        </div>
+        <div className="flex items-center justify-center w-14 min-w-[56px] mb-2 hidden group-hover:hidden">
+          <button onClick={toggleTheme} className="w-8 h-8 flex items-center justify-center rounded-lg text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-tertiary)] transition-all cursor-pointer text-sm">
+            {theme === 'dark' ? '☀️' : '🌙'}
+          </button>
+        </div>
         {user && (
-          <div className="border-t border-[#1e2040]">
+          <div className="border-t border-[var(--border-primary)]">
             <div className="py-3">
               <div className="flex items-center h-10 mb-2">
                 <div className="flex items-center justify-center w-14 min-w-[56px]">
@@ -116,10 +134,10 @@ export default function Sidebar() {
                     {(user.username || user.email || 'U')[0].toUpperCase()}
                   </div>
                 </div>
-                <span className="text-sm text-gray-400 truncate hidden group-hover:block">{user.username || user.email}</span>
+                <span className="text-sm text-[var(--text-secondary)] truncate hidden group-hover:block">{user.username || user.email}</span>
               </div>
               <div className="hidden group-hover:block px-3.5">
-                <button onClick={logout} className="w-full text-sm px-3 py-2 rounded-lg border border-gray-700 text-gray-400 hover:text-gray-200 hover:bg-[#1e2040] transition-all cursor-pointer">
+                <button onClick={logout} className="w-full text-sm px-3 py-2 rounded-lg border border-[var(--border-primary)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-tertiary)] transition-all cursor-pointer">
                   Sign Out
                 </button>
               </div>

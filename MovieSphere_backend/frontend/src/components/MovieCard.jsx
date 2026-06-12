@@ -38,20 +38,20 @@ export default function MovieCard({ item, onFavChange, mediaType: forceMediaType
 
   return (
     <div onClick={() => navigate(`/${mediaType === 'tv' ? 'tv' : 'movie'}/${id}`)}
-         className="group relative rounded-xl overflow-hidden bg-[#12142a] cursor-pointer transition-all duration-500 hover:shadow-2xl hover:shadow-indigo-500/15 border border-[#1e2040] hover:border-indigo-500/30">
-      <div className="relative aspect-[2/3] overflow-hidden bg-gradient-to-br from-[#1a1c36] to-[#0f1123]">
+         className="group relative rounded-xl overflow-hidden bg-[var(--bg-card)] cursor-pointer transition-all duration-500 hover:shadow-2xl hover:shadow-indigo-500/15 border border-[var(--border-primary)] hover:border-indigo-500/30">
+      <div className="relative aspect-[2/3] overflow-hidden bg-gradient-to-br from-[var(--bg-tertiary)] to-[var(--bg-primary)]">
         {posterUrl ? (
           <img src={posterUrl} alt=""
                onError={() => setImgFailed(true)}
                className="w-full h-full object-cover transition-all duration-500 group-hover:scale-105" />
         ) : (
           <div className="w-full h-full flex items-center justify-center">
-            <svg className="w-10 h-10 text-gray-700" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1}>
+            <svg className="w-10 h-10 text-[var(--text-muted)]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 10.5l4.72-4.72a.75.75 0 011.28.53v11.38a.75.75 0 01-1.28.53l-4.72-4.72M4.5 18.75h9a2.25 2.25 0 002.25-2.25v-9a2.25 2.25 0 00-2.25-2.25h-9A2.25 2.25 0 002.25 7.5v9a2.25 2.25 0 002.25 2.25z" />
             </svg>
           </div>
         )}
-        <div className="absolute inset-0 bg-gradient-to-t from-[#0b0d17]/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+        <div className="absolute inset-0 bg-gradient-to-t from-[var(--bg-primary)]/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
         <div className="absolute inset-0 flex items-center justify-center gap-3 opacity-0 group-hover:opacity-100 transition-all duration-300 translate-y-2 group-hover:translate-y-0">
           <button onClick={handleWatch}
                   className="w-12 h-12 rounded-full bg-indigo-500/90 hover:bg-indigo-500 border-0 flex items-center justify-center text-white cursor-pointer transition-all duration-200 hover:scale-110 shadow-xl shadow-indigo-500/30">
@@ -81,7 +81,7 @@ export default function MovieCard({ item, onFavChange, mediaType: forceMediaType
         )}
       </div>
       <div className="p-3">
-        <h3 className="text-sm font-semibold text-gray-100 truncate leading-snug">{title}</h3>
+        <h3 className="text-sm font-semibold text-[var(--text-primary)] truncate leading-snug">{title}</h3>
       </div>
     </div>
   )

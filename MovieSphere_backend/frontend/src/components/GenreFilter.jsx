@@ -6,7 +6,7 @@
               className={`px-4 py-2 rounded-xl text-sm font-medium transition-all duration-200 cursor-pointer border ${
                 !selected
                   ? 'bg-indigo-500/20 text-indigo-300 border-indigo-500/30'
-                  : 'bg-[#12142a] text-gray-400 border-[#1e2040] hover:border-gray-600 hover:text-gray-200'
+                  : 'bg-[var(--bg-secondary)] text-[var(--text-secondary)] border-[var(--border-primary)] hover:border-indigo-500/30 hover:text-[var(--text-primary)]'
               }`}>
         All
       </button>
@@ -15,7 +15,7 @@
                 className={`px-4 py-2 rounded-xl text-sm font-medium transition-all duration-200 cursor-pointer border ${
                   String(g.id) === selected
                     ? 'bg-indigo-500/20 text-indigo-300 border-indigo-500/30'
-                    : 'bg-[#12142a] text-gray-400 border-[#1e2040] hover:border-gray-600 hover:text-gray-200'
+                    : 'bg-[var(--bg-secondary)] text-[var(--text-secondary)] border-[var(--border-primary)] hover:border-indigo-500/30 hover:text-[var(--text-primary)]'
                 }`}>
           {g.name}
         </button>
