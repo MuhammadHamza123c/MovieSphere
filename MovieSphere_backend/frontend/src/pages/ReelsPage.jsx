@@ -300,20 +300,6 @@ export default function ReelsPage() {
                 </div>
               )}
 
-              <div className="absolute bottom-0 left-0 right-0 z-20 bg-gradient-to-t from-black/80 via-black/20 to-transparent px-5 pt-20 pb-2 pointer-events-none">
-                <div className="max-w-[56.25vh] mx-auto w-full">
-                  <div className="flex items-center gap-3 mb-2">
-                    <div className="w-9 h-9 rounded-full bg-gradient-to-br from-indigo-400 to-purple-500 flex items-center justify-center text-white text-xs font-bold flex-shrink-0">
-                      {reel.channelTitle?.charAt(0)?.toUpperCase() || 'Y'}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-white text-sm font-semibold truncate drop-shadow-lg">{reel.channelTitle}</p>
-                    </div>
-                  </div>
-                  <p className="text-white/90 text-sm leading-relaxed drop-shadow-lg line-clamp-2">{reel.title}</p>
-                </div>
-              </div>
-
               {isActive && (
                 <div className="absolute bottom-0 left-0 right-0 z-20 h-0.5 bg-white/10">
                   <div className="h-full bg-white transition-all duration-100 ease-linear" style={{ width: `${progress * 100}%` }} />
