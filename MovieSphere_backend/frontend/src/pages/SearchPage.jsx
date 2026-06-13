@@ -1,11 +1,12 @@
 ﻿import { useState, useEffect, useMemo } from 'react'
-import { useSearchParams } from 'react-router-dom'
+import { useSearchParams, useNavigate } from 'react-router-dom'
 import { searchMovies, searchAiText, fetchGenres, fetchFavorites, fetchContinueWatching } from '../api/endpoints'
 import MovieGrid from '../components/MovieGrid'
 import GenreFilter from '../components/GenreFilter'
 
 export default function SearchPage() {
   const [searchParams] = useSearchParams()
+  const navigate = useNavigate()
   const [items, setItems] = useState([])
   const [loading, setLoading] = useState(false)
   const [genres, setGenres] = useState([])
@@ -36,18 +37,21 @@ export default function SearchPage() {
     } else { setItems([]) }
   }, [q, text])
 
+  const people = items.filter(item => item.media_type === 'person')
+  const mediaItems = items.filter(item => item.media_type !== 'person')
+
   const allGenres = useMemo(() => {
     const seen = new Set()
-    return items.reduce((acc, item) => {
+    return mediaItems.reduce((acc, item) => {
       const genreStr = item.Genre || item.genres || ''
       genreStr.split('|').filter(Boolean).forEach(g => {
         if (!seen.has(g)) { seen.add(g); acc.push(g) }
       })
       return acc
     }, [])
-  }, [items])
+  }, [mediaItems])
 
-  const filtered = items.filter(item => {
+  const filtered = mediaItems.filter(item => {
     const genreStr = item.Genre || item.genres || ''
     if (selectedGenre && !genreStr.split('|').filter(Boolean).includes(selectedGenre)) return false
     const raw = item.Release_date || item.release_date || item['Starting Date'] || item.first_air_date || ''
@@ -62,6 +66,33 @@ export default function SearchPage() {
   return (
     <div>
       <p className="text-sm text-gray-500 mb-4">Results for: <span className="text-gray-300 font-medium">&ldquo;{q || text}&rdquo;</span></p>
+      {people.length > 0 && (
+        <div className="mb-8">
+          <h3 className="text-xs font-semibold text-indigo-400 uppercase tracking-wider mb-3">People</h3>
+          <div className="flex gap-4 overflow-x-auto pb-2 scrollbar-thin">
+            {people.map((person, i) => {
+              const profile = person.Profile_path || person.profile_path || ''
+              const name = person.Title || person.title || person.name || 'Unknown'
+              return (
+                <div key={person.Id || i} onClick={() => navigate(`/actor/${person.Id}`)}
+                  className="flex-shrink-0 w-28 text-center cursor-pointer transition-transform hover:-translate-y-1">
+                  <div className="w-24 h-24 mx-auto mb-2 rounded-full overflow-hidden ring-2 ring-transparent hover:ring-indigo-500/50 transition-all bg-[var(--bg-tertiary)]">
+                    {profile ? (
+                      <img src={profile} alt={name} className="w-full h-full object-cover" />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-[var(--bg-tertiary)] to-[var(--bg-primary)]">
+                        <svg className="w-8 h-8 text-[var(--text-muted)]" fill="currentColor" viewBox="0 0 24 24"><path d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
+                      </div>
+                    )}
+                  </div>
+                  <p className="text-sm font-semibold text-[var(--text-primary)] truncate">{name}</p>
+                  <p className="text-xs text-[var(--text-muted)] truncate">{person.Known_for_department || 'Actor'}</p>
+                </div>
+              )
+            })}
+          </div>
+        </div>
+      )}
       {allGenres.length > 1 && (
         <>
           <GenreFilter genres={allGenres.map(g => ({ id: g, name: g }))} selected={selectedGenre} onSelect={setSelectedGenre} />

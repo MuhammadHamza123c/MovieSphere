@@ -51,8 +51,12 @@ export default function TopBar() {
   const selectSuggestion = useCallback((item) => {
     setShowDropdown(false)
     setQuery('')
-    const type = item.media_type === 'tv' ? 'tv' : 'movie'
-    navigate(`/${type}/${item.Id}`)
+    if (item.media_type === 'person') {
+      navigate(`/actor/${item.Id}`)
+    } else {
+      const type = item.media_type === 'tv' ? 'tv' : 'movie'
+      navigate(`/${type}/${item.Id}`)
+    }
   }, [navigate])
 
   const handleKeyDown = (e) => {
@@ -119,8 +123,9 @@ export default function TopBar() {
               </div>
             )}
             {!loading && suggestions.map((item, i) => {
-              const year = getYear(item)
-              const poster = item.Poster_path || item.poster_path
+              const isPerson = item.media_type === 'person'
+              const year = isPerson ? '' : (item.Release_date || item.release_date || '').split('-')[0]
+              const poster = isPerson ? (item.Profile_path || item.profile_path) : (item.Poster_path || item.poster_path)
               return (
                 <button
                   key={item.Id || item.id}
@@ -136,17 +141,28 @@ export default function TopBar() {
                     {poster ? (
                       <img src={poster} alt="" className="w-full h-full object-cover" />
                     ) : (
-                      <div className="w-full h-full flex items-center justify-center text-[var(--text-muted)] text-xs">N/A</div>
+                      <div className="w-full h-full flex items-center justify-center text-[var(--text-muted)] text-xs">
+                        {isPerson ? '👤' : 'N/A'}
+                      </div>
                     )}
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-medium text-[var(--text-primary)] truncate">{item.Title || item.title || item.name}</p>
                     <div className="flex items-center gap-2 mt-0.5">
-                      <span className="text-[11px] font-semibold uppercase tracking-wider px-1.5 py-0.5 rounded border text-indigo-300 border-indigo-500/30 bg-indigo-500/10">
-                        {item.media_type === 'tv' ? 'TV' : 'Movie'}
+                      <span className={`text-[11px] font-semibold uppercase tracking-wider px-1.5 py-0.5 rounded border ${
+                        isPerson
+                          ? 'text-emerald-300 border-emerald-500/30 bg-emerald-500/10'
+                          : 'text-indigo-300 border-indigo-500/30 bg-indigo-500/10'
+                      }`}>
+                        {isPerson ? (item.Known_for_department || 'Actor') : (item.media_type === 'tv' ? 'TV' : 'Movie')}
                       </span>
                       {year && <span className="text-xs text-[var(--text-muted)]">{year}</span>}
                     </div>
+                    {isPerson && item.Known_for?.length > 0 && (
+                      <p className="text-[11px] text-[var(--text-muted)] truncate mt-0.5">
+                        {item.Known_for.map(k => k.title).filter(Boolean).join(', ')}
+                      </p>
+                    )}
                   </div>
                 </button>
               )

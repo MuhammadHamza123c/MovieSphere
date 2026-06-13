@@ -72,26 +72,45 @@ def search_it(q: str):
     result = data['results']
     length_total = len(result)
     if length_total > 0:
-        if length_total > 4:
-            length_total = 4
-        data_list = [
-            {
-                'Id': result[i]['id'],
-                'Title': result[i].get('title') or result[i].get('name'),
-                'media_type': result[i].get('media_type', ''),
-                'Release_date': result[i].get('release_date') or result[i].get('first_air_date'),
-                'Genre': '|'.join([
-                    tmdb_movie_genres.get(genre_id, tmdb_tv_genres.get(genre_id, 'Unknown'))
-                    for genre_id in (result[i].get('genre_ids') or [])
-                ]) or 'None',
-                'Popularity': result[i].get('popularity', 0),
-                'Poster_path': (
-                    f"https://image.tmdb.org/t/p/w500{result[i]['poster_path']}"
-                    if result[i].get('poster_path')
-                    else "https://znuiuhxyhpgqmdftansc.supabase.co/storage/v1/object/public/user_files/images/no_image_avail.png"
-                )
-            }
-            for i in range(0, length_total)]
+        if length_total > 8:
+            length_total = 8
+        data_list = []
+        for i in range(length_total):
+            item = result[i]
+            if item.get('media_type') == 'person':
+                data_list.append({
+                    'Id': item['id'],
+                    'Title': item.get('name', ''),
+                    'media_type': 'person',
+                    'Profile_path': (
+                        f"https://image.tmdb.org/t/p/w185{item['profile_path']}"
+                        if item.get('profile_path')
+                        else ''
+                    ),
+                    'Known_for_department': item.get('known_for_department', ''),
+                    'Known_for': [
+                        {'title': k.get('title') or k.get('name', ''), 'media_type': k.get('media_type', '')}
+                        for k in (item.get('known_for') or [])
+                    ],
+                    'Popularity': item.get('popularity', 0),
+                })
+            else:
+                data_list.append({
+                    'Id': item['id'],
+                    'Title': item.get('title') or item.get('name'),
+                    'media_type': item.get('media_type', ''),
+                    'Release_date': item.get('release_date') or item.get('first_air_date'),
+                    'Genre': '|'.join([
+                        tmdb_movie_genres.get(genre_id, tmdb_tv_genres.get(genre_id, 'Unknown'))
+                        for genre_id in (item.get('genre_ids') or [])
+                    ]) or 'None',
+                    'Popularity': item.get('popularity', 0),
+                    'Poster_path': (
+                        f"https://image.tmdb.org/t/p/w500{item['poster_path']}"
+                        if item.get('poster_path')
+                        else "https://znuiuhxyhpgqmdftansc.supabase.co/storage/v1/object/public/user_files/images/no_image_avail.png"
+                    )
+                })
     else:
         data_list = ['No Movie Found']
     return data_list
