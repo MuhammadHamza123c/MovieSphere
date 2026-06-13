@@ -475,7 +475,7 @@ export default function DetailPage() {
                   {album.artwork && (
                     <div className="relative flex-shrink-0">
                       <img src={album.artwork} alt={album.album}
-                        className="w-36 h-36 rounded-2xl object-cover shadow-xl ring-1 ring-white/[0.06]" />
+                        className="w-36 h-52 rounded-2xl object-cover shadow-xl ring-1 ring-white/[0.06]" />
                       <div className="absolute inset-0 rounded-2xl ring-1 ring-inset ring-white/[0.06]" />
                     </div>
                   )}
