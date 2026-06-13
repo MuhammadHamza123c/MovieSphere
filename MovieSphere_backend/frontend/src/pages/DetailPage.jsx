@@ -31,6 +31,8 @@ export default function DetailPage() {
   const [videoPlayer, setVideoPlayer] = useState(null)
   const [similars, setSimilars] = useState([])
   const [playingTrack, setPlayingTrack] = useState(null)
+  const [trackPage, setTrackPage] = useState(0)
+  const tracksPerPage = 6
   const audioRef = useRef(null)
 
   useEffect(() => {
@@ -501,8 +503,8 @@ export default function DetailPage() {
                     </div>
                     {album.tracks?.length > 0 && (
                       <div className="mt-3 space-y-0.5">
-                        {album.tracks.map((track, j) => {
-                          const isPlaying = playingTrack?.albumIdx === i && playingTrack?.trackIdx === j
+                        {album.tracks.slice(trackPage * tracksPerPage, (trackPage + 1) * tracksPerPage).map((track, j) => {
+                          const isPlaying = playingTrack?.albumIdx === i && playingTrack?.trackIdx === (trackPage * tracksPerPage + j)
                           return (
                             <div key={j}
                               className={`flex items-center gap-2 px-2 py-1.5 rounded-lg transition-colors ${isPlaying ? 'bg-indigo-500/10' : 'hover:bg-white/[0.03]'}`}>
@@ -526,7 +528,7 @@ export default function DetailPage() {
                                       })
                                       audio.play()
                                       audioRef.current = audio
-                                      setPlayingTrack({ albumIdx: i, trackIdx: j })
+                                      setPlayingTrack({ albumIdx: i, trackIdx: trackPage * tracksPerPage + j })
                                     }
                                   }
                                 }}
@@ -556,10 +558,29 @@ export default function DetailPage() {
                               )}
                             </div>
                           )
-                        })}
-                      </div>
-                    )}
-                  </div>
+                          })}
+                        </div>
+                      )}
+                      {album.tracks?.length > tracksPerPage && (
+                        <div className="mt-4 flex items-center gap-2">
+                          <button
+                            onClick={() => setTrackPage(p => Math.max(0, p - 1))}
+                            disabled={trackPage === 0}
+                            className="px-3 py-1 rounded-lg text-xs font-medium transition-all bg-white/[0.06] hover:bg-white/[0.12] disabled:opacity-30 disabled:cursor-not-allowed text-white/60">
+                            Previous
+                          </button>
+                          <span className="text-xs text-white/30 mx-1">
+                            {trackPage * tracksPerPage + 1}&ndash;{Math.min((trackPage + 1) * tracksPerPage, album.tracks.length)} of {album.tracks.length}
+                          </span>
+                          <button
+                            onClick={() => setTrackPage(p => Math.min(Math.ceil(album.tracks.length / tracksPerPage) - 1, p + 1))}
+                            disabled={(trackPage + 1) * tracksPerPage >= album.tracks.length}
+                            className="px-3 py-1 rounded-lg text-xs font-medium transition-all bg-white/[0.06] hover:bg-white/[0.12] disabled:opacity-30 disabled:cursor-not-allowed text-white/60">
+                            Next
+                          </button>
+                        </div>
+                      )}
+                    </div>
                 </div>
               ))}
             </div>
