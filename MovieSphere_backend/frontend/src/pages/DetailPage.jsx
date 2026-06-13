@@ -457,6 +457,56 @@ export default function DetailPage() {
               </div>
             </div>
           )}
+          {mediaItems.music?.length > 0 && (
+            <div className="mb-8">
+              <h4 className="text-xs font-semibold text-indigo-400 uppercase tracking-wider mb-4 flex items-center gap-2">
+                <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3" />
+                </svg>
+                Music
+              </h4>
+              <div className="space-y-4">
+                {mediaItems.music.map((album, i) => (
+                  <div key={i} className="flex gap-4 p-4 rounded-xl bg-[#12142a] border border-gray-800/40">
+                    {album.artwork && (
+                      <img src={album.artwork} alt={album.album}
+                        className="w-20 h-20 rounded-lg object-cover flex-shrink-0 shadow-lg" />
+                    )}
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-semibold text-white truncate">{album.album}</p>
+                      <p className="text-xs text-gray-400 mt-0.5">{album.artist}</p>
+                      <p className="text-xs text-gray-500 mt-0.5">{album.release_date} &middot; {album.tracks} tracks</p>
+                      {album.tracks?.length > 0 && (
+                        <div className="mt-3 space-y-1">
+                          {album.tracks.slice(0, 6).map((track, j) => (
+                            <div key={j} className="flex items-center gap-2">
+                              {track.preview ? (
+                                <audio
+                                  controls
+                                  preload="none"
+                                  className="h-8 w-48"
+                                  style={{ filter: 'invert(1) hue-rotate(180deg)' }}
+                                >
+                                  <source src={track.preview} type="audio/mpeg" />
+                                </audio>
+                              ) : (
+                                <span className="text-xs text-gray-500">{track.track_number}.</span>
+                              )}
+                              <span className="text-xs text-gray-400 truncate">{track.name}</span>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                    <a href={album.url} target="_blank" rel="noopener noreferrer"
+                      className="flex-shrink-0 self-start px-3 py-1.5 rounded-lg bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-400 text-xs font-semibold transition-all">
+                      Apple Music
+                    </a>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
           {mediaItems.images?.length > 0 && (
             <div>
               <h4 className="text-xs font-semibold text-indigo-400 uppercase tracking-wider mb-4 flex items-center gap-2">

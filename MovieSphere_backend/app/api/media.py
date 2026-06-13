@@ -3,6 +3,7 @@ import requests
 from app.core.config import TMDB_API_KEY
 from app.services.youtube import get_behind_scenes
 from app.services.giphy import search_gifs
+from app.services.itunes import search_soundtrack, get_track_previews
 
 media_app = APIRouter()
 
@@ -40,12 +41,21 @@ def fetch_media(id: int = Query(...), type: str = Query('movie'), title: str = Q
 
     gifs = search_gifs(title) if title else []
 
+    music = []
+    if title:
+        albums = search_soundtrack(title)
+        for album in albums:
+            tracks = get_track_previews(album['collection_id'])
+            album['tracks'] = tracks
+            music.append(album)
+
     return {
         'MovieSphere': {
             'trailers': trailers,
             'behind_scenes': behind_scenes,
             'other_videos': other_videos,
             'images': images,
-            'gifs': gifs
+            'gifs': gifs,
+            'music': music
         }
     }
