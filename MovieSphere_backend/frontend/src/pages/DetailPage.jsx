@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { fetchDetail, fetchCast, fetchRecommendations, fetchSimilar, fetchComments, postComment, deleteComment, checkWatchLater, addWatchLater, removeWatchLater, addFavorite, removeFavorite, fetchFavorites, fetchMedia, fetchSeasonEpisodes } from '../api/endpoints'
 import { useAuth } from '../hooks/useAuth'
@@ -30,6 +30,8 @@ export default function DetailPage() {
   const [gifLightbox, setGifLightbox] = useState(null)
   const [videoPlayer, setVideoPlayer] = useState(null)
   const [similars, setSimilars] = useState([])
+  const [playingTrack, setPlayingTrack] = useState(null)
+  const audioRef = useRef(null)
 
   useEffect(() => {
     setInWatchLater(false)
@@ -458,62 +460,105 @@ export default function DetailPage() {
             </div>
           )}
           {mediaItems.music?.length > 0 && (
-            <div className="mb-8">
-              <h4 className="text-xs font-semibold text-indigo-400 uppercase tracking-wider mb-4 flex items-center gap-2">
-                <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3" />
-                </svg>
-                Music
-              </h4>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="mb-10">
+              <div className="flex items-center gap-3 mb-5">
+                <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-lg shadow-indigo-500/20">
+                  <svg className="w-4 h-4 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3" />
+                  </svg>
+                </div>
+                <h4 className="text-sm font-semibold text-white">Soundtrack</h4>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 {mediaItems.music.map((album, i) => (
-                  <div key={i} className="relative overflow-hidden rounded-xl bg-[#12142a] border border-gray-800/40 group">
+                  <div key={i}
+                    className="group relative flex gap-4 p-3 rounded-2xl bg-white/[0.03] border border-white/[0.06] hover:border-white/[0.1] hover:bg-white/[0.05] transition-all duration-300">
                     {album.artwork && (
-                      <div className="aspect-[3/1] relative overflow-hidden">
-                        <img src={album.artwork} alt="" className="w-full h-full object-cover blur-xl opacity-40 scale-110" />
-                        <div className="absolute inset-0 bg-gradient-to-r from-[#12142a]/80 via-[#12142a]/40 to-transparent" />
-                        <div className="absolute inset-0 bg-gradient-to-t from-[#12142a] via-transparent to-transparent" />
-                        <div className="absolute left-4 bottom-4 flex items-end gap-4">
-                          <img src={album.artwork} alt={album.album}
-                            className="w-16 h-16 rounded-lg object-cover shadow-lg shadow-black/40 ring-1 ring-white/10" />
-                          <div className="pb-0.5">
-                            <p className="text-sm font-semibold text-white">{album.album}</p>
-                            <p className="text-xs text-gray-400 mt-0.5">{album.artist}</p>
-                            <p className="text-xs text-gray-500 mt-0.5">{album.release_date} &middot; {album.tracks?.length ?? album.tracks ?? 0} tracks</p>
-                          </div>
-                        </div>
+                      <div className="relative flex-shrink-0">
+                        <img src={album.artwork} alt={album.album}
+                          className="w-20 h-20 rounded-xl object-cover shadow-lg ring-1 ring-white/[0.06]" />
+                        <div className="absolute inset-0 rounded-xl ring-1 ring-inset ring-white/[0.06]" />
                       </div>
                     )}
-                    <div className="p-4">
-                      {album.tracks?.length > 0 && (
-                        <div className="space-y-1.5">
-                          {album.tracks.slice(0, 6).map((track, j) => (
-                            <div key={j} className="flex items-center gap-2 py-1">
-                              {track.preview ? (
-                                <audio
-                                  controls
-                                  preload="none"
-                                  className="h-7 w-40 flex-shrink-0"
-                                  style={{ filter: 'invert(1) hue-rotate(180deg)' }}
-                                >
-                                  <source src={track.preview} type="audio/mpeg" />
-                                </audio>
-                              ) : (
-                                <span className="w-6 text-xs text-gray-500 text-right flex-shrink-0">{track.track_number ?? j + 1}.</span>
-                              )}
-                              <span className="text-xs text-gray-300 truncate">{track.name}</span>
-                            </div>
-                          ))}
+                    <div className="flex-1 min-w-0 pt-0.5">
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="min-w-0">
+                          <p className="text-sm font-semibold text-white truncate">{album.album}</p>
+                          <div className="flex items-center gap-1.5 mt-0.5">
+                            <span className="text-xs text-white/40">{album.artist}</span>
+                            <span className="text-white/20">&middot;</span>
+                            <span className="text-xs text-white/40">{album.tracks?.length ?? album.tracks ?? 0} songs</span>
+                          </div>
                         </div>
-                      )}
-                      {album.url && (
-                        <a href={album.url} target="_blank" rel="noopener noreferrer"
-                          className="mt-3 inline-flex items-center gap-1.5 text-xs text-indigo-400 hover:text-indigo-300 transition-colors">
-                          <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="currentColor">
-                            <path d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3" />
-                          </svg>
-                          Listen on Apple Music
-                        </a>
+                        {album.url && (
+                          <a href={album.url} target="_blank" rel="noopener noreferrer"
+                            className="flex-shrink-0 w-7 h-7 rounded-full bg-white/[0.06] flex items-center justify-center hover:bg-white/[0.12] transition-colors opacity-0 group-hover:opacity-100"
+                            title="Listen on Apple Music">
+                            <svg className="w-3.5 h-3.5 text-white/60" viewBox="0 0 24 24" fill="currentColor">
+                              <path d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3" />
+                            </svg>
+                          </a>
+                        )}
+                      </div>
+                      {album.tracks?.length > 0 && (
+                        <div className="mt-2.5 space-y-0.5">
+                          {album.tracks.slice(0, 6).map((track, j) => {
+                            const isPlaying = playingTrack?.albumIdx === i && playingTrack?.trackIdx === j
+                            return (
+                              <div key={j}
+                                className={`flex items-center gap-2 px-2 py-1.5 rounded-lg transition-colors ${isPlaying ? 'bg-indigo-500/10' : 'hover:bg-white/[0.03]'}`}>
+                                <button
+                                  onClick={() => {
+                                    if (track.preview) {
+                                      if (isPlaying) {
+                                        audioRef.current?.pause()
+                                        audioRef.current = null
+                                        setPlayingTrack(null)
+                                      } else {
+                                        if (audioRef.current) {
+                                          audioRef.current.pause()
+                                          audioRef.current = null
+                                        }
+                                        const audio = new Audio(track.preview)
+                                        audio.volume = 0.5
+                                        audio.addEventListener('ended', () => {
+                                          setPlayingTrack(null)
+                                          audioRef.current = null
+                                        })
+                                        audio.play()
+                                        audioRef.current = audio
+                                        setPlayingTrack({ albumIdx: i, trackIdx: j })
+                                      }
+                                    }
+                                  }}
+                                  className={`flex-shrink-0 w-6 h-6 rounded-full flex items-center justify-center transition-all ${track.preview
+                                    ? (isPlaying
+                                      ? 'bg-indigo-500 shadow-lg shadow-indigo-500/30'
+                                      : 'bg-white/10 group-hover:bg-white/20')
+                                    : 'bg-transparent'
+                                  }`}>
+                                  {isPlaying ? (
+                                    <span className="flex items-end gap-[1.5px] h-3 py-0.5">
+                                      <span className="w-[2px] bg-white rounded-full animate-pulse" style={{ height: '100%', animationDelay: '0ms' }} />
+                                      <span className="w-[2px] bg-white rounded-full animate-pulse" style={{ height: '60%', animationDelay: '150ms' }} />
+                                      <span className="w-[2px] bg-white rounded-full animate-pulse" style={{ height: '80%', animationDelay: '300ms' }} />
+                                    </span>
+                                  ) : track.preview ? (
+                                    <svg className="w-2.5 h-2.5 text-white/70 ml-[1px]" viewBox="0 0 24 24" fill="currentColor">
+                                      <path d="M8 5v14l11-7z" />
+                                    </svg>
+                                  ) : null}
+                                </button>
+                                <span className={`text-xs truncate ${isPlaying ? 'text-indigo-300 font-medium' : 'text-white/50'}`}>
+                                  {track.name}
+                                </span>
+                                {isPlaying && (
+                                  <span className="ml-auto text-[10px] text-indigo-400/60 font-medium flex-shrink-0">Now Playing</span>
+                                )}
+                              </div>
+                            )
+                          })}
+                        </div>
                       )}
                     </div>
                   </div>
