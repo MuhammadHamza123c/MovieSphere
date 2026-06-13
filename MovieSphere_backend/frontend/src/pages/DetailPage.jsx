@@ -78,6 +78,16 @@ export default function DetailPage() {
       .catch(() => setSeasonEpisodes([]))
   }, [id, mediaType, selectedSeason])
 
+  useEffect(() => {
+    return () => {
+      if (audioRef.current) {
+        audioRef.current.pause()
+        audioRef.current = null
+      }
+      setPlayingTrack(null)
+    }
+  }, [])
+
   if (loading) {
     return (
       <div className="animate-pulse space-y-6">
