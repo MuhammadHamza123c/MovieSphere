@@ -465,45 +465,57 @@ export default function DetailPage() {
                 </svg>
                 Music
               </h4>
-              <div className="space-y-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 {mediaItems.music.map((album, i) => (
-                  <div key={i} className="flex gap-4 p-4 rounded-xl bg-[#12142a] border border-gray-800/40">
+                  <div key={i} className="relative overflow-hidden rounded-xl bg-[#12142a] border border-gray-800/40 group">
                     {album.artwork && (
-                      <img src={album.artwork} alt={album.album}
-                        className="w-20 h-20 rounded-lg object-cover flex-shrink-0 shadow-lg" />
+                      <div className="aspect-[3/1] relative overflow-hidden">
+                        <img src={album.artwork} alt="" className="w-full h-full object-cover blur-xl opacity-40 scale-110" />
+                        <div className="absolute inset-0 bg-gradient-to-r from-[#12142a]/80 via-[#12142a]/40 to-transparent" />
+                        <div className="absolute inset-0 bg-gradient-to-t from-[#12142a] via-transparent to-transparent" />
+                        <div className="absolute left-4 bottom-4 flex items-end gap-4">
+                          <img src={album.artwork} alt={album.album}
+                            className="w-16 h-16 rounded-lg object-cover shadow-lg shadow-black/40 ring-1 ring-white/10" />
+                          <div className="pb-0.5">
+                            <p className="text-sm font-semibold text-white">{album.album}</p>
+                            <p className="text-xs text-gray-400 mt-0.5">{album.artist}</p>
+                            <p className="text-xs text-gray-500 mt-0.5">{album.release_date} &middot; {album.tracks?.length ?? album.tracks ?? 0} tracks</p>
+                          </div>
+                        </div>
+                      </div>
                     )}
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-semibold text-white truncate">{album.album}</p>
-                      <p className="text-xs text-gray-400 mt-0.5">{album.artist}</p>
-                      <p className="text-xs text-gray-500 mt-0.5">{album.release_date} &middot; {album.tracks?.length ?? album.tracks ?? 0} tracks</p>
+                    <div className="p-4">
                       {album.tracks?.length > 0 && (
-                        <div className="mt-3 space-y-1">
+                        <div className="space-y-1.5">
                           {album.tracks.slice(0, 6).map((track, j) => (
-                            <div key={j} className="flex items-center gap-2">
+                            <div key={j} className="flex items-center gap-2 py-1">
                               {track.preview ? (
                                 <audio
                                   controls
                                   preload="none"
-                                  className="h-8 w-48"
+                                  className="h-7 w-40 flex-shrink-0"
                                   style={{ filter: 'invert(1) hue-rotate(180deg)' }}
                                 >
                                   <source src={track.preview} type="audio/mpeg" />
                                 </audio>
                               ) : (
-                                <span className="text-xs text-gray-500">{track.track_number ?? j + 1}.</span>
+                                <span className="w-6 text-xs text-gray-500 text-right flex-shrink-0">{track.track_number ?? j + 1}.</span>
                               )}
-                              <span className="text-xs text-gray-400 truncate">{track.name}</span>
+                              <span className="text-xs text-gray-300 truncate">{track.name}</span>
                             </div>
                           ))}
                         </div>
                       )}
+                      {album.url && (
+                        <a href={album.url} target="_blank" rel="noopener noreferrer"
+                          className="mt-3 inline-flex items-center gap-1.5 text-xs text-indigo-400 hover:text-indigo-300 transition-colors">
+                          <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3" />
+                          </svg>
+                          Listen on Apple Music
+                        </a>
+                      )}
                     </div>
-                    {album.url && (
-                      <a href={album.url} target="_blank" rel="noopener noreferrer"
-                        className="flex-shrink-0 self-start px-3 py-1.5 rounded-lg bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-400 text-xs font-semibold transition-all">
-                        Apple Music
-                      </a>
-                    )}
                   </div>
                 ))}
               </div>
