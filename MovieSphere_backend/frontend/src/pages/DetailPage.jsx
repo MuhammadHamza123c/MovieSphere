@@ -501,7 +501,7 @@ export default function DetailPage() {
                     </div>
                     {album.tracks?.length > 0 && (
                       <div className="mt-3 space-y-0.5">
-                        {album.tracks.slice(0, 6).map((track, j) => {
+                        {album.tracks.map((track, j) => {
                           const isPlaying = playingTrack?.albumIdx === i && playingTrack?.trackIdx === j
                           return (
                             <div key={j}
