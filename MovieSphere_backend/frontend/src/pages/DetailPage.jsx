@@ -435,6 +435,27 @@ export default function DetailPage() {
               </div>
             </div>
           )}
+          {mediaItems.gifs?.length > 0 && (
+            <div className="mb-8">
+              <h4 className="text-xs font-semibold text-amber-400 uppercase tracking-wider mb-4 flex items-center gap-2">
+                <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M14.828 14.828a4 4 0 01-5.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                GIFs
+              </h4>
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+                {mediaItems.gifs.map((gif, i) => (
+                  <a key={i} href={gif.url} target="_blank" rel="noopener noreferrer"
+                    className="group relative overflow-hidden rounded-lg bg-[#12142a] border border-gray-800/40 hover:border-amber-500/30 transition-all aspect-video cursor-pointer">
+                    <img src={gif.thumbnail} alt={gif.title} className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105" loading="lazy" />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end p-2">
+                      <span className="text-[10px] font-semibold text-amber-400 uppercase tracking-wider">GIPHY</span>
+                    </div>
+                  </a>
+                ))}
+              </div>
+            </div>
+          )}
           {mediaItems.images?.length > 0 && (
             <div>
               <h4 className="text-xs font-semibold text-indigo-400 uppercase tracking-wider mb-4 flex items-center gap-2">

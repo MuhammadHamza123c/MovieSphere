@@ -2,6 +2,7 @@ from fastapi import APIRouter, Query
 import requests
 from app.core.config import TMDB_API_KEY
 from app.services.youtube import get_behind_scenes
+from app.services.giphy import search_gifs
 
 media_app = APIRouter()
 
@@ -37,11 +38,14 @@ def fetch_media(id: int = Query(...), type: str = Query('movie'), title: str = Q
     else:
         behind_scenes = []
 
+    gifs = search_gifs(title) if title else []
+
     return {
         'MovieSphere': {
             'trailers': trailers,
             'behind_scenes': behind_scenes,
             'other_videos': other_videos,
-            'images': images
+            'images': images,
+            'gifs': gifs
         }
     }
