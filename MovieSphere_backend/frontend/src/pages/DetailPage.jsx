@@ -483,11 +483,11 @@ export default function DetailPage() {
               </div>
               {mediaItems.music.slice(0, 1).map((album, i) => (
                 <div key={i}
-                  className="group flex gap-5 p-4 rounded-2xl bg-white/[0.03] border border-white/[0.06] hover:border-white/[0.1] hover:bg-white/[0.05] transition-all duration-300">
+                  className="group flex gap-5 p-4 rounded-2xl overflow-hidden bg-white/[0.03] border border-white/[0.06] hover:border-white/[0.1] hover:bg-white/[0.05] transition-all duration-300">
                   {album.artwork && (
-                    <div className="relative flex-shrink-0">
+                    <div className="relative shrink-0 w-44 h-96">
                       <img src={album.artwork} alt={album.album}
-                        className="w-44 h-96 rounded-2xl object-cover shadow-xl ring-1 ring-white/[0.06]" />
+                        className="w-full h-full object-cover rounded-2xl shadow-xl ring-1 ring-white/[0.06]" />
                       <div className="absolute inset-0 rounded-2xl ring-1 ring-inset ring-white/[0.06]" />
                     </div>
                   )}
