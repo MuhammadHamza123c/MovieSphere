@@ -485,10 +485,10 @@ export default function DetailPage() {
                 <div key={i}
                   className="group flex gap-5 p-4 rounded-2xl overflow-hidden bg-white/[0.03] border border-white/[0.06] hover:border-white/[0.1] hover:bg-white/[0.05] transition-all duration-300">
                   {album.artwork && (
-                    <div className="relative shrink-0 w-44 h-96">
+                    <div className="relative shrink-0 w-44 h-96 overflow-hidden rounded-2xl">
                       <img src={album.artwork} alt={album.album}
-                        className="w-full h-full object-cover rounded-2xl shadow-xl ring-1 ring-white/[0.06]" />
-                      <div className="absolute inset-0 rounded-2xl ring-1 ring-inset ring-white/[0.06]" />
+                        className="w-full h-full object-cover shadow-xl ring-1 ring-white/[0.06]" />
+                      <div className="absolute inset-0 ring-1 ring-inset ring-white/[0.06] rounded-2xl" />
                     </div>
                   )}
                   <div className="flex-1 min-w-0 pt-1">
