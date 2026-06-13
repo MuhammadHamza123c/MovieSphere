@@ -48,7 +48,7 @@ export default function DetailPage() {
         setComments(commentData)
         const title = detail.Title || detail.title || ''
         fetchMedia(id, mediaType, title).then(mediaData => {
-          if (mediaData?.images?.length || mediaData?.trailers?.length || mediaData?.behind_scenes?.length || mediaData?.other_videos?.length) setMediaItems(mediaData)
+          if (mediaData?.images?.length || mediaData?.trailers?.length || mediaData?.behind_scenes?.length || mediaData?.other_videos?.length || mediaData?.gifs?.length || mediaData?.music?.length) setMediaItems(mediaData)
         }).catch(() => {})
         if (title) {
           fetchRecommendations(title).then(setRecs).catch(() => {})
@@ -475,7 +475,7 @@ export default function DetailPage() {
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-semibold text-white truncate">{album.album}</p>
                       <p className="text-xs text-gray-400 mt-0.5">{album.artist}</p>
-                      <p className="text-xs text-gray-500 mt-0.5">{album.release_date} &middot; {album.tracks} tracks</p>
+                      <p className="text-xs text-gray-500 mt-0.5">{album.release_date} &middot; {album.tracks?.length ?? album.tracks ?? 0} tracks</p>
                       {album.tracks?.length > 0 && (
                         <div className="mt-3 space-y-1">
                           {album.tracks.slice(0, 6).map((track, j) => (
@@ -490,7 +490,7 @@ export default function DetailPage() {
                                   <source src={track.preview} type="audio/mpeg" />
                                 </audio>
                               ) : (
-                                <span className="text-xs text-gray-500">{track.track_number}.</span>
+                                <span className="text-xs text-gray-500">{track.track_number ?? j + 1}.</span>
                               )}
                               <span className="text-xs text-gray-400 truncate">{track.name}</span>
                             </div>
@@ -498,10 +498,12 @@ export default function DetailPage() {
                         </div>
                       )}
                     </div>
-                    <a href={album.url} target="_blank" rel="noopener noreferrer"
-                      className="flex-shrink-0 self-start px-3 py-1.5 rounded-lg bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-400 text-xs font-semibold transition-all">
-                      Apple Music
-                    </a>
+                    {album.url && (
+                      <a href={album.url} target="_blank" rel="noopener noreferrer"
+                        className="flex-shrink-0 self-start px-3 py-1.5 rounded-lg bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-400 text-xs font-semibold transition-all">
+                        Apple Music
+                      </a>
+                    )}
                   </div>
                 ))}
               </div>
