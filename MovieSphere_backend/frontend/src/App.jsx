@@ -16,6 +16,7 @@ import UpcomingPage from './pages/UpcomingPage'
 import WatchLaterPage from './pages/WatchLaterPage'
 import ReelsPage from './pages/ReelsPage'
 import TrendingPage from './pages/TrendingPage'
+import AuthCallback from './pages/AuthCallback'
 
 function ProtectedRoute({ children }) {
   const { user, loading } = useAuth()
@@ -40,6 +41,7 @@ export default function App() {
   return (
     <Routes>
       <Route path="/auth" element={user ? <Navigate to={from} replace /> : <AuthPage />} />
+      <Route path="/auth/callback" element={<AuthCallback />} />
       <Route element={<ProtectedRoute><AppLayout /></ProtectedRoute>}>
         <Route path="/home" element={<HomePage />} />
         <Route path="/shows" element={<ShowsPage />} />

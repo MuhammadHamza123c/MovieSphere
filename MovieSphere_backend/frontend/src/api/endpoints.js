@@ -196,3 +196,8 @@ export async function fetchReels(page = 1) {
   const { data } = await client.get('/MovieSphere/reels', { params: { page } })
   return data.MovieSphere || []
 }
+
+export async function getGoogleAuthUrl() {
+  const { data } = await client.get('/auth/google/url')
+  return data.url
+}
