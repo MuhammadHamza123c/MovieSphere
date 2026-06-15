@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../hooks/useAuth'
+import { createClient } from '@supabase/supabase-js'
+import client from '../api/client'
 
 export default function AuthCallback() {
   const navigate = useNavigate()
@@ -8,22 +10,29 @@ export default function AuthCallback() {
   const [status, setStatus] = useState('Completing sign in...')
 
   useEffect(() => {
-    const hash = window.location.hash.substring(1)
-    const params = new URLSearchParams(hash)
-    const token = params.get('access_token')
-    if (token) {
-      localStorage.setItem('msp_token', token)
-      check(true).then(() => {
-        const redirect = sessionStorage.getItem('msp_redirect') || '/home'
-        sessionStorage.removeItem('msp_redirect')
-        navigate(redirect, { replace: true })
-      }).catch(() => {
-        setStatus('Sign in failed. Please try again.')
-      })
-    } else {
-      const error = params.get('error_description') || 'Authentication failed'
-      setStatus(error)
-    }
+    let cancelled = false
+    ;(async () => {
+      try {
+        const { data: config } = await client.get('/auth/google/config')
+        const supabase = createClient(config.url, config.anon_key)
+        const { data, error } = await supabase.auth.getSession()
+        if (cancelled) return
+        if (error || !data.session) {
+          setStatus(error?.message || 'No session found')
+          return
+        }
+        localStorage.setItem('msp_token', data.session.access_token)
+        await check(true)
+        if (!cancelled) {
+          const redirect = sessionStorage.getItem('msp_redirect') || '/home'
+          sessionStorage.removeItem('msp_redirect')
+          navigate(redirect, { replace: true })
+        }
+      } catch (e) {
+        if (!cancelled) setStatus('Authentication failed: ' + (e.message || 'unknown error'))
+      }
+    })()
+    return () => { cancelled = true }
   }, [navigate, check])
 
   return (

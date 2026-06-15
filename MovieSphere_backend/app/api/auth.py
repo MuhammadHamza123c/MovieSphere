@@ -2,6 +2,7 @@ from fastapi import APIRouter, HTTPException, Depends
 from pydantic import BaseModel
 from app.core.database import supabase
 from app.core.auth import get_current_user
+import os
 
 auth_app = APIRouter(prefix="/auth", tags=["auth"])
 
@@ -69,15 +70,9 @@ async def get_me(user=Depends(get_current_user)):
         }
     }
 
-@auth_app.get("/google/url")
-async def google_auth_url():
-    try:
-        result = supabase.auth.sign_in_with_oauth({
-            "provider": "google",
-            "options": {
-                "redirect_to": "https://movie-sphere-sigma.vercel.app/auth/callback"
-            }
-        })
-        return {"url": result.url}
-    except Exception as e:
-        raise HTTPException(status_code=400, detail=str(e))
+@auth_app.get("/google/config")
+async def google_config():
+    return {
+        "url": os.getenv("project_url"),
+        "anon_key": os.getenv("api_key")
+    }
