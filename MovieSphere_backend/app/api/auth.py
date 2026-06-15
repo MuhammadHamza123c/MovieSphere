@@ -61,12 +61,13 @@ async def logout(user=Depends(get_current_user)):
 @auth_app.get("/me")
 async def get_me(user=Depends(get_current_user)):
     metadata = user.user_metadata or {}
+    name = metadata.get("username") or metadata.get("display_name") or metadata.get("full_name") or metadata.get("name") or ""
     return {
         "user": {
             "id": user.id,
             "email": user.email,
-            "username": metadata.get("username") or metadata.get("display_name", ""),
-            "display_name": metadata.get("display_name", "")
+            "username": name,
+            "display_name": name
         }
     }
 
