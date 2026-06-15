@@ -75,5 +75,21 @@ async def get_me(user=Depends(get_current_user)):
 async def google_config():
     return {
         "url": os.getenv("project_url"),
-        "anon_key": os.getenv("api_key")
+        "anon_key": os.getenv("anon_key")
     }
+
+@auth_app.delete("/account")
+async def delete_account(user=Depends(get_current_user)):
+    import httpx
+    uid = user.id
+    headers = {
+        "apikey": os.getenv("api_key"),
+        "Authorization": f"Bearer {os.getenv('api_key')}",
+        "Content-Type": "application/json",
+        "Prefer": "return=representation"
+    }
+    async with httpx.AsyncClient() as c:
+        for table in ["movies_table", "user_watch_later", "comments", "continue_watching", "user_exp", "user_notifications"]:
+            await c.delete(f"{os.getenv('project_url')}/rest/v1/{table}", headers=headers, params={"user_id": f"eq.{uid}"})
+        await c.delete(f"{os.getenv('project_url')}/auth/v1/admin/users/{uid}", headers=headers)
+    return {"message": "Account deleted"}

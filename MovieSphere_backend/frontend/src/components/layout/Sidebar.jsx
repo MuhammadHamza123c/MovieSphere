@@ -2,6 +2,7 @@
 import { useAuth } from '../../hooks/useAuth'
 import { useState } from 'react'
 import { useTheme } from '../../context/ThemeContext'
+import client from '../../api/client'
 
 const nav = [
   { to: '/home', label: 'Home', icon: 'M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6' },
@@ -19,6 +20,21 @@ export default function Sidebar() {
   const { user, logout } = useAuth()
   const { theme, toggleTheme } = useTheme()
   const [mobileOpen, setMobileOpen] = useState(false)
+  const [showDeleteModal, setShowDeleteModal] = useState(false)
+  const [deleting, setDeleting] = useState(false)
+
+  const handleDeleteAccount = async () => {
+    setDeleting(true)
+    try {
+      await client.delete('/auth/account')
+      await logout()
+    } catch (e) {
+      alert('Failed to delete account: ' + (e.response?.data?.detail || e.message))
+    } finally {
+      setDeleting(false)
+      setShowDeleteModal(false)
+    }
+  }
 
   const navLinkClasses = ({ isActive }) =>
     `flex items-center h-10 rounded-lg text-sm font-medium transition-all duration-200 ${
@@ -84,6 +100,9 @@ export default function Sidebar() {
                 <button onClick={logout} className="w-full text-sm px-3 py-2 rounded-lg border border-[var(--border-primary)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-tertiary)] transition-all cursor-pointer">
                   Sign Out
                 </button>
+                <button onClick={() => setShowDeleteModal(true)} className="w-full mt-1.5 text-[11px] px-3 py-1.5 rounded-lg border border-red-900/30 text-red-500/60 hover:text-red-400 hover:border-red-500/30 hover:bg-red-500/5 transition-all cursor-pointer bg-transparent">
+                  Delete Account
+                </button>
               </div>
             )}
           </div>
@@ -142,11 +161,40 @@ export default function Sidebar() {
                 <button onClick={logout} className="w-full text-sm px-3 py-2 rounded-lg border border-[var(--border-primary)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-tertiary)] transition-all cursor-pointer">
                   Sign Out
                 </button>
+                <button onClick={() => setShowDeleteModal(true)} className="w-full mt-1.5 text-[11px] px-3 py-1.5 rounded-lg border border-red-900/30 text-red-500/60 hover:text-red-400 hover:border-red-500/30 hover:bg-red-500/5 transition-all cursor-pointer bg-transparent">
+                  Delete Account
+                </button>
               </div>
             </div>
           </div>
         )}
       </aside>
+
+      {showDeleteModal && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60" onClick={() => !deleting && setShowDeleteModal(false)}>
+          <div className="bg-[#12142a] border border-red-900/40 rounded-2xl p-6 w-full max-w-sm mx-4 shadow-2xl shadow-black/50" onClick={e => e.stopPropagation()}>
+            <div className="w-12 h-12 mx-auto mb-4 rounded-full bg-red-500/10 flex items-center justify-center">
+              <svg className="w-6 h-6 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z" />
+              </svg>
+            </div>
+            <h3 className="text-lg font-bold text-white text-center mb-2">Delete Account?</h3>
+            <p className="text-sm text-gray-400 text-center mb-6">
+              This will permanently delete your account, favorites, watch later, comments, and all saved data. This cannot be undone.
+            </p>
+            <div className="flex gap-3">
+              <button onClick={() => setShowDeleteModal(false)} disabled={deleting}
+                className="flex-1 py-2.5 rounded-xl border border-gray-700/50 text-sm text-gray-300 hover:bg-white/5 transition-all cursor-pointer bg-transparent disabled:opacity-50">
+                Cancel
+              </button>
+              <button onClick={handleDeleteAccount} disabled={deleting}
+                className="flex-1 py-2.5 rounded-xl bg-red-500/90 hover:bg-red-600 text-white text-sm font-semibold transition-all cursor-pointer disabled:opacity-60">
+                {deleting ? 'Deleting...' : 'Delete'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   )
 }
