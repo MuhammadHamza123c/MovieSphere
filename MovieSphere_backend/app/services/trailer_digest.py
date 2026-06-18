@@ -1,6 +1,6 @@
 import httpx
 from datetime import date
-from app.core.config import TMDB_API_KEY, YOUTUBE_API_KEY, SUPABASE_URL, SUPABASE_KEY
+from app.core.config import TMDB_API_KEY, SUPABASE_URL, SUPABASE_KEY
 
 SUPABASE_HEADERS = {
     'apikey': SUPABASE_KEY,
@@ -52,31 +52,29 @@ async def fetch_daily_digest():
     async with httpx.AsyncClient(timeout=15) as client:
         for key, item in collected.items():
             try:
-                q = f"{item['title']} official trailer"
+                videos_path = f"/{'movie' if item['media_type'] == 'movie' else 'tv'}/{item['media_id']}/videos"
                 r = await client.get(
-                    'https://www.googleapis.com/youtube/v3/search',
-                    params={
-                        'part': 'snippet',
-                        'q': q,
-                        'key': YOUTUBE_API_KEY,
-                        'maxResults': 1,
-                        'type': 'video',
-                    }
+                    f'https://api.themoviedb.org/3{videos_path}',
+                    params={'api_key': TMDB_API_KEY, 'language': 'en-US'}
                 )
                 if r.status_code != 200:
                     continue
-                items = r.json().get('items', [])
-                if not items:
+                results = r.json().get('results', [])
+                if not results:
                     continue
-                vid = items[0]['id']['videoId']
-                snippet = items[0]['snippet']
+                official = [v for v in results if v.get('site') == 'YouTube' and v.get('type') == 'Trailer' and v.get('official')]
+                if not official:
+                    official = [v for v in results if v.get('site') == 'YouTube' and v.get('type') == 'Trailer']
+                if not official:
+                    continue
+                vid = official[0]['key']
                 trailers.append({
                     'media_id': item['media_id'],
                     'media_type': item['media_type'],
                     'title': item['title'],
                     'poster_url': item['poster_url'],
                     'trailer_url': vid,
-                    'trailer_title': snippet.get('title', ''),
+                    'trailer_title': official[0].get('name', ''),
                     'source': item['source'],
                     'created_at': today,
                 })
