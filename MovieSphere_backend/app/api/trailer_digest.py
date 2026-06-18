@@ -4,6 +4,7 @@ from app.services.trailer_digest import fetch_daily_digest, send_push_notificati
 
 trailer_digest_app = APIRouter()
 
+@trailer_digest_app.get('/MovieSphere/trailer-digest/run')
 @trailer_digest_app.post('/MovieSphere/trailer-digest/run')
 async def run_digest(key: str = Query(...)):
     if key != CRON_SECRET_KEY:
