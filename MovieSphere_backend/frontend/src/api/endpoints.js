@@ -196,3 +196,13 @@ export async function fetchReels(page = 1) {
   const { data } = await client.get('/MovieSphere/reels', { params: { page } })
   return data.MovieSphere || []
 }
+
+export async function subscribePush(subscription) {
+  const { data } = await client.post('/MovieSphere/notifications/subscribe', subscription)
+  return data
+}
+
+export async function unsubscribePush(endpoint) {
+  const { data } = await client.delete('/MovieSphere/notifications/subscribe', { params: { endpoint } })
+  return data
+}

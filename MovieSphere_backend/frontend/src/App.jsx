@@ -17,6 +17,7 @@ import WatchLaterPage from './pages/WatchLaterPage'
 import ReelsPage from './pages/ReelsPage'
 import TrendingPage from './pages/TrendingPage'
 import AuthCallback from './pages/AuthCallback'
+import usePushNotifications from './hooks/usePushNotifications'
 
 function ProtectedRoute({ children }) {
   const { user, loading } = useAuth()
@@ -31,6 +32,7 @@ function ProtectedRoute({ children }) {
 
 export default function App() {
   const { user, loading } = useAuth()
+  usePushNotifications()
   const redirectRef = useRef(null)
   if (!redirectRef.current) {
     redirectRef.current = sessionStorage.getItem('msp_redirect')
