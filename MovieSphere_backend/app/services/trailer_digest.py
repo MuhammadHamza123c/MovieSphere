@@ -116,41 +116,38 @@ async def send_push_notifications(trailers, max_count=5):
     sent = []
     for sub in subs:
         for t in selected:
+            payload = {
+                'title': f"New {t['media_type']} trailer",
+                'body': t['title'],
+                'icon': t['poster_url'] or '/logo.png',
+                'data': {
+                    'media_id': t['media_id'],
+                    'media_type': t['media_type'],
+                    'url': f"/{t['media_type']}/{t['media_id']}",
+                },
+            }
             try:
-                payload = {
-                    'title': f"New {t['media_type']} trailer",
-                    'body': t['title'],
-                    'icon': t['poster_url'] or '/logo.png',
-                    'data': {
-                        'media_id': t['media_id'],
-                        'media_type': t['media_type'],
-                        'url': f"/{t['media_type']}/{t['media_id']}",
-                    },
-                }
                 _send_push(sub['endpoint'], sub['p256dh_key'], sub['auth_key'], payload)
                 sent.append(t['media_id'])
-            except:
-                continue
+            except Exception as e:
+                print(f'[Push] Failed to send to {sub["endpoint"][:30]}: {e}')
     return sent
 
 def _send_push(endpoint, p256dh, auth, payload):
-    try:
-        import json
-        from pywebpush import webpush
-        from app.core.config import VAPID_PRIVATE_KEY, VAPID_PUBLIC_KEY
-        webpush(
-            subscription_info={
-                'endpoint': endpoint,
-                'keys': {
-                    'p256dh': p256dh,
-                    'auth': auth,
-                }
-            },
-            data=json.dumps(payload),
-            vapid_private_key=VAPID_PRIVATE_KEY,
-            vapid_claims={
-                'sub': 'mailto:admin@moviesphere.app',
+    import json
+    from pywebpush import webpush
+    from app.core.config import VAPID_PRIVATE_KEY, VAPID_PUBLIC_KEY
+    webpush(
+        subscription_info={
+            'endpoint': endpoint,
+            'keys': {
+                'p256dh': p256dh,
+                'auth': auth,
             }
-        )
-    except:
-        pass
+        },
+        data=json.dumps(payload),
+        vapid_private_key=VAPID_PRIVATE_KEY,
+        vapid_claims={
+            'sub': 'mailto:admin@moviesphere.app',
+        }
+    )
