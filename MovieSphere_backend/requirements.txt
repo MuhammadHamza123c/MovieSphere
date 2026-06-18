@@ -5,3 +5,4 @@ requests
 supabase
 groq
 python-multipart
+pywebpush

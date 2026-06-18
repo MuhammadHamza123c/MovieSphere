@@ -1,3 +1,4 @@
+import asyncio
 import httpx
 from datetime import date
 from app.core.config import TMDB_API_KEY, SUPABASE_URL, SUPABASE_KEY
@@ -48,38 +49,40 @@ async def fetch_daily_digest():
             except:
                 continue
 
-    trailers = []
-    async with httpx.AsyncClient(timeout=15) as client:
-        for key, item in collected.items():
-            try:
-                videos_path = f"/{'movie' if item['media_type'] == 'movie' else 'tv'}/{item['media_id']}/videos"
+    async def fetch_trailer(item):
+        try:
+            videos_path = f"/{'movie' if item['media_type'] == 'movie' else 'tv'}/{item['media_id']}/videos"
+            async with httpx.AsyncClient(timeout=10) as client:
                 r = await client.get(
                     f'https://api.themoviedb.org/3{videos_path}',
                     params={'api_key': TMDB_API_KEY, 'language': 'en-US'}
                 )
                 if r.status_code != 200:
-                    continue
+                    return None
                 results = r.json().get('results', [])
                 if not results:
-                    continue
+                    return None
                 official = [v for v in results if v.get('site') == 'YouTube' and v.get('type') == 'Trailer' and v.get('official')]
                 if not official:
                     official = [v for v in results if v.get('site') == 'YouTube' and v.get('type') == 'Trailer']
                 if not official:
-                    continue
-                vid = official[0]['key']
-                trailers.append({
+                    return None
+                return {
                     'media_id': item['media_id'],
                     'media_type': item['media_type'],
                     'title': item['title'],
                     'poster_url': item['poster_url'],
-                    'trailer_url': vid,
+                    'trailer_url': official[0]['key'],
                     'trailer_title': official[0].get('name', ''),
                     'source': item['source'],
                     'created_at': today,
-                })
-            except:
-                continue
+                }
+        except:
+            return None
+
+    tasks = [fetch_trailer(item) for item in collected.values()]
+    results = await asyncio.gather(*tasks)
+    trailers = [r for r in results if r is not None]
 
     inserted = []
     async with httpx.AsyncClient(timeout=30) as client:
