@@ -50,11 +50,21 @@ async def unsubscribe(endpoint: str, user=Depends(get_current_user)):
 @notifications_app.get('/MovieSphere/notifications/subscriptions')
 async def list_subscriptions():
     async with httpx.AsyncClient() as client:
-        r = await client.get(
+        r1 = await client.get(
             f'{SUPABASE_URL}/rest/v1/push_subscriptions',
             headers=SUPABASE_HEADERS,
             params={'select': 'user_id,endpoint', 'limit': 50},
         )
-        r.raise_for_status()
-        data = r.json()
-        return {'subscriptions': data, 'count': len(data)}
+        r2 = await client.get(
+            f'{SUPABASE_URL}/rest/v1/movies_table',
+            headers=SUPABASE_HEADERS,
+            params={'select': 'user_id', 'limit': 5},
+        )
+        push_data = r1.json() if r1.status_code == 200 else f'error: {r1.text[:100]}'
+        movie_data = r2.json() if r2.status_code == 200 else f'error: {r2.text[:100]}'
+        return {
+            'push_subscriptions': push_data,
+            'push_count': len(push_data) if isinstance(push_data, list) else 0,
+            'movies_table_sample': movie_data,
+            'supabase_url': SUPABASE_URL[:30] + '...' if SUPABASE_URL else None,
+        }
