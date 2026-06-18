@@ -37,12 +37,13 @@ export default function usePushNotifications() {
         if (Notification.permission !== 'granted') return
 
         let sub = await reg.pushManager.getSubscription()
-        if (!sub) {
-          sub = await reg.pushManager.subscribe({
-            userVisibleOnly: true,
-            applicationServerKey: VAPID_PUBLIC_KEY,
-          })
+        if (sub) {
+          await sub.unsubscribe()
         }
+        sub = await reg.pushManager.subscribe({
+          userVisibleOnly: true,
+          applicationServerKey: VAPID_PUBLIC_KEY,
+        })
         subRef.current = sub
 
         const json = sub.toJSON()
