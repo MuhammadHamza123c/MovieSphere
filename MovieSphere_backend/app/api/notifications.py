@@ -30,10 +30,12 @@ async def subscribe(sub: PushSubscription, user=Depends(get_current_user)):
                 'p256dh_key': sub.p256dh_key,
                 'auth_key': sub.auth_key,
             },
-            params={'on_conflict': 'endpoint'}
         )
+        if r.status_code == 409:
+            return {'status': 'already_subscribed'}
         if r.status_code not in (200, 201):
-            raise HTTPException(status_code=500, detail='Failed to save subscription')
+            detail = r.text[:200]
+            raise HTTPException(status_code=500, detail=f'Supabase error: {detail}')
         return {'status': 'subscribed'}
 
 @notifications_app.delete('/MovieSphere/notifications/subscribe')
