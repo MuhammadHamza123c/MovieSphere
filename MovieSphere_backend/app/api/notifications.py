@@ -35,10 +35,10 @@ async def subscribe(sub: PushSubscription, user=Depends(get_current_user)):
             return {'status': 'already_subscribed', 'user_id': user.id}
         if r.status_code not in (200, 201):
             return {'status': 'error', 'detail': f'Supabase {r.status_code}: {r.text[:200]}'}
-        return {'status': 'subscribed', 'user_id': user.id}
+        return {'status': 'subscribed', 'user_id': user.id, 'supabase_code': r.status_code}
 
 @notifications_app.get('/MovieSphere/notifications/subscriptions')
-async def list_subscriptions(user=Depends(get_current_user)):
+async def list_subscriptions():
     async with httpx.AsyncClient(timeout=10) as client:
         r = await client.get(
             f'{SUPABASE_URL}/rest/v1/push_subscriptions',
