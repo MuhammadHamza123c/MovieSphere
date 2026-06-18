@@ -2,7 +2,7 @@ import { useEffect, useRef } from 'react'
 import { useAuth } from './useAuth'
 import { subscribePush, unsubscribePush } from '../api/endpoints'
 
-const VAPID_PUBLIC_KEY = 'BAB-tulvQES41CCydcYw2gHwy14arztGvjevvWgN9IHbxJbYs_xdlAbTu7oHo2U41jTR0mRUho9GtJDFYavOFc8'
+const VAPID_PUBLIC_KEY = 'BA54yZO-Ba4663OHp4SwjWzo165mOg4iE2rJba6A61yB9IjvujLZNtIWQVIr5GHzq233XlRZmDrPlXuihpQt6Zk'
 
 export default function usePushNotifications() {
   const { user } = useAuth()

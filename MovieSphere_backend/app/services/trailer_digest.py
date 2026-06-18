@@ -148,6 +148,6 @@ def _send_push(endpoint, p256dh, auth, payload):
         data=json.dumps(payload),
         vapid_private_key=VAPID_PRIVATE_KEY,
         vapid_claims={
-            'sub': 'mailto:admin@moviesphere.app',
+            'sub': 'mailto:hamza574656@gmail.com',
         }
     )
