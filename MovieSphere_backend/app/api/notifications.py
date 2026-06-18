@@ -31,8 +31,11 @@ async def subscribe(sub: PushSubscription, user=Depends(get_current_user)):
                 'auth_key': sub.auth_key,
             },
         )
-        r.raise_for_status()
-        return {'status': 'subscribed', 'user_id': user.id}
+        return {
+            'status_code': r.status_code,
+            'response': r.text[:500],
+            'user_id': user.id,
+        }
 
 @notifications_app.delete('/MovieSphere/notifications/subscribe')
 async def unsubscribe(endpoint: str, user=Depends(get_current_user)):
@@ -60,11 +63,9 @@ async def list_subscriptions():
             headers=SUPABASE_HEADERS,
             params={'select': 'user_id', 'limit': 5},
         )
-        push_data = r1.json() if r1.status_code == 200 else f'error: {r1.text[:100]}'
-        movie_data = r2.json() if r2.status_code == 200 else f'error: {r2.text[:100]}'
         return {
-            'push_subscriptions': push_data,
-            'push_count': len(push_data) if isinstance(push_data, list) else 0,
-            'movies_table_sample': movie_data,
-            'supabase_url': SUPABASE_URL[:30] + '...' if SUPABASE_URL else None,
+            'push_status': r1.status_code,
+            'push_response': r1.text[:300],
+            'movie_status': r2.status_code,
+            'movie_response': r2.text[:300],
         }
