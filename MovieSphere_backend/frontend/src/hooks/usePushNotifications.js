@@ -37,16 +37,12 @@ export default function usePushNotifications() {
         if (Notification.permission !== 'granted') return
 
         let sub = await reg.pushManager.getSubscription()
-        if (sub) {
-          subRef.current = sub
-          endpointRef.current = sub.toJSON().endpoint
-          return
+        if (!sub) {
+          sub = await reg.pushManager.subscribe({
+            userVisibleOnly: true,
+            applicationServerKey: VAPID_PUBLIC_KEY,
+          })
         }
-
-        sub = await reg.pushManager.subscribe({
-          userVisibleOnly: true,
-          applicationServerKey: VAPID_PUBLIC_KEY,
-        })
         subRef.current = sub
 
         const json = sub.toJSON()
@@ -56,8 +52,8 @@ export default function usePushNotifications() {
           p256dh_key: json.keys.p256dh,
           auth_key: json.keys.auth,
         })
-      } catch {
-        // silently fail - user may have denied permission
+      } catch (err) {
+        console.error('[PushNotification]', err)
       }
     }
 
