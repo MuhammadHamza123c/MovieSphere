@@ -84,22 +84,19 @@ async def fetch_daily_digest():
     results = await asyncio.gather(*tasks)
     trailers = [r for r in results if r is not None]
 
-    inserted = []
     async with httpx.AsyncClient(timeout=30) as client:
         for t in trailers:
             try:
-                r = await client.post(
+                await client.post(
                     f'{SUPABASE_URL}/rest/v1/daily_trailers',
                     headers=SUPABASE_HEADERS,
                     json=t,
                     params={'on_conflict': 'media_id,media_type,created_at'}
                 )
-                if r.status_code in (200, 201):
-                    inserted.append(t)
             except:
-                continue
+                pass
 
-    return inserted
+    return trailers
 
 async def send_push_notifications(trailers, max_count=5):
     if not trailers:
