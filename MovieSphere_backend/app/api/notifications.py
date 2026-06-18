@@ -31,16 +31,17 @@ async def subscribe(sub: PushSubscription, user=Depends(get_current_user)):
                 'auth_key': sub.auth_key,
             },
         )
-        return {
-            'status_code': r.status_code,
-            'response': r.text[:500],
-            'user_id': user.id,
-        }
+        if r.status_code == 409:
+            return {'status': 'already_subscribed'}
+        if r.status_code not in (200, 201):
+            from fastapi import HTTPException
+            raise HTTPException(status_code=502, detail=f'Supabase error: {r.text[:200]}')
+        return {'status': 'subscribed'}
 
 @notifications_app.delete('/MovieSphere/notifications/subscribe')
 async def unsubscribe(endpoint: str, user=Depends(get_current_user)):
     async with httpx.AsyncClient() as client:
-        r = await client.delete(
+        await client.delete(
             f'{SUPABASE_URL}/rest/v1/push_subscriptions',
             headers=SUPABASE_HEADERS,
             params={
@@ -49,23 +50,3 @@ async def unsubscribe(endpoint: str, user=Depends(get_current_user)):
             }
         )
         return {'status': 'unsubscribed'}
-
-@notifications_app.get('/MovieSphere/notifications/subscriptions')
-async def list_subscriptions():
-    async with httpx.AsyncClient() as client:
-        r1 = await client.get(
-            f'{SUPABASE_URL}/rest/v1/push_subscriptions',
-            headers=SUPABASE_HEADERS,
-            params={'select': 'user_id,endpoint', 'limit': 50},
-        )
-        r2 = await client.get(
-            f'{SUPABASE_URL}/rest/v1/movies_table',
-            headers=SUPABASE_HEADERS,
-            params={'select': 'user_id', 'limit': 5},
-        )
-        return {
-            'push_status': r1.status_code,
-            'push_response': r1.text[:300],
-            'movie_status': r2.status_code,
-            'movie_response': r2.text[:300],
-        }
