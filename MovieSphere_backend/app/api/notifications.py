@@ -1,9 +1,11 @@
-import httpx
+import json
 import traceback
+
+import httpx
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
+
 from app.core.config import SUPABASE_URL, SUPABASE_KEY
-from app.core.auth import get_current_user
 
 notifications_app = APIRouter()
 
@@ -20,14 +22,15 @@ class PushSubscription(BaseModel):
     auth_key: str
 
 @notifications_app.post('/MovieSphere/notifications/subscribe')
-async def subscribe(sub: PushSubscription, user=Depends(get_current_user)):
+async def subscribe(sub: PushSubscription):
     try:
+        user_id = '00000000-0000-0000-0000-000000000000'
         async with httpx.AsyncClient(timeout=15) as client:
             r = await client.post(
                 f'{SUPABASE_URL}/rest/v1/push_subscriptions',
                 headers=SUPABASE_HEADERS,
                 json={
-                    'user_id': user.id,
+                    'user_id': user_id,
                     'endpoint': sub.endpoint,
                     'p256dh_key': sub.p256dh_key,
                     'auth_key': sub.auth_key,
@@ -44,14 +47,15 @@ async def subscribe(sub: PushSubscription, user=Depends(get_current_user)):
         raise HTTPException(status_code=500, detail=f'{type(e).__name__}: {str(e)[:300]}')
 
 @notifications_app.delete('/MovieSphere/notifications/subscribe')
-async def unsubscribe(endpoint: str, user=Depends(get_current_user)):
+async def unsubscribe(endpoint: str):
     try:
+        user_id = '00000000-0000-0000-0000-000000000000'
         async with httpx.AsyncClient(timeout=10) as client:
             r = await client.delete(
                 f'{SUPABASE_URL}/rest/v1/push_subscriptions',
                 headers=SUPABASE_HEADERS,
                 params={
-                    'user_id': f'eq.{user.id}',
+                    'user_id': f'eq.{user_id}',
                     'endpoint': f'eq.{endpoint}',
                 }
             )
