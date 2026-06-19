@@ -87,6 +87,14 @@ export default function Sidebar() {
                 </NavLink>
               ))}
             </nav>
+            {credits && (
+              <div className="px-4 py-2">
+                <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-indigo-500/10 text-indigo-300 text-sm font-medium">
+                  <span>⚡</span>
+                  <span>{credits.credits_remaining}/100 credits</span>
+                </div>
+              </div>
+            )}
             <div className="border-t border-[var(--border-primary)] px-4 py-3 flex gap-2">
               <button onClick={toggleTheme} className="flex-1 flex items-center justify-center gap-2 h-10 rounded-lg border border-[var(--border-primary)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-tertiary)] transition-all cursor-pointer text-sm">
                 {theme === 'dark' ? '☀️' : '🌙'} {theme === 'dark' ? 'Light' : 'Dark'}
