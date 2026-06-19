@@ -146,7 +146,7 @@ export default function Sidebar() {
             <div className="px-3.5 mb-1 hidden group-hover:block">
               <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-indigo-500/10 text-indigo-300 text-xs font-medium">
                 <span>⚡</span>
-                <span>{credits.credits_remaining}/20 credits</span>
+                <span>{credits.credits_remaining}/100 credits</span>
               </div>
             </div>
             <div className="flex items-center justify-center w-14 min-w-[56px] mb-1 hidden group-hover:hidden">
