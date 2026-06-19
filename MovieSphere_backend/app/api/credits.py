@@ -5,6 +5,6 @@ from app.core.credits import get_credits
 credits_app = APIRouter()
 
 @credits_app.get('/MovieSphere/credits')
-async def credits_info(user=Depends(get_current_user)):
-    result = await get_credits(user.id)
+def credits_info(user=Depends(get_current_user)):
+    result = get_credits(user.id)
     return {'MovieSphere': result}

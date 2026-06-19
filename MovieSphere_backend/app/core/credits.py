@@ -1,13 +1,5 @@
-import httpx
 from datetime import date, datetime, timezone
-from app.core.config import SUPABASE_URL, SUPABASE_KEY
-
-SUPABASE_HEADERS = {
-    'apikey': SUPABASE_KEY,
-    'Authorization': f'Bearer {SUPABASE_KEY}',
-    'Content-Type': 'application/json',
-    'Prefer': 'return=representation',
-}
+from app.core.database import supabase
 
 DEFAULT_CREDITS = 20
 
@@ -23,31 +15,19 @@ def get_credit_cost(path: str, query_params: dict) -> int:
         return 2 if season is None else 1
     return 1
 
-async def get_credits(user_id: str) -> dict:
-    async with httpx.AsyncClient(timeout=10) as client:
-        r = await client.get(
-            f'{SUPABASE_URL}/rest/v1/user_credits',
-            headers=SUPABASE_HEADERS,
-            params={'user_id': f'eq.{user_id}', 'select': '*'},
-        )
-        if r.status_code != 200:
-            return {'credits_remaining': 0, 'reset_at': None}
-
-        records = r.json()
-        now_ts = datetime.now(timezone.utc).isoformat()
+def get_credits(user_id: str) -> dict:
+    try:
+        records = supabase.table('user_credits').select('*').eq('user_id', user_id).execute()
         now_date = date.today()
 
-        if not records:
-            await client.post(
-                f'{SUPABASE_URL}/rest/v1/user_credits',
-                headers=SUPABASE_HEADERS,
-                json={'user_id': user_id, 'credits_remaining': DEFAULT_CREDITS, 'reset_at': now_ts},
-            )
-            return {'credits_remaining': DEFAULT_CREDITS, 'reset_at': now_ts}
+        if not records.data:
+            supabase.table('user_credits').insert({
+                'user_id': user_id,
+                'credits_remaining': DEFAULT_CREDITS,
+            }).execute()
+            return {'credits_remaining': DEFAULT_CREDITS}
 
-        record = records[0]
-
-        # Parse only the date part of reset_at
+        record = records.data[0]
         reset_str = record.get('reset_at', '') or ''
         reset_date_str = reset_str[:10]
         try:
@@ -55,58 +35,42 @@ async def get_credits(user_id: str) -> dict:
         except:
             reset_date = now_date
 
-        # Reset if 7+ days have passed
         if (now_date - reset_date).days >= 7:
-            await client.patch(
-                f'{SUPABASE_URL}/rest/v1/user_credits',
-                headers=SUPABASE_HEADERS,
-                params={'user_id': f'eq.{user_id}'},
-                json={'credits_remaining': DEFAULT_CREDITS, 'reset_at': now_ts},
-            )
-            return {'credits_remaining': DEFAULT_CREDITS, 'reset_at': now_ts}
+            supabase.table('user_credits').update({
+                'credits_remaining': DEFAULT_CREDITS,
+                'reset_at': datetime.now(timezone.utc).isoformat(),
+            }).eq('user_id', user_id).execute()
+            return {'credits_remaining': DEFAULT_CREDITS}
 
-        return {
-            'credits_remaining': record.get('credits_remaining', 0),
-            'reset_at': record.get('reset_at'),
-        }
+        return {'credits_remaining': record.get('credits_remaining', 0)}
+    except Exception as e:
+        print(f'[Credits] get_credits failed: {e}', flush=True)
+        return {'credits_remaining': DEFAULT_CREDITS}
 
-async def deduct_credits(user_id: str, cost: int) -> dict:
-    info = await get_credits(user_id)
+def deduct_credits(user_id: str, cost: int) -> dict:
+    info = get_credits(user_id)
     remaining = info.get('credits_remaining', 0)
-    reset_at = info.get('reset_at')
 
     if remaining < cost:
-        return {'success': False, 'credits_remaining': remaining, 'reset_at': reset_at}
+        return {'success': False, 'credits_remaining': remaining}
 
     new_remaining = remaining - cost
+    try:
+        result = supabase.table('user_credits').update({
+            'credits_remaining': new_remaining,
+        }).eq('user_id', user_id).eq('credits_remaining', remaining).execute()
 
-    async with httpx.AsyncClient(timeout=10) as client:
-        r = await client.patch(
-            f'{SUPABASE_URL}/rest/v1/user_credits',
-            headers=SUPABASE_HEADERS,
-            params={'user_id': f'eq.{user_id}', 'credits_remaining': f'eq.{remaining}'},
-            json={'credits_remaining': new_remaining},
-        )
+        if not result.data:
+            info2 = get_credits(user_id)
+            remaining2 = info2.get('credits_remaining', 0)
+            if remaining2 < cost:
+                return {'success': False, 'credits_remaining': remaining2}
+            new_remaining2 = remaining2 - cost
+            supabase.table('user_credits').update({
+                'credits_remaining': new_remaining2,
+            }).eq('user_id', user_id).eq('credits_remaining', remaining2).execute()
 
-    if r.status_code != 200:
-        return {'success': False, 'credits_remaining': remaining, 'reset_at': reset_at}
-
-    # Check if any row was actually updated
-    updated = r.json()
-    if not updated or len(updated) == 0:
-        # Race condition — credits changed between read and write
-        # Re-fetch and try once more
-        info2 = await get_credits(user_id)
-        remaining2 = info2.get('credits_remaining', 0)
-        if remaining2 < cost:
-            return {'success': False, 'credits_remaining': remaining2, 'reset_at': info2.get('reset_at')}
-        new_remaining2 = remaining2 - cost
-        async with httpx.AsyncClient(timeout=10) as client:
-            await client.patch(
-                f'{SUPABASE_URL}/rest/v1/user_credits',
-                headers=SUPABASE_HEADERS,
-                params={'user_id': f'eq.{user_id}', 'credits_remaining': f'eq.{remaining2}'},
-                json={'credits_remaining': new_remaining2},
-            )
-
-    return {'success': True, 'credits_remaining': new_remaining, 'reset_at': reset_at}
+        return {'success': True, 'credits_remaining': new_remaining}
+    except Exception as e:
+        print(f'[Credits] deduct_credits failed: {e}', flush=True)
+        return {'success': False, 'credits_remaining': remaining}

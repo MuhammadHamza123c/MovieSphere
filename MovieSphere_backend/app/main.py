@@ -75,7 +75,7 @@ async def credit_middleware(request: Request, call_next):
 
     cost = get_credit_cost(path, dict(request.query_params))
 
-    result = await deduct_credits(user_id, cost)
+    result = deduct_credits(user_id, cost)
 
     if not result.get('success'):
         remaining = result.get('credits_remaining', 0)
