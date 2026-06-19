@@ -1,5 +1,5 @@
 import httpx
-from datetime import date, timedelta
+from datetime import date, datetime, timezone
 from app.core.config import SUPABASE_URL, SUPABASE_KEY
 
 SUPABASE_HEADERS = {
@@ -34,22 +34,22 @@ async def get_credits(user_id: str) -> dict:
             return {'credits_remaining': 0, 'reset_at': None}
 
         records = r.json()
+        now_ts = datetime.now(timezone.utc).isoformat()
         now_date = date.today()
 
         if not records:
-            now = now_date.isoformat()
             await client.post(
                 f'{SUPABASE_URL}/rest/v1/user_credits',
                 headers=SUPABASE_HEADERS,
-                json={'user_id': user_id, 'credits_remaining': DEFAULT_CREDITS, 'reset_at': now},
+                json={'user_id': user_id, 'credits_remaining': DEFAULT_CREDITS, 'reset_at': now_ts},
             )
-            return {'credits_remaining': DEFAULT_CREDITS, 'reset_at': now}
+            return {'credits_remaining': DEFAULT_CREDITS, 'reset_at': now_ts}
 
         record = records[0]
 
-        # Parse only the date part of reset_at to avoid timezone issues
+        # Parse only the date part of reset_at
         reset_str = record.get('reset_at', '') or ''
-        reset_date_str = reset_str[:10]  # "2026-06-19"
+        reset_date_str = reset_str[:10]
         try:
             reset_date = date.fromisoformat(reset_date_str) if reset_date_str else now_date
         except:
@@ -57,14 +57,13 @@ async def get_credits(user_id: str) -> dict:
 
         # Reset if 7+ days have passed
         if (now_date - reset_date).days >= 7:
-            now_str = now_date.isoformat()
             await client.patch(
                 f'{SUPABASE_URL}/rest/v1/user_credits',
                 headers=SUPABASE_HEADERS,
                 params={'user_id': f'eq.{user_id}'},
-                json={'credits_remaining': DEFAULT_CREDITS, 'reset_at': now_str},
+                json={'credits_remaining': DEFAULT_CREDITS, 'reset_at': now_ts},
             )
-            return {'credits_remaining': DEFAULT_CREDITS, 'reset_at': now_str}
+            return {'credits_remaining': DEFAULT_CREDITS, 'reset_at': now_ts}
 
         return {
             'credits_remaining': record.get('credits_remaining', 0),
