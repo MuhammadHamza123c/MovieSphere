@@ -48,21 +48,23 @@ export default function App() {
   }
   if (loading) return <div className="flex items-center justify-center h-screen bg-[#0b0d17]"><div className="w-8 h-8 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin" /></div>
   const from = redirectRef.current || '/home'
+  if (blockedModal) {
+    return (
+      <div className="fixed inset-0 z-[200] flex items-center justify-center bg-[#0b0d17]">
+        <div className="text-center px-4">
+          <div className="w-16 h-16 mx-auto mb-6 rounded-2xl bg-amber-500/10 flex items-center justify-center">
+            <span className="text-4xl">⚡</span>
+          </div>
+          <h2 className="text-2xl font-bold text-gray-100 mb-3">Free Streams Used Up</h2>
+          <p className="text-gray-400 max-w-sm leading-relaxed">
+            You've used all your free streams this week. Come back in a few days when your credits reset!
+          </p>
+        </div>
+      </div>
+    )
+  }
   return (
     <>
-      {blockedModal && (
-        <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/70 backdrop-blur-sm">
-          <div className="bg-[#12142a] border border-amber-500/30 rounded-2xl p-8 w-full max-w-sm mx-4 shadow-2xl shadow-black/50 text-center">
-            <div className="w-14 h-14 mx-auto mb-5 rounded-2xl bg-amber-500/10 flex items-center justify-center">
-              <span className="text-3xl">⚡</span>
-            </div>
-            <h3 className="text-xl font-bold text-gray-100 mb-2">Free Streams Used Up</h3>
-            <p className="text-sm text-gray-400 leading-relaxed mb-6">
-              You've used all your free streams this week. Come back in a few days when your credits reset!
-            </p>
-          </div>
-        </div>
-      )}
       <Routes>
       <Route path="/auth" element={user ? <Navigate to={from} replace /> : <AuthPage />} />
       <Route path="/auth/callback" element={<AuthCallback />} />
