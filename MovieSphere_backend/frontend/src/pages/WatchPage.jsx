@@ -17,8 +17,6 @@ export default function WatchPage() {
   const iframeRef = useRef(null)
   const [streamUrl, setStreamUrl] = useState('')
   const [error, setError] = useState('')
-  const [blocked, setBlocked] = useState(false)
-  const [blockedInfo, setBlockedInfo] = useState(null)
   const [cinema, setCinema] = useState(false)
   const [seasons, setSeasons] = useState([])
   const [episodes, setEpisodes] = useState([])
@@ -105,14 +103,7 @@ export default function WatchPage() {
         setStreamSources(res.sources || [res.url || ''])
         setCurrentServer(Number(queryParams.get('server')) || 0)
       }
-    }).catch(err => {
-      if (err.response?.status === 402) {
-        setBlocked(true)
-        setBlockedInfo(err.response.data)
-      } else {
-        setError('Failed to load stream')
-      }
-    })
+    }).catch(() => setError('Failed to load stream'))
   }, [id, season, epi, type, seasonNum, epiNum, saveRecentlyViewed, watchTitle, watchPoster])
 
   // Set default volume to mid level via postMessage to vidlink player
@@ -599,18 +590,7 @@ export default function WatchPage() {
           )}
         </div>
 
-        {blocked ? (
-          <div className="flex flex-col items-center justify-center py-20 px-4 text-center">
-            <div className="w-16 h-16 mb-5 rounded-2xl bg-amber-500/10 flex items-center justify-center">
-              <span className="text-3xl">⚡</span>
-            </div>
-            <h3 className="text-xl font-bold text-gray-100 mb-2">Free Streams Used Up</h3>
-            <p className="text-sm text-gray-400 max-w-sm mb-6 leading-relaxed">
-              You've used all your free streams this week. Your credit resets in a few days — come back then to continue watching!
-            </p>
-            <button onClick={() => navigate(-1)} className="px-6 py-2.5 bg-indigo-500 hover:bg-indigo-600 text-white text-sm font-semibold rounded-lg transition-all cursor-pointer shadow-lg shadow-indigo-500/20">Go Back</button>
-          </div>
-        ) : error ? (
+        {error ? (
           <div className="text-center py-20">
             <p className="text-gray-500 mb-4">{error}</p>
             <button onClick={() => navigate(-1)} className="px-5 py-2.5 bg-indigo-500 hover:bg-indigo-600 text-white text-sm font-semibold rounded-lg transition-all cursor-pointer">Go Back</button>

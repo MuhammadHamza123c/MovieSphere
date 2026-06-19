@@ -1,7 +1,7 @@
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
-from fastapi.responses import FileResponse, JSONResponse
+from fastapi.responses import FileResponse
 from app.core.database import supabase
 import os
 import mimetypes
@@ -75,20 +75,7 @@ async def credit_middleware(request: Request, call_next):
     except:
         return await call_next(request)
 
-    result = deduct_credits(user_id, cost)
-
-    if not result.get('success'):
-        remaining = result.get('credits_remaining', 0)
-        reset_at = result.get('reset_at')
-        return JSONResponse(
-            status_code=402,
-            content={
-                'error': 'no_credits',
-                'message': "You've used all your free streams this week. Resets in a few days.",
-                'credits_remaining': remaining,
-                'reset_at': reset_at,
-            }
-        )
+    deduct_credits(user_id, cost)
 
     response = await call_next(request)
     return response
