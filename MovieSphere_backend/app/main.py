@@ -60,6 +60,10 @@ async def credit_middleware(request: Request, call_next):
     if path in EXEMPT_PATHS:
         return await call_next(request)
 
+    cost = get_credit_cost(path, dict(request.query_params))
+    if cost == 0:
+        return await call_next(request)
+
     auth_header = request.headers.get('Authorization', '')
     if not auth_header.startswith('Bearer '):
         return await call_next(request)
@@ -72,8 +76,6 @@ async def credit_middleware(request: Request, call_next):
         user_id = user.user.id
     except:
         return await call_next(request)
-
-    cost = get_credit_cost(path, dict(request.query_params))
 
     result = deduct_credits(user_id, cost)
 

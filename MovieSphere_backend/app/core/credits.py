@@ -13,7 +13,7 @@ def get_credit_cost(path: str, query_params: dict) -> int:
     if path == '/MovieSphere/streamit':
         season = query_params.get('season')
         return 2 if season is None else 1
-    return 1
+    return 0
 
 def get_credits(user_id: str) -> dict:
     try:
