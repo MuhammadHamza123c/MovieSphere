@@ -7,6 +7,9 @@ EXEMPT_PATHS = {
     '/MovieSphere/credits',
     '/MovieSphere/notifications/subscribe',
     '/MovieSphere/trailer-digest/run',
+    '/MovieSphere/continue-watching/progress',
+    '/MovieSphere/continue-watching',
+    '/MovieSphere/comments',
 }
 
 def get_credit_cost(path: str, query_params: dict) -> int:
