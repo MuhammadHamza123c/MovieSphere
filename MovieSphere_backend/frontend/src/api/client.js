@@ -15,6 +15,7 @@ client.interceptors.response.use(
   error => {
     if (error.response?.status === 402) {
       window.dispatchEvent(new CustomEvent('credits-exhausted'))
+      return Promise.resolve({ data: { MovieSphere: [] } })
     }
     return Promise.reject(error)
   }

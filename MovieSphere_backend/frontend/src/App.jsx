@@ -1,6 +1,7 @@
 ﻿import { Routes, Route, Navigate, useLocation } from 'react-router-dom'
 import { useRef, useState, useEffect } from 'react'
 import { useAuth } from './hooks/useAuth'
+import { useCredits } from './hooks/useCredits'
 import AppLayout from './components/layout/AppLayout'
 import AuthPage from './pages/AuthPage'
 import HomePage from './pages/HomePage'
@@ -32,15 +33,22 @@ function ProtectedRoute({ children }) {
 
 export default function App() {
   const { user, loading } = useAuth()
+  const { credits } = useCredits()
   usePushNotifications()
   const [blockedModal, setBlockedModal] = useState(false)
   const redirectRef = useRef(null)
+
+  const creditsExhausted = credits && credits.credits_remaining !== null && credits.credits_remaining <= 0
 
   useEffect(() => {
     const handler = () => setBlockedModal(true)
     window.addEventListener('credits-exhausted', handler)
     return () => window.removeEventListener('credits-exhausted', handler)
   }, [])
+
+  useEffect(() => {
+    if (creditsExhausted) setBlockedModal(true)
+  }, [creditsExhausted])
 
   if (!redirectRef.current) {
     redirectRef.current = sessionStorage.getItem('msp_redirect')
