@@ -1,7 +1,7 @@
 from datetime import date, datetime, timezone
 from app.core.database import supabase
 
-DEFAULT_CREDITS = 20
+DEFAULT_CREDITS = 100
 
 EXEMPT_PATHS = {
     '/MovieSphere/credits',
