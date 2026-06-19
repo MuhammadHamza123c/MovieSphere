@@ -14,18 +14,24 @@ export default function ShowsPage() {
   useEffect(() => { fetchGenres().then(g => setGenres(g.tv)).catch(() => {}) }, [])
 
   useEffect(() => {
+    let cancelled = false
     setLoading(true)
-    Promise.all([fetchShows(page, selectedGenre), fetchFavorites(), fetchContinueWatching()])
-      .then(([data, favs, cw]) => {
-        const cwMap = new Map(cw.map(i => [String(i.media_id), i]))
-        const favTitles = new Set(favs.map(f => (f.Title || f.title || '').toLowerCase()))
-        const marked = data.map(item => ({
-          ...item, _isFav: favTitles.has((item.Title || item.title || item.name || '').toLowerCase()),
-          _progress: cwMap.get(String(item.Id || item.id))?.total_seconds > 0 ? cwMap.get(String(item.Id || item.id)).progress_seconds / cwMap.get(String(item.Id || item.id)).total_seconds : 0,
-        }))
-        setItems(marked)
-        setLoading(false)
-      }).catch(() => setLoading(false))
+    Promise.all([
+      fetchShows(page, selectedGenre),
+      fetchFavorites().catch(() => []),
+      fetchContinueWatching().catch(() => []),
+    ]).then(([data, favs, cw]) => {
+      if (cancelled) return
+      const cwMap = new Map(cw.map(i => [String(i.media_id), i]))
+      const favTitles = new Set(favs.map(f => (f.Title || f.title || '').toLowerCase()))
+      const marked = data.map(item => ({
+        ...item, _isFav: favTitles.has((item.Title || item.title || item.name || '').toLowerCase()),
+        _progress: cwMap.get(String(item.Id || item.id))?.total_seconds > 0 ? cwMap.get(String(item.Id || item.id)).progress_seconds / cwMap.get(String(item.Id || item.id)).total_seconds : 0,
+      }))
+      setItems(marked)
+      setLoading(false)
+    }).catch(() => setLoading(false))
+    return () => { cancelled = true }
   }, [page, selectedGenre])
 
   const handleGenreChange = (id) => {
