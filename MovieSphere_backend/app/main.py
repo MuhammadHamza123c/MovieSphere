@@ -61,8 +61,6 @@ async def credit_middleware(request: Request, call_next):
         return await call_next(request)
 
     cost = get_credit_cost(path, dict(request.query_params))
-    if cost == 0:
-        return await call_next(request)
 
     auth_header = request.headers.get('Authorization', '')
     if not auth_header.startswith('Bearer '):
