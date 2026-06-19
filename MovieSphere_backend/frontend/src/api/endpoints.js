@@ -197,6 +197,11 @@ export async function fetchReels(page = 1) {
   return data.MovieSphere || []
 }
 
+export async function fetchCredits() {
+  const { data } = await client.get('/MovieSphere/credits')
+  return data.MovieSphere || { credits_remaining: 0, reset_at: null }
+}
+
 export async function subscribePush(subscription) {
   const { data } = await client.post('/MovieSphere/notifications/subscribe', subscription)
   return data

@@ -3,6 +3,7 @@ import { useAuth } from '../../hooks/useAuth'
 import { useState } from 'react'
 import { useTheme } from '../../context/ThemeContext'
 import client from '../../api/client'
+import { useCredits } from '../../hooks/useCredits'
 
 const nav = [
   { to: '/home', label: 'Home', icon: 'M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6' },
@@ -22,6 +23,8 @@ export default function Sidebar() {
   const [mobileOpen, setMobileOpen] = useState(false)
   const [showDeleteModal, setShowDeleteModal] = useState(false)
   const [deleting, setDeleting] = useState(false)
+
+  const { credits } = useCredits()
 
   const handleDeleteAccount = async () => {
     setDeleting(true)
@@ -138,6 +141,21 @@ export default function Sidebar() {
             </NavLink>
           ))}
         </nav>
+        {credits && (
+          <>
+            <div className="px-3.5 mb-1 hidden group-hover:block">
+              <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-indigo-500/10 text-indigo-300 text-xs font-medium">
+                <span>⚡</span>
+                <span>{credits.credits_remaining}/20 credits</span>
+              </div>
+            </div>
+            <div className="flex items-center justify-center w-14 min-w-[56px] mb-1 hidden group-hover:hidden">
+              <div className="w-8 h-8 flex items-center justify-center rounded-lg bg-indigo-500/10 text-indigo-300 text-xs font-bold">
+                {credits.credits_remaining}
+              </div>
+            </div>
+          </>
+        )}
         {/* Theme toggle */}
         <div className="px-3.5 mb-2 hidden group-hover:block">
           <button onClick={toggleTheme} className="w-full flex items-center gap-2 h-10 rounded-lg border border-[var(--border-primary)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-tertiary)] transition-all cursor-pointer text-sm justify-center">

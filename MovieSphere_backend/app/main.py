@@ -1,7 +1,8 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, JSONResponse
+from app.core.database import supabase
 import os
 import mimetypes
 
@@ -30,6 +31,8 @@ from app.api.reels import reels_app
 from app.api.trending import trending_app
 from app.api.trailer_digest import trailer_digest_app
 from app.api.notifications import notifications_app
+from app.api.credits import credits_app
+from app.core.credits import EXEMPT_PATHS, get_credit_cost, deduct_credits
 
 app = FastAPI()
 
@@ -44,6 +47,51 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"]
 )
+
+@app.middleware('http')
+async def credit_middleware(request: Request, call_next):
+    path = request.url.path
+    method = request.method
+
+    if not path.startswith('/MovieSphere/'):
+        return await call_next(request)
+    if method == 'OPTIONS':
+        return await call_next(request)
+    if path in EXEMPT_PATHS:
+        return await call_next(request)
+
+    auth_header = request.headers.get('Authorization', '')
+    if not auth_header.startswith('Bearer '):
+        return await call_next(request)
+
+    token = auth_header[7:]
+    try:
+        user = supabase.auth.get_user(token)
+        if not user or not user.user:
+            return await call_next(request)
+        user_id = user.user.id
+    except:
+        return await call_next(request)
+
+    cost = get_credit_cost(path, dict(request.query_params))
+
+    result = await deduct_credits(user_id, cost)
+
+    if not result.get('success'):
+        remaining = result.get('credits_remaining', 0)
+        reset_at = result.get('reset_at')
+        return JSONResponse(
+            status_code=402,
+            content={
+                'error': 'no_credits',
+                'message': "You've used all your free streams this week. Resets in a few days.",
+                'credits_remaining': remaining,
+                'reset_at': reset_at,
+            }
+        )
+
+    response = await call_next(request)
+    return response
 
 app.include_router(home_app)
 app.include_router(search_any_app)
@@ -70,6 +118,7 @@ app.include_router(reels_app)
 app.include_router(trending_app)
 app.include_router(trailer_digest_app)
 app.include_router(notifications_app)
+app.include_router(credits_app)
 
 # Catch-all OPTIONS handler for Vercel CORS preflight
 @app.options("/{rest_of_path:path}")
