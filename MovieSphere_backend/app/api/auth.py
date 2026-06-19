@@ -71,6 +71,21 @@ async def get_me(user=Depends(get_current_user)):
         }
     }
 
+@auth_app.post("/refresh")
+async def refresh_token(body: dict):
+    try:
+        refresh = body.get("refresh_token")
+        if not refresh:
+            raise HTTPException(status_code=400, detail="refresh_token required")
+        result = supabase.auth.refresh_session(refresh)
+        if not result.session:
+            raise HTTPException(status_code=401, detail="Invalid or expired refresh token")
+        return {"session": result.session}
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
 @auth_app.get("/google/config")
 async def google_config():
     return {

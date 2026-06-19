@@ -22,6 +22,7 @@ export default function AuthCallback() {
           return
         }
         localStorage.setItem('msp_token', data.session.access_token)
+        localStorage.setItem('msp_refresh', data.session.refresh_token)
         await check(true)
         if (!cancelled) {
           const redirect = sessionStorage.getItem('msp_redirect') || '/home'
