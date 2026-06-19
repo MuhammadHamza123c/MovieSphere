@@ -1,7 +1,6 @@
 ﻿import { Routes, Route, Navigate, useLocation } from 'react-router-dom'
-import { useRef } from 'react'
+import { useRef, useState, useEffect } from 'react'
 import { useAuth } from './hooks/useAuth'
-import { useCredits } from './hooks/useCredits'
 import AppLayout from './components/layout/AppLayout'
 import AuthPage from './pages/AuthPage'
 import HomePage from './pages/HomePage'
@@ -33,9 +32,15 @@ function ProtectedRoute({ children }) {
 
 export default function App() {
   const { user, loading } = useAuth()
-  const { credits } = useCredits()
   usePushNotifications()
+  const [blockedModal, setBlockedModal] = useState(false)
   const redirectRef = useRef(null)
+
+  useEffect(() => {
+    const handler = () => setBlockedModal(true)
+    window.addEventListener('credits-exhausted', handler)
+    return () => window.removeEventListener('credits-exhausted', handler)
+  }, [])
 
   if (!redirectRef.current) {
     redirectRef.current = sessionStorage.getItem('msp_redirect')
@@ -45,9 +50,17 @@ export default function App() {
   const from = redirectRef.current || '/home'
   return (
     <>
-      {credits && credits.credits_remaining <= 0 && (
-        <div className="fixed top-0 left-0 right-0 z-[200] bg-amber-500/90 text-black text-center text-sm font-semibold py-2 px-4 shadow-lg">
-          ⚡ You've used all your free streams this week. Credits reset in a few days.
+      {blockedModal && (
+        <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/70 backdrop-blur-sm">
+          <div className="bg-[#12142a] border border-amber-500/30 rounded-2xl p-8 w-full max-w-sm mx-4 shadow-2xl shadow-black/50 text-center">
+            <div className="w-14 h-14 mx-auto mb-5 rounded-2xl bg-amber-500/10 flex items-center justify-center">
+              <span className="text-3xl">⚡</span>
+            </div>
+            <h3 className="text-xl font-bold text-gray-100 mb-2">Free Streams Used Up</h3>
+            <p className="text-sm text-gray-400 leading-relaxed mb-6">
+              You've used all your free streams this week. Come back in a few days when your credits reset!
+            </p>
+          </div>
         </div>
       )}
       <Routes>

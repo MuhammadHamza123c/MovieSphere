@@ -10,4 +10,14 @@ client.interceptors.request.use(config => {
   return config
 })
 
+client.interceptors.response.use(
+  response => response,
+  error => {
+    if (error.response?.status === 402) {
+      window.dispatchEvent(new CustomEvent('credits-exhausted'))
+    }
+    return Promise.reject(error)
+  }
+)
+
 export default client
