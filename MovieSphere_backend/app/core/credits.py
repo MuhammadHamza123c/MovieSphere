@@ -23,26 +23,26 @@ def get_credits(user_id: str) -> dict:
         if not records.data:
             supabase.table('user_credits').insert({
                 'user_id': user_id,
-                'credits_remaining': DEFAULT_CREDITS,
+                'free_credits': DEFAULT_CREDITS,
             }).execute()
             return {'credits_remaining': DEFAULT_CREDITS}
 
         record = records.data[0]
-        reset_str = record.get('reset_at', '') or ''
-        reset_date_str = reset_str[:10]
+        created_str = record.get('created_at', '') or ''
+        created_date_str = created_str[:10]
         try:
-            reset_date = date.fromisoformat(reset_date_str) if reset_date_str else now_date
+            created_date = date.fromisoformat(created_date_str) if created_date_str else now_date
         except:
-            reset_date = now_date
+            created_date = now_date
 
-        if (now_date - reset_date).days >= 7:
+        if (now_date - created_date).days >= 7:
             supabase.table('user_credits').update({
-                'credits_remaining': DEFAULT_CREDITS,
-                'reset_at': datetime.now(timezone.utc).isoformat(),
+                'free_credits': DEFAULT_CREDITS,
+                'created_at': datetime.now(timezone.utc).isoformat(),
             }).eq('user_id', user_id).execute()
             return {'credits_remaining': DEFAULT_CREDITS}
 
-        return {'credits_remaining': record.get('credits_remaining', 0)}
+        return {'credits_remaining': record.get('free_credits', 0)}
     except Exception as e:
         print(f'[Credits] get_credits failed: {e}', flush=True)
         return {'credits_remaining': DEFAULT_CREDITS}
@@ -57,8 +57,8 @@ def deduct_credits(user_id: str, cost: int) -> dict:
     new_remaining = remaining - cost
     try:
         result = supabase.table('user_credits').update({
-            'credits_remaining': new_remaining,
-        }).eq('user_id', user_id).eq('credits_remaining', remaining).execute()
+            'free_credits': new_remaining,
+        }).eq('user_id', user_id).eq('free_credits', remaining).execute()
 
         if not result.data:
             info2 = get_credits(user_id)
@@ -67,8 +67,8 @@ def deduct_credits(user_id: str, cost: int) -> dict:
                 return {'success': False, 'credits_remaining': remaining2}
             new_remaining2 = remaining2 - cost
             supabase.table('user_credits').update({
-                'credits_remaining': new_remaining2,
-            }).eq('user_id', user_id).eq('credits_remaining', remaining2).execute()
+                'free_credits': new_remaining2,
+            }).eq('user_id', user_id).eq('free_credits', remaining2).execute()
 
         return {'success': True, 'credits_remaining': new_remaining}
     except Exception as e:
