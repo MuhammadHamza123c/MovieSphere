@@ -57,7 +57,7 @@ async def credit_middleware(request: Request, call_next):
         return await call_next(request)
     if method == 'OPTIONS':
         return await call_next(request)
-    if path in EXEMPT_PATHS:
+    if path in EXEMPT_PATHS or path.startswith('/MovieSphere/home/'):
         return await call_next(request)
 
     cost = get_credit_cost(path, dict(request.query_params))
