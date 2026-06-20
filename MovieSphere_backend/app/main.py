@@ -32,6 +32,7 @@ from app.api.trending import trending_app
 from app.api.trailer_digest import trailer_digest_app
 from app.api.notifications import notifications_app
 from app.api.credits import credits_app
+from app.api.og import og_app
 from app.core.credits import EXEMPT_PATHS, get_credit_cost, deduct_credits
 
 app = FastAPI()
@@ -57,7 +58,7 @@ async def credit_middleware(request: Request, call_next):
         return await call_next(request)
     if method == 'OPTIONS':
         return await call_next(request)
-    if path in EXEMPT_PATHS or path.startswith('/MovieSphere/home/'):
+    if path in EXEMPT_PATHS or path.startswith('/MovieSphere/home/') or path.startswith('/MovieSphere/og/'):
         return await call_next(request)
 
     cost = get_credit_cost(path, dict(request.query_params))
@@ -116,6 +117,7 @@ app.include_router(trending_app)
 app.include_router(trailer_digest_app)
 app.include_router(notifications_app)
 app.include_router(credits_app)
+app.include_router(og_app)
 
 # Catch-all OPTIONS handler for Vercel CORS preflight
 @app.options("/{rest_of_path:path}")

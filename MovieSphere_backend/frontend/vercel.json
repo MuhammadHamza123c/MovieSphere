@@ -1,6 +1,14 @@
 {
   "routes": [
     {
+      "src": "/movie/(.*)",
+      "dest": "https://movie-sphere-backend.vercel.app/MovieSphere/og/movie/$1"
+    },
+    {
+      "src": "/tv/(.*)",
+      "dest": "https://movie-sphere-backend.vercel.app/MovieSphere/og/tv/$1"
+    },
+    {
       "handle": "filesystem"
     },
     {
