@@ -7,10 +7,10 @@ import GenreTag from '../components/GenreTag'
 import MovieCard from '../components/MovieCard'
 
 export default function DetailPage() {
-  const { id } = useParams()
+  const { type, id } = useParams()
   const navigate = useNavigate()
   const { user } = useAuth()
-  const mediaType = window.location.pathname.startsWith('/tv') ? 'tv' : 'movie'
+  const mediaType = type || (window.location.pathname.startsWith('/tv') ? 'tv' : 'movie')
   const [data, setData] = useState(null)
   const [cast, setCast] = useState([])
   const [recs, setRecs] = useState([])

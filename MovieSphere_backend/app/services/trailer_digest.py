@@ -231,7 +231,7 @@ async def send_next_push():
         'data': {
             'media_id': record['media_id'],
             'media_type': record['media_type'],
-            'url': f"/{record['media_type']}/{record['media_id']}",
+            'url': f"/detail/{record['media_type']}/{record['media_id']}",
         },
     }
 

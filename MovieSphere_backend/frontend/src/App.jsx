@@ -84,6 +84,7 @@ export default function App() {
         <Route path="/recommend" element={<RecommendPage />} />
         <Route path="/movie/:id" element={<DetailPage />} />
         <Route path="/tv/:id" element={<DetailPage />} />
+        <Route path="/detail/:type/:id" element={<DetailPage />} />
         <Route path="/watch/:type/:id" element={<WatchPage />} />
         <Route path="/watch/:type/:id/:season/:epi" element={<WatchPage />} />
         <Route path="/actor/:id" element={<ActorPage />} />
