@@ -601,7 +601,7 @@ export default function WatchPage() {
             </div>
             <h3 className="text-xl font-bold text-gray-100 mb-2">Free Streams Used Up</h3>
             <p className="text-sm text-gray-400 max-w-sm mb-6 leading-relaxed">
-              You've used all your free streams this week. Credits reset in a few days.
+              You've used all your free streams today. Credits reset tomorrow.
             </p>
             <button onClick={() => navigate(-1)} className="px-6 py-2.5 bg-indigo-500 hover:bg-indigo-600 text-white text-sm font-semibold rounded-lg transition-all cursor-pointer shadow-lg shadow-indigo-500/20">Go Back</button>
           </div>

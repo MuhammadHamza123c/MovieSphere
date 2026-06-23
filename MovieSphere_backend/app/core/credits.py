@@ -40,7 +40,7 @@ def get_credits(user_id: str) -> dict:
         except:
             created_date = now_date
 
-        if (now_date - created_date).days >= 7:
+        if (now_date - created_date).days >= 1:
             supabase.table('user_credits').update({
                 'free_credits': DEFAULT_CREDITS,
                 'created_at': datetime.now(timezone.utc).isoformat(),

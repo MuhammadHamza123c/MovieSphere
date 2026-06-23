@@ -56,7 +56,7 @@ A full-featured movie and TV streaming app with AI-powered recommendations, real
 - Force re-subscribe on every init
 
 ### ⚡ Credit System
-- **100 free credits per week** (resets 7 days from first use)
+- **100 free credits daily** (resets every day)
 - Costs: 1 credit per API request, movies = 2 credits, TV episodes = 1 credit
 - **402 blocked** when exhausted (full-page overlay)
 - Exempt paths: credits, notifications, trailer digest, continue watching, comments, home page, OG previews
@@ -561,8 +561,8 @@ Set `VITE_API_URL` to the deployed backend URL.
 | Streaming a TV episode | 1 credit |
 | Credits, notifications, trailer digest, continue watching, comments, home page load, OG previews | **Free** |
 
-- **100 credits** are allocated weekly
-- Reset occurs **7 days** from the user's first credit use (`created_at`)
+- **100 credits** are allocated daily
+- Reset occurs **every day** (checks if 1+ day has passed since `created_at`)
 - When exhausted, the app shows a full-page blocked overlay
 - Frontend auto-refreshes credits on every page navigation
 

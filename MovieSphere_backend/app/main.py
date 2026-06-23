@@ -83,7 +83,7 @@ async def credit_middleware(request: Request, call_next):
             status_code=402,
             content={
                 'error': 'no_credits',
-                'message': "You've used all your free streams this week. Credits reset in a few days.",
+                'message': "You've used all your free streams today. Credits reset tomorrow.",
                 'credits_remaining': remaining,
             }
         )
