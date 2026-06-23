@@ -6,3 +6,4 @@ supabase
 groq
 python-multipart
 pywebpush
+pyjwt[crypto]
