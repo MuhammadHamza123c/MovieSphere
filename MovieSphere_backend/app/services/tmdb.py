@@ -401,7 +401,9 @@ def watch_movie(id: int):
         'url': f"https://vidlink.pro/movie/{id}?poster=true&title=true&autoplay=true",
         'sources': [
             f"https://vidlink.pro/movie/{id}?poster=true&title=true&autoplay=true",
-            f"https://apiplayer.ru/embed/movie/{id}"
+            f"https://apiplayer.ru/embed/movie/{id}",
+            f"https://vidbinge.dev/embed/movie/{id}",
+            f"https://superembed.stream/embed/movie/{id}"
         ]
     }
 
@@ -411,7 +413,9 @@ def watch_tv(id: int, season: int, epi: int):
         'url': f"https://vidlink.pro/tv/{id}/{season}/{epi}?poster=true&title=true&autoplay=true&nextbutton=true",
         'sources': [
             f"https://vidlink.pro/tv/{id}/{season}/{epi}?poster=true&title=true&autoplay=true&nextbutton=true",
-            f"https://apiplayer.ru/embed/tv/{id}/{season}/{epi}"
+            f"https://apiplayer.ru/embed/tv/{id}/{season}/{epi}",
+            f"https://vidbinge.dev/embed/tv/{id}/{season}/{epi}",
+            f"https://superembed.stream/embed/tv/{id}/{season}/{epi}"
         ]
     }
 
