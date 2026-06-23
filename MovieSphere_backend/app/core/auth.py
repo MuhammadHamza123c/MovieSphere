@@ -17,11 +17,16 @@ def _get_jwks_client():
 
 def _verify_token_locally(token: str):
     try:
+        from jwt.exceptions import PyJWTError
         jwks_client = _get_jwks_client()
         signing_key = jwks_client.get_signing_key_from_jwt(token)
         payload = pyjwt.decode(token, signing_key.key, algorithms=["RS256"], options={"verify_exp": True})
         return payload
-    except Exception:
+    except PyJWTError as e:
+        print(f'[Auth] Local verify failed (PyJWT): {e}', flush=True)
+        return None
+    except Exception as e:
+        print(f'[Auth] Local verify failed: {e}', flush=True)
         return None
 
 async def get_optional_user(credentials: HTTPAuthorizationCredentials = Depends(security)):

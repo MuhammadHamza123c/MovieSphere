@@ -57,25 +57,18 @@ def deduct_credits(user_id: str, cost: int) -> dict:
     remaining = info.get('credits_remaining', 0)
 
     if remaining < cost:
+        print(f'[Credits] Not enough for {user_id}: {remaining} < {cost}', flush=True)
         return {'success': False, 'credits_remaining': remaining}
 
     new_remaining = remaining - cost
     try:
         result = supabase.table('user_credits').update({
             'free_credits': new_remaining,
-        }).eq('user_id', user_id).eq('free_credits', remaining).execute()
+        }).eq('user_id', user_id).execute()
 
-        if not result.data:
-            info2 = get_credits(user_id)
-            remaining2 = info2.get('credits_remaining', 0)
-            if remaining2 < cost:
-                return {'success': False, 'credits_remaining': remaining2}
-            new_remaining2 = remaining2 - cost
-            supabase.table('user_credits').update({
-                'free_credits': new_remaining2,
-            }).eq('user_id', user_id).eq('free_credits', remaining2).execute()
-
+        print(f'[Credits] Deducted {cost} from {user_id}: {remaining} -> {new_remaining}', flush=True)
         return {'success': True, 'credits_remaining': new_remaining}
+
     except Exception as e:
         print(f'[Credits] deduct_credits failed: {e}', flush=True)
         return {'success': False, 'credits_remaining': remaining}

@@ -72,9 +72,18 @@ async def credit_middleware(request: Request, call_next):
     token = auth_header[7:]
     from app.core.auth import _verify_token_locally
     payload = _verify_token_locally(token)
-    if not payload:
+    user_id = None
+    if payload:
+        user_id = payload.get('sub')
+    else:
+        try:
+            user = supabase.auth.get_user(token)
+            if user and user.user:
+                user_id = user.user.id
+        except:
+            pass
+    if not user_id:
         return await call_next(request)
-    user_id = payload.get('sub')
 
     result = deduct_credits(user_id, cost)
     if not result.get('success'):
