@@ -400,10 +400,9 @@ def watch_movie(id: int):
     return {
         'url': f"https://multiembed.mov/?video_id={id}&tmdb=1",
         'sources': [
-            f"https://vidlink.pro/movie/{id}?poster=true&title=true&autoplay=true",
-            f"https://apiplayer.ru/embed/movie/{id}",
-            f"https://vidbinge.dev/embed/movie/{id}",
-            f"https://multiembed.mov/?video_id={id}&tmdb=1"
+            f"https://multiembed.mov/?video_id={id}&tmdb=1&s={season}&e={epi}",
+            f"https://vidlink.pro/tv/{id}/{season}/{epi}?poster=true&title=true&autoplay=true&nextbutton=true",
+            f"https://apiplayer.ru/embed/tv/{id}/{season}/{epi}"
         ]
     }
 
