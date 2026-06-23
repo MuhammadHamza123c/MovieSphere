@@ -5,7 +5,7 @@ import requests as httpx
 from app.core.config import CRON_SECRET_KEY, SUPABASE_URL, SUPABASE_KEY
 from app.core.database import supabase
 from app.core.credits import DEFAULT_CREDITS
-from app.services.email_service import send_bulk_credits_emails
+
 
 daily_credits_app = APIRouter()
 
@@ -32,12 +32,10 @@ def run_daily_credits(key: str = ''):
     now = datetime.now(timezone.utc).isoformat()
 
     reset_count = 0
-    email_users = []
 
     for u in users:
         uid = u.get('id')
-        email = u.get('email')
-        if not uid or not email:
+        if not uid:
             continue
         supabase.table('user_credits').upsert({
             'user_id': uid,
@@ -46,12 +44,5 @@ def run_daily_credits(key: str = ''):
             'created_at': now,
         }, on_conflict='user_id').execute()
         reset_count += 1
-        email_users.append(u)
 
-    email_result = send_bulk_credits_emails(email_users, DEFAULT_CREDITS)
-
-    return {
-        'reset_count': reset_count,
-        'email_sent': email_result['sent'],
-        'email_failed': email_result['failed'],
-    }
+    return {'reset_count': reset_count}

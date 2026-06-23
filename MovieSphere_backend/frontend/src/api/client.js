@@ -34,6 +34,7 @@ client.interceptors.response.use(
       return new Promise((resolve, reject) => {
         failedQueue.push({ resolve, reject })
       }).then(newToken => {
+        originalRequest._retry = true
         originalRequest.headers.Authorization = `Bearer ${newToken}`
         return client(originalRequest)
       })

@@ -13,7 +13,6 @@ export function AuthProvider({ children }) {
       setUser(u)
     } catch {
       setUser(null)
-      localStorage.removeItem('msp_token')
     } finally {
       if (!skipLoading) setLoading(false)
     }
