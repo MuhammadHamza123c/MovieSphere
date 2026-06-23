@@ -9,6 +9,8 @@ search_any_app = APIRouter()
 def search_movie(q: Optional[str] = None, text: Optional[str] = None):
     if text is not None and q is None:
         q = ask_ai_movie(text)
+        if not q:
+            return {'MovieSphere': []}
     result = search_it(q)
     return {
         'MovieSphere': result

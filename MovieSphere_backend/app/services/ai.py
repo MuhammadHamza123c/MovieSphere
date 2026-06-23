@@ -25,7 +25,7 @@ Rules:
 - If multiple versions exist, return the most popular or original one.
 - If it is a TV show or series, return the series name only.
 - If you are unsure, return the single best guess.
-- If nothing matches confidently, return: Unknown"""
+- If nothing matches confidently, return nothing (empty string)."""
     chat_completion = client.chat.completions.create(
         messages=[
             {
