@@ -398,7 +398,7 @@ def get_top_rated(type: str, page: int):
 
 def watch_movie(id: int):
     return {
-        'url': f"https://multiembed.mov/?video_id={id}&tmdb=1",
+        'url': f"../MovieSphere/player/movie/{id}",
         'sources': [
             f"https://multiembed.mov/?video_id={id}&tmdb=1",
             f"https://vidlink.pro/movie/{id}?poster=true&title=true&autoplay=true",
@@ -409,7 +409,7 @@ def watch_movie(id: int):
 
 def watch_tv(id: int, season: int, epi: int):
     return {
-        'url': f"https://multiembed.mov/?video_id={id}&tmdb=1&s={season}&e={epi}",
+        'url': f"../MovieSphere/player/tv/{id}/{season}/{epi}",
         'sources': [
             f"https://multiembed.mov/?video_id={id}&tmdb=1&s={season}&e={epi}",
             f"https://vidlink.pro/tv/{id}/{season}/{epi}?poster=true&title=true&autoplay=true&nextbutton=true",

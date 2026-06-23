@@ -33,6 +33,8 @@ from app.api.trailer_digest import trailer_digest_app
 from app.api.notifications import notifications_app
 from app.api.credits import credits_app
 from app.api.og import og_app
+from app.api.player import player_app
+from app.api.daily_credits import daily_credits_app
 from app.core.credits import EXEMPT_PATHS, get_credit_cost, deduct_credits
 
 app = FastAPI()
@@ -118,6 +120,8 @@ app.include_router(trailer_digest_app)
 app.include_router(notifications_app)
 app.include_router(credits_app)
 app.include_router(og_app)
+app.include_router(player_app)
+app.include_router(daily_credits_app)
 
 # Catch-all OPTIONS handler for Vercel CORS preflight
 @app.options("/{rest_of_path:path}")
