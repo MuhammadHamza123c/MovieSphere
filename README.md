@@ -6,6 +6,7 @@ A full-featured movie and TV streaming app with AI-powered recommendations, real
 
 - **Frontend**: https://movie-sphere-sigma.vercel.app
 - **Backend API**: https://movie-sphere-backend.vercel.app
+- **Updated**: June 19, 2026
 
 ---
 
