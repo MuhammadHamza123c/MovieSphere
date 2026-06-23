@@ -19,7 +19,7 @@ A full-featured movie and TV streaming app with AI-powered recommendations, real
 - **Detailed view** with cast, crew, recommendations, similar titles, trailers, and media gallery
 
 ### 🎥 Video Streaming
-- Watch movies and TV episodes via embedded sources (VidLink, EZVID, API.Player)
+- Watch movies and TV episodes via embedded sources (SuperEmbed, VidLink, API.Player, VidBinge)
 - **Cinema mode** with custom controls
 - **Continue Watching** — progress tracked per user
 - Episode/season selector for TV shows
