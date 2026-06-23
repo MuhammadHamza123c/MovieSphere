@@ -17,11 +17,10 @@ def stream_now(request: Request, id: Optional[int] = None, season: Optional[int]
         ).execute()
     except:
         pass
-    base_url = str(request.base_url).rstrip('/')
     if id is not None and season is None and epi is None:
-        result = watch_movie(id, base_url)
+        result = watch_movie(id)
     elif season is not None and epi is not None:
-        result = watch_tv(id, season, epi, base_url)
+        result = watch_tv(id, season, epi)
     else:
         result = "Error: For TV shows, both 'season' and 'epi' are required!"
     return {
