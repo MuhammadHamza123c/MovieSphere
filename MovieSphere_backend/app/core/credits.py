@@ -30,6 +30,7 @@ def get_credits(user_id: str) -> dict:
                 'user_id': user_id,
                 'free_credits': DEFAULT_CREDITS,
             }).execute()
+            print(f'[Credits] No record for {user_id}, created at {DEFAULT_CREDITS}', flush=True)
             return {'credits_remaining': DEFAULT_CREDITS}
 
         record = records.data[0]
@@ -40,14 +41,19 @@ def get_credits(user_id: str) -> dict:
         except:
             created_date = now_date
 
-        if (now_date - created_date).days >= 1:
+        free = record.get('free_credits', 0)
+        days_diff = (now_date - created_date).days
+        print(f'[Credits] get_credits {user_id}: free={free}, created_date={created_date}, now={now_date}, days_diff={days_diff}', flush=True)
+
+        if days_diff >= 1:
             supabase.table('user_credits').update({
                 'free_credits': DEFAULT_CREDITS,
                 'created_at': datetime.now(timezone.utc).isoformat(),
             }).eq('user_id', user_id).execute()
+            print(f'[Credits] Reset {user_id} to {DEFAULT_CREDITS} (was {free}, days_diff={days_diff})', flush=True)
             return {'credits_remaining': DEFAULT_CREDITS}
 
-        return {'credits_remaining': record.get('free_credits', 0)}
+        return {'credits_remaining': free}
     except Exception as e:
         print(f'[Credits] get_credits failed: {e}', flush=True)
         return {'credits_remaining': DEFAULT_CREDITS}

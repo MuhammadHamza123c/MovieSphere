@@ -86,6 +86,7 @@ async def credit_middleware(request: Request, call_next):
         return await call_next(request)
 
     result = deduct_credits(user_id, cost)
+    print(f'[Credits] Middleware: {path}, user={user_id}, cost={cost}, result={result}', flush=True)
     if not result.get('success'):
         remaining = result.get('credits_remaining', 0)
         return JSONResponse(
