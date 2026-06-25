@@ -183,7 +183,9 @@ export default function DetailPage() {
           )}
           <div className="flex-1">
             <div className="flex flex-wrap items-center gap-2 mb-2">
-              <h1 className="text-3xl md:text-4xl font-extrabold text-gray-100">{title}</h1>
+              <a href={`https://www.google.com/search?q=${encodeURIComponent(title)}`} target="_blank" rel="noopener noreferrer" className="hover:underline">
+                <h1 className="text-3xl md:text-4xl font-extrabold text-gray-100">{title}</h1>
+              </a>
               {year && <span className="text-lg text-gray-400">({year})</span>}
             </div>
             <div className="flex items-center gap-3 text-sm text-gray-400 mb-3">
