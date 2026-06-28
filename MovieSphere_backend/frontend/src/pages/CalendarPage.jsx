@@ -68,107 +68,58 @@ export default function CalendarPage() {
           <div className="w-8 h-8 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin" />
         </div>
       ) : (
-        <>
-          {/* Calendar grid */}
-          <div className="bg-[var(--bg-secondary)] rounded-2xl border border-[var(--border-primary)] overflow-hidden mb-8">
-            <div className="grid grid-cols-7">
-              {WEEKDAYS.map(d => (
-                <div key={d} className="p-2 text-center text-xs font-semibold text-gray-500 uppercase tracking-wider border-b border-[var(--border-primary)] bg-[var(--bg-tertiary)]/30">
-                  {d}
-                </div>
-              ))}
-              {cells.map((day, i) => (
-                <div key={i} className={`min-h-[80px] sm:min-h-[100px] p-1.5 border-b border-r border-[var(--border-primary)] relative transition-colors ${
-                  day ? (releaseDays.has(day) ? 'bg-indigo-500/5 hover:bg-indigo-500/10' : 'hover:bg-[var(--bg-tertiary)]/30') : 'bg-transparent'
-                }`}>
-                  {day && (
-                    <>
+        <div className="bg-[var(--bg-secondary)] rounded-2xl border border-[var(--border-primary)] overflow-hidden">
+          <div className="grid grid-cols-7">
+            {WEEKDAYS.map(d => (
+              <div key={d} className="p-2 text-center text-xs font-semibold text-gray-500 uppercase tracking-wider border-b border-[var(--border-primary)] bg-[var(--bg-tertiary)]/30">
+                {d}
+              </div>
+            ))}
+            {cells.map((day, i) => (
+              <div key={i} className={`min-h-[120px] sm:min-h-[150px] p-1.5 border-b border-r border-[var(--border-primary)] transition-colors ${
+                day ? (releaseDays.has(day) ? 'bg-indigo-500/[0.04]' : 'hover:bg-[var(--bg-tertiary)]/30') : 'bg-transparent'
+              }`}>
+                {day && (
+                  <>
+                    <div className="flex items-center justify-between mb-1">
                       <span className={`text-xs font-bold ${releaseDays.has(day) ? 'text-indigo-400' : 'text-gray-500'}`}>
                         {day}
                       </span>
                       {releaseDays.has(day) && (
-                        <div className="mt-1 flex flex-wrap gap-1">
-                          {dayItems[day]?.slice(0, 4).map((item, j) => (
-                            <Link key={j} to={`/detail/${item.media_type}/${item.id}`} className="block group">
-                              <div className="w-7 h-10 sm:w-9 sm:h-13 rounded overflow-hidden border border-[var(--border-primary)] hover:border-indigo-400 transition-all">
-                                {item.poster ? (
-                                  <img src={item.poster} alt={item.title} className="w-full h-full object-cover group-hover:scale-110 transition-transform" loading="lazy" />
-                                ) : (
-                                  <div className="w-full h-full flex items-center justify-center bg-gray-800 text-[6px] text-gray-600">N/A</div>
-                                )}
-                              </div>
-                            </Link>
-                          ))}
-                          {dayItems[day]?.length > 4 && (
-                            <div className="w-7 h-10 sm:w-9 sm:h-13 rounded overflow-hidden bg-indigo-500/20 border border-indigo-500/30 flex items-center justify-center">
-                              <span className="text-[9px] font-bold text-indigo-300">+{dayItems[day].length - 4}</span>
-                            </div>
-                          )}
-                        </div>
+                        <span className="text-[9px] text-indigo-400/60 font-medium">{dayItems[day].length}</span>
                       )}
-                    </>
-                  )}
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Release list */}
-          {data?.days?.length > 0 ? (
-            <div>
-              <h2 className="text-lg font-bold text-gray-100 mb-4">Upcoming Releases</h2>
-              <div className="space-y-3">
-                {data.days.map(day => (
-                  <div key={day.date} className="bg-[var(--bg-secondary)] rounded-xl border border-[var(--border-primary)] overflow-hidden">
-                    <div className="px-4 py-2.5 bg-indigo-500/10 border-b border-[var(--border-primary)]">
-                      <span className="text-sm font-semibold text-indigo-300">
-                        {new Date(day.date + 'T00:00:00').toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}
-                      </span>
-                      <span className="text-xs text-gray-500 ml-2">{day.items.length} release{day.items.length > 1 ? 's' : ''}</span>
                     </div>
-                    <div className="p-3 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
-                      {day.items.map((item, i) => (
-                        <Link key={i} to={`/detail/${item.media_type}/${item.id}`} className="group block">
-                          <div className="bg-[var(--bg-tertiary)] rounded-xl overflow-hidden border border-[var(--border-primary)] hover:border-indigo-500/30 transition-all">
-                            <div className="aspect-[2/3] bg-gray-800 relative overflow-hidden">
+                    {releaseDays.has(day) && (
+                      <div className="grid grid-cols-2 gap-1">
+                        {dayItems[day]?.slice(0, 6).map((item, j) => (
+                          <Link key={j} to={`/detail/${item.media_type}/${item.id}`} className="block group">
+                            <div className="aspect-[2/3] rounded-md overflow-hidden border border-[var(--border-primary)] hover:border-indigo-400/60 transition-all bg-gray-800 relative">
                               {item.poster ? (
-                                <img src={item.poster} alt={item.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" loading="lazy" />
+                                <img src={item.poster} alt={item.title} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300" loading="lazy" />
                               ) : (
-                                <div className="w-full h-full flex items-center justify-center text-gray-600 text-xs">No poster</div>
+                                <div className="w-full h-full flex items-center justify-center text-gray-600">N/A</div>
                               )}
-                              <div className="absolute top-1.5 right-1.5">
-                                <span className={`px-1.5 py-0.5 rounded text-[10px] font-bold uppercase ${item.media_type === 'movie' ? 'bg-indigo-500/80 text-white' : 'bg-emerald-500/80 text-white'}`}>
-                                  {item.media_type === 'movie' ? 'Movie' : 'TV'}
+                              <div className="absolute top-0.5 right-0.5">
+                                <span className={`px-1 py-[1px] rounded-sm text-[7px] font-bold uppercase ${item.media_type === 'movie' ? 'bg-indigo-500/90 text-white' : 'bg-emerald-500/90 text-white'}`}>
+                                  {item.media_type === 'movie' ? 'M' : 'TV'}
                                 </span>
                               </div>
                             </div>
-                            <div className="p-2">
-                              <p className="text-xs font-medium text-gray-200 truncate group-hover:text-indigo-300 transition-colors">{item.title}</p>
-                              <div className="flex items-center gap-1.5 mt-1">
-                                <span className="text-[10px] text-yellow-400">★ {item.vote_average}</span>
-                                {item.genre && item.genre !== 'Unknown' && (
-                                  <span className="text-[10px] text-gray-500 truncate">{item.genre.split('|')[0]}</span>
-                                )}
-                              </div>
-                            </div>
-                          </div>
-                        </Link>
-                      ))}
-                    </div>
-                  </div>
-                ))}
+                          </Link>
+                        ))}
+                        {dayItems[day]?.length > 6 && (
+                          <Link to={`/upcoming`} className="aspect-[2/3] rounded-md overflow-hidden bg-indigo-500/15 border border-indigo-500/20 flex items-center justify-center hover:bg-indigo-500/25 transition-colors">
+                            <span className="text-xs font-bold text-indigo-300">+{dayItems[day].length - 6}</span>
+                          </Link>
+                        )}
+                      </div>
+                    )}
+                  </>
+                )}
               </div>
-            </div>
-          ) : (
-            <div className="text-center py-16">
-              <div className="text-5xl mb-4">📅</div>
-              <p className="text-gray-500 text-sm">No upcoming releases for {MONTHS[month - 1]} {year}</p>
-              <button onClick={nextMonth} className="mt-3 text-sm text-indigo-400 hover:text-indigo-300 transition-colors bg-transparent border-0 cursor-pointer">
-                Check next month →
-              </button>
-            </div>
-          )}
-        </>
+            ))}
+          </div>
+        </div>
       )}
     </div>
   )
