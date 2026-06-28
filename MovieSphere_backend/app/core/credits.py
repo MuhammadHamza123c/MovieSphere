@@ -12,6 +12,7 @@ EXEMPT_PATHS = {
     '/MovieSphere/comments',
     '/MovieSphere/og/movie/',
     '/MovieSphere/og/tv/',
+    '/MovieSphere/trivia/',
 }
 
 def get_credit_cost(path: str, query_params: dict) -> int:
@@ -78,3 +79,18 @@ def deduct_credits(user_id: str, cost: int) -> dict:
     except Exception as e:
         print(f'[Credits] deduct_credits failed: {e}', flush=True)
         return {'success': False, 'credits_remaining': remaining}
+
+def add_credits(user_id: str, amount: int) -> dict:
+    try:
+        records = supabase.table('user_credits').select('*').eq('user_id', user_id).execute()
+        current = records.data[0].get('free_credits', 0) if records.data else 0
+        new_total = current + amount
+        supabase.table('user_credits').update({
+            'free_credits': new_total,
+            'updated_at': datetime.now(timezone.utc).isoformat(),
+        }).eq('user_id', user_id).execute()
+        print(f'[Credits] Added {amount} to {user_id}: {current} -> {new_total}', flush=True)
+        return {'success': True, 'credits_remaining': new_total}
+    except Exception as e:
+        print(f'[Credits] add_credits failed: {e}', flush=True)
+        return {'success': False, 'credits_remaining': None}
