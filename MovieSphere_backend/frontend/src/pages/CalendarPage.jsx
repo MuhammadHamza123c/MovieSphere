@@ -87,17 +87,22 @@ export default function CalendarPage() {
                         {day}
                       </span>
                       {releaseDays.has(day) && (
-                        <div className="mt-1 flex flex-col gap-0.5">
-                          {dayItems[day]?.slice(0, 3).map((item, j) => (
+                        <div className="mt-1 flex flex-wrap gap-1">
+                          {dayItems[day]?.slice(0, 4).map((item, j) => (
                             <Link key={j} to={`/detail/${item.media_type}/${item.id}`} className="block group">
-                              <div className="flex items-center gap-1 truncate rounded px-0.5 py-0.5 hover:bg-indigo-500/10 transition-colors">
-                                <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${item.media_type === 'movie' ? 'bg-indigo-400' : 'bg-emerald-400'}`} />
-                                <span className="text-[10px] sm:text-xs text-gray-400 group-hover:text-gray-200 truncate">{item.title}</span>
+                              <div className="w-7 h-10 sm:w-9 sm:h-13 rounded overflow-hidden border border-[var(--border-primary)] hover:border-indigo-400 transition-all">
+                                {item.poster ? (
+                                  <img src={item.poster} alt={item.title} className="w-full h-full object-cover group-hover:scale-110 transition-transform" loading="lazy" />
+                                ) : (
+                                  <div className="w-full h-full flex items-center justify-center bg-gray-800 text-[6px] text-gray-600">N/A</div>
+                                )}
                               </div>
                             </Link>
                           ))}
-                          {dayItems[day]?.length > 3 && (
-                            <span className="text-[10px] text-indigo-400/70 pl-2">+{dayItems[day].length - 3} more</span>
+                          {dayItems[day]?.length > 4 && (
+                            <div className="w-7 h-10 sm:w-9 sm:h-13 rounded overflow-hidden bg-indigo-500/20 border border-indigo-500/30 flex items-center justify-center">
+                              <span className="text-[9px] font-bold text-indigo-300">+{dayItems[day].length - 4}</span>
+                            </div>
                           )}
                         </div>
                       )}
