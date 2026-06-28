@@ -6,7 +6,7 @@ A full-featured movie and TV streaming app with AI-powered recommendations, real
 
 - **Frontend**: https://movie-sphere-sigma.vercel.app
 - **Backend API**: https://movie-sphere-backend.vercel.app
-- **Updated**: June 19, 2026
+- **Updated**: June 28, 2026
 
 ---
 
@@ -28,6 +28,7 @@ A full-featured movie and TV streaming app with AI-powered recommendations, real
 - AI-powered **movie recommendations** based on your taste
 - **AI chat** about movies (powered by Groq / Llama 3.3 70B)
 - **Daily trailer push notifications** with AI-generated descriptions
+- **Daily Trivia Quiz** — 5 AI-generated movie/TV questions per session with 10-second timer. Earn +2 credits per correct answer
 
 ### 👥 Watch Party (LiveKit)
 - Real-time **watch parties** with camera sharing
@@ -68,6 +69,8 @@ A full-featured movie and TV streaming app with AI-powered recommendations, real
 - **User reviews & ratings** with comments
 - **Account deletion**
 - **Open Graph meta tags** for rich link previews on social media
+- **Content Calendar** — monthly grid with poster thumbnails for upcoming movie/TV releases
+- **Daily Trivia Quiz** — 5 AI-generated questions, 10-second timer, win credits
 
 ---
 
@@ -309,6 +312,35 @@ CREATE TABLE watch_party_rooms (
   is_active BOOLEAN DEFAULT TRUE,
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
+
+-- daily_trivia (cached questions — optional, AI generates on-the-fly by default)
+CREATE TABLE IF NOT EXISTS daily_trivia (
+  id SERIAL PRIMARY KEY,
+  quiz_date DATE NOT NULL DEFAULT CURRENT_DATE,
+  questions JSONB NOT NULL,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_trivia_date ON daily_trivia(quiz_date);
+
+-- user_trivia_scores
+CREATE TABLE IF NOT EXISTS user_trivia_scores (
+  id SERIAL PRIMARY KEY,
+  user_id UUID REFERENCES auth.users(id) NOT NULL,
+  quiz_date DATE NOT NULL DEFAULT CURRENT_DATE,
+  total_correct INTEGER DEFAULT 0,
+  total_questions INTEGER DEFAULT 0,
+  credits_earned INTEGER DEFAULT 0,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  UNIQUE(user_id, quiz_date)
+);
+
+-- user_trivia_sessions (active per-user quiz session)
+CREATE TABLE IF NOT EXISTS user_trivia_sessions (
+  id SERIAL PRIMARY KEY,
+  user_id UUID REFERENCES auth.users(id) NOT NULL UNIQUE,
+  questions JSONB NOT NULL,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
 ```
 
 ### 5. Set Up Push Notifications
@@ -373,7 +405,9 @@ MovieSphere/
 │   │   │   ├── trending.py       # Trending
 │   │   │   ├── upcoming.py       # Upcoming
 │   │   │   ├── watch_later.py    # Watch later list
-│   │   │   └── watch_party.py    # LiveKit watch party rooms
+│   │   │   ├── watch_party.py    # LiveKit watch party rooms
+│   │   │   ├── daily_trivia.py   # Trivia quiz API
+│   │   │   └── calendar.py       # Content calendar
 │   │   ├── core/
 │   │   │   ├── auth.py           # JWT auth dependency
 │   │   │   ├── config.py         # Environment config
@@ -385,6 +419,7 @@ MovieSphere/
 │   │   │   ├── itunes.py         # iTunes Search API
 │   │   │   ├── tmdb.py           # TMDB API wrapper
 │   │   │   ├── trailer_digest.py # Push digest logic
+│   │   │   ├── trivia.py         # AI trivia question generation
 │   │   │   └── youtube.py        # YouTube Data API
 │   │   ├── utils/
 │   │   │   └── genres.py         # TMDB genre mappings
@@ -433,7 +468,9 @@ MovieSphere/
 │   │   │   ├── TrendingPage.jsx
 │   │   │   ├── UpcomingPage.jsx
 │   │   │   ├── WatchLaterPage.jsx
-│   │   │   └── WatchPage.jsx     # Video player
+│   │   │   ├── WatchPage.jsx     # Video player
+│   │   │   ├── CalendarPage.jsx  # Content calendar
+│   │   │   └── TriviaPage.jsx    # Daily trivia quiz
 │   │   ├── App.jsx               # Routes + layout
 │   │   └── main.jsx              # Entry point
 │   ├── vercel.json               # Vercel deployment config
@@ -518,6 +555,17 @@ All API routes are prefixed with `/MovieSphere` (unless noted as `/auth`).
 | POST | `/MovieSphere/notifications/subscribe` | Subscribe to push |
 | GET | `/MovieSphere/trailer-digest/run` | Trigger trailer digest (cron) |
 
+### Trivia Quiz
+| Method | Path | Description |
+|---|---|---|
+| GET | `/MovieSphere/trivia/today` | Fetch fresh AI-generated quiz (5 questions) |
+| POST | `/MovieSphere/trivia/submit` | Submit answers, earn credits for correct ones |
+
+### Calendar
+| Method | Path | Description |
+|---|---|---|
+| GET | `/MovieSphere/calendar` | Releases by month (`?month=&year=`) |
+
 ### Open Graph (Social Previews)
 | Method | Path | Description |
 |---|---|---|
@@ -559,7 +607,8 @@ Set `VITE_API_URL` to the deployed backend URL.
 | Browsing any page (home, shows, search, etc.) | 1 credit |
 | Streaming a movie | 2 credits |
 | Streaming a TV episode | 1 credit |
-| Credits, notifications, trailer digest, continue watching, comments, home page load, OG previews | **Free** |
+| Trivia quiz (free to play), credits, notifications, trailer digest, continue watching, comments, home page load, OG previews | **Free** |
+| Trivia correct answer (within 10s) | **+2 credits** |
 
 - **100 credits** are allocated daily
 - Reset occurs **every day** (checks if 1+ day has passed since `created_at`)
