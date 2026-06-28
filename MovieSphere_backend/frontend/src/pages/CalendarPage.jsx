@@ -132,11 +132,7 @@ export default function CalendarPage() {
                               </div>
                             </Link>
                           ))}
-                          {items.length > 4 && (
-                            <Link to="/upcoming" className="aspect-[2/3] rounded-lg overflow-hidden bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center hover:bg-indigo-500/20 transition-all group">
-                              <span className="text-sm sm:text-base font-bold text-indigo-400 group-hover:text-indigo-300 transition-colors">+{items.length - 4}</span>
-                            </Link>
-                          )}
+
                         </div>
                       )}
                     </div>
