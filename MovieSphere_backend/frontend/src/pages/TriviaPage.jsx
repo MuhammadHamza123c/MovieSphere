@@ -58,7 +58,7 @@ export default function TriviaPage() {
         }
         return prev - 1
       })
-    }, 200)
+    }, 1000)
     return () => clearInterval(timerRef.current)
   }, [phase, current, selected])
 
