@@ -1,5 +1,6 @@
 from fastapi import APIRouter, Query
-from datetime import datetime, timedelta
+from datetime import datetime
+import calendar as cal
 import requests
 from app.core.config import TMDB_API_KEY
 from app.utils.genres import tmdb_movie_genres, tmdb_tv_genres
@@ -8,12 +9,17 @@ calendar_app = APIRouter()
 
 MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December']
 
-def _fetch_page(url, params, page):
-    p = {**params, 'page': page}
-    r = requests.get(url, params=p, timeout=8)
-    if not r.ok:
-        return []
-    return (r.json().get('results') or [])
+def _fetch_all_pages(url, params, max_pages=5):
+    results = []
+    for page in range(1, max_pages + 1):
+        r = requests.get(url, params={**params, 'page': page}, timeout=8)
+        if not r.ok:
+            break
+        data = r.json()
+        results.extend(data.get('results') or [])
+        if page >= (data.get('total_pages', 1) or 1):
+            break
+    return results
 
 def _format_item(item, media_type, title_key, date_key, genre_map):
     gids = item.get('genre_ids') or []
@@ -34,28 +40,40 @@ def calendar_data(month: int = Query(default=0, ge=0, le=12), year: int = Query(
     target_month = month if 1 <= month <= 12 else now.month
     target_year = year if year > 0 else now.year
 
+    _, last_day = cal.monthrange(target_year, target_month)
+    date_from = f'{target_year}-{target_month:02d}-01'
+    date_to = f'{target_year}-{target_month:02d}-{last_day:02d}'
+
     items = []
+    base_params = {'api_key': TMDB_API_KEY, 'language': 'en-US', 'sort_by': 'popularity.desc'}
 
-    for page in (1, 2):
-        for m in _fetch_page('https://api.themoviedb.org/3/movie/upcoming', {'api_key': TMDB_API_KEY, 'language': 'en-US'}, page):
-            d = (m.get('release_date') or '')[:10]
-            if d:
-                try:
-                    dt = datetime.strptime(d, '%Y-%m-%d')
-                    if dt.month == target_month and dt.year == target_year:
-                        items.append(_format_item(m, 'movie', 'title', 'release_date', tmdb_movie_genres))
-                except:
-                    pass
+    # Movies releasing in this month
+    for m in _fetch_all_pages(
+        'https://api.themoviedb.org/3/discover/movie',
+        {**base_params, 'primary_release_date.gte': date_from, 'primary_release_date.lte': date_to},
+    ):
+        d = (m.get('release_date') or '')[:10]
+        if d:
+            try:
+                dt = datetime.strptime(d, '%Y-%m-%d')
+                if dt.month == target_month and dt.year == target_year:
+                    items.append(_format_item(m, 'movie', 'title', 'release_date', tmdb_movie_genres))
+            except:
+                pass
 
-        for t in _fetch_page('https://api.themoviedb.org/3/tv/on_the_air', {'api_key': TMDB_API_KEY, 'language': 'en-US'}, page):
-            d = (t.get('first_air_date') or '')[:10]
-            if d:
-                try:
-                    dt = datetime.strptime(d, '%Y-%m-%d')
-                    if dt.month == target_month and dt.year == target_year:
-                        items.append(_format_item(t, 'tv', 'name', 'first_air_date', tmdb_tv_genres))
-                except:
-                    pass
+    # TV shows premiering this month
+    for t in _fetch_all_pages(
+        'https://api.themoviedb.org/3/discover/tv',
+        {**base_params, 'first_air_date.gte': date_from, 'first_air_date.lte': date_to},
+    ):
+        d = (t.get('first_air_date') or '')[:10]
+        if d:
+            try:
+                dt = datetime.strptime(d, '%Y-%m-%d')
+                if dt.month == target_month and dt.year == target_year:
+                    items.append(_format_item(t, 'tv', 'name', 'first_air_date', tmdb_tv_genres))
+            except:
+                pass
 
     items.sort(key=lambda x: x['release_date'])
 
