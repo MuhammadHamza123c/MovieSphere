@@ -113,7 +113,7 @@ export default function CalendarPage() {
 
                       {hasRelease && (
                         <div className="flex-1 grid grid-cols-2 gap-1">
-                          {items.slice(0, 6).map((item, j) => (
+                          {items.slice(0, 4).map((item, j) => (
                             <Link key={j} to={`/detail/${item.media_type}/${item.id}`} className="group block">
                               <div className="aspect-[2/3] rounded-lg overflow-hidden border border-[var(--border-primary)]/60 bg-gray-800 relative shadow-sm hover:shadow-md hover:shadow-indigo-500/10 hover:border-indigo-400/40 transition-all duration-200">
                                 {item.poster ? (
@@ -132,9 +132,9 @@ export default function CalendarPage() {
                               </div>
                             </Link>
                           ))}
-                          {items.length > 6 && (
+                          {items.length > 4 && (
                             <Link to="/upcoming" className="aspect-[2/3] rounded-lg overflow-hidden bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center hover:bg-indigo-500/20 transition-all group">
-                              <span className="text-sm sm:text-base font-bold text-indigo-400 group-hover:text-indigo-300 transition-colors">+{items.length - 6}</span>
+                              <span className="text-sm sm:text-base font-bold text-indigo-400 group-hover:text-indigo-300 transition-colors">+{items.length - 4}</span>
                             </Link>
                           )}
                         </div>
