@@ -29,7 +29,7 @@ def _fetch_trending_items():
         )
         if r.ok:
             for item in (r.json().get('results') or []):
-                if item.get('vote_count', 0) < 50:
+                if item.get('vote_count', 0) < 200:
                     continue
                 items.append({
                     'id': item.get('id'),
@@ -45,9 +45,9 @@ def _fetch_trending_items():
 
 
 def _get_year_distractors(correct_year, count=3):
-    candidates = [correct_year + i for i in range(-8, 9) if i != 0]
+    candidates = [str(correct_year + i) for i in range(-8, 9) if i != 0]
     random.shuffle(candidates)
-    return sorted(candidates[:count])
+    return [str(y) for y in sorted(candidates[:count])]
 
 
 def _get_genre_distractors(correct_genre, genre_map, count=3):
@@ -135,7 +135,7 @@ def generate_questions():
         # Build question based on resolved type
         if qtype == 'year':
             raw = item.get('release_date', '')
-            correct_answer = raw[:4]
+            correct_answer = str(raw[:4])
             question_text = f'What year was "{title}" released?'
             distractors = _get_year_distractors(int(correct_answer))
             correct = correct_answer
