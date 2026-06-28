@@ -35,6 +35,7 @@ from app.api.credits import credits_app
 from app.api.og import og_app
 from app.api.player import player_app
 from app.api.daily_credits import daily_credits_app
+from app.api.calendar import calendar_app
 from app.core.credits import EXEMPT_PATHS, get_credit_cost, deduct_credits
 
 app = FastAPI()
@@ -130,6 +131,7 @@ app.include_router(credits_app)
 app.include_router(og_app)
 app.include_router(player_app)
 app.include_router(daily_credits_app)
+app.include_router(calendar_app)
 
 # Catch-all OPTIONS handler for Vercel CORS preflight
 @app.options("/{rest_of_path:path}")

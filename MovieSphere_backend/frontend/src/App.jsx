@@ -18,6 +18,7 @@ import WatchLaterPage from './pages/WatchLaterPage'
 import ReelsPage from './pages/ReelsPage'
 import TrendingPage from './pages/TrendingPage'
 import AuthCallback from './pages/AuthCallback'
+import CalendarPage from './pages/CalendarPage'
 import usePushNotifications from './hooks/usePushNotifications'
 
 function ProtectedRoute({ children }) {
@@ -92,7 +93,8 @@ export default function App() {
         <Route path="/watch-later" element={<WatchLaterPage />} />
         <Route path="/top-rated" element={<TopRatedPage />} />
         <Route path="/trending" element={<TrendingPage />} />
-        <Route path="/reels" element={<ReelsPage />} />
+<Route path="/reels"         element={<ReelsPage />} />
+<Route path="/calendar"     element={<CalendarPage />} />
         <Route path="/" element={<Navigate to="/home" replace />} />
         <Route path="*" element={<Navigate to="/home" replace />} />
       </Route>
