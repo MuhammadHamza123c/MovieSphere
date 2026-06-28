@@ -47,7 +47,8 @@ async def get_today_trivia(user_id: str = Depends(_resolve_user)):
 
     questions = await generate_questions()
 
-    supabase.table('user_trivia_sessions').upsert({
+    supabase.table('user_trivia_sessions').delete().eq('user_id', user_id).execute()
+    supabase.table('user_trivia_sessions').insert({
         'user_id': user_id,
         'questions': questions,
     }).execute()
