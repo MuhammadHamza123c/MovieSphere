@@ -131,7 +131,7 @@ def submit_trivia(payload: dict, user_id: str = Depends(_resolve_user)):
 
 
 @trivia_app.get('/MovieSphere/trivia/generate')
-def generate_daily_trivia(key: str = Query(...)):
+async def generate_daily_trivia(key: str = Query(...)):
     if key != CRON_SECRET_KEY:
         raise HTTPException(status_code=403, detail='Invalid key')
 
@@ -141,7 +141,7 @@ def generate_daily_trivia(key: str = Query(...)):
     if existing.data:
         return {'generated': False, 'message': 'Already generated for today'}
 
-    questions = generate_questions()
+    questions = await generate_questions()
     supabase.table('daily_trivia').insert({
         'quiz_date': today,
         'questions': questions,
