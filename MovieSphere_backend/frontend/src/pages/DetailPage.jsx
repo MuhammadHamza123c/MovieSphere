@@ -4,6 +4,7 @@ import { fetchDetail, fetchCast, fetchRecommendations, fetchSimilar, fetchCommen
 import { useAuth } from '../hooks/useAuth'
 import CastCard from '../components/CastCard'
 import GenreTag from '../components/GenreTag'
+import ShareButton from '../components/ShareButton'
 import MovieCard from '../components/MovieCard'
 
 export default function DetailPage() {
@@ -217,6 +218,7 @@ export default function DetailPage() {
                 </svg>
                 Watch Later
               </button>
+              <ShareButton mediaId={id} mediaType={mediaType} title={title} />
             </div>
           </div>
         </div>
