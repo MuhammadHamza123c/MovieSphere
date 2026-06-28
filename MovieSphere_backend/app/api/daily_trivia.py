@@ -1,5 +1,4 @@
-from fastapi import APIRouter, HTTPException, Query, Depends
-from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
+from fastapi import APIRouter, HTTPException, Query, Header, Depends
 from datetime import date
 from app.core.database import supabase
 from app.core.config import CRON_SECRET_KEY
@@ -8,7 +7,6 @@ from app.core.auth import _verify_token_locally
 from app.core.credits import add_credits
 
 trivia_app = APIRouter()
-auth_scheme = HTTPBearer(auto_error=False)
 
 
 def _get_user_id(token: str) -> str | None:
@@ -24,16 +22,20 @@ def _get_user_id(token: str) -> str | None:
     return None
 
 
-@trivia_app.get('/MovieSphere/trivia/today')
-def get_today_trivia(authorization: str = Query('', alias='Authorization')):
+def _resolve_user(authorization: str = Header('')) -> str:
     token = authorization.removeprefix('Bearer ').strip()
+    if not token:
+        raise HTTPException(status_code=401, detail='Missing Authorization header')
     user_id = _get_user_id(token)
     if not user_id:
         raise HTTPException(status_code=401, detail='Unauthorized')
+    return user_id
 
+
+@trivia_app.get('/MovieSphere/trivia/today')
+def get_today_trivia(user_id: str = Depends(_resolve_user)):
     today = date.today().isoformat()
 
-    # Check if user already completed today
     existing = supabase.table('user_trivia_scores').select('*').eq('user_id', user_id).eq('quiz_date', today).execute()
     if existing.data:
         s = existing.data[0]
@@ -44,7 +46,6 @@ def get_today_trivia(authorization: str = Query('', alias='Authorization')):
             'credits_earned': s.get('credits_earned', 0),
         }
 
-    # Fetch today's questions
     trivia = supabase.table('daily_trivia').select('*').eq('quiz_date', today).execute()
     if not trivia.data:
         return {'completed': False, 'questions': None, 'message': 'No quiz available today yet'}
@@ -56,7 +57,6 @@ def get_today_trivia(authorization: str = Query('', alias='Authorization')):
     else:
         questions = questions_raw
 
-    # Strip correct answers for the client
     safe = []
     for q in questions:
         safe.append({
@@ -72,20 +72,13 @@ def get_today_trivia(authorization: str = Query('', alias='Authorization')):
 
 
 @trivia_app.post('/MovieSphere/trivia/submit')
-def submit_trivia(payload: dict, authorization: str = Query('', alias='Authorization')):
-    token = authorization.removeprefix('Bearer ').strip()
-    user_id = _get_user_id(token)
-    if not user_id:
-        raise HTTPException(status_code=401, detail='Unauthorized')
-
+def submit_trivia(payload: dict, user_id: str = Depends(_resolve_user)):
     today = date.today().isoformat()
 
-    # Check if already completed
     existing = supabase.table('user_trivia_scores').select('*').eq('user_id', user_id).eq('quiz_date', today).execute()
     if existing.data:
         return {'already_completed': True, 'credits_earned': existing.data[0].get('credits_earned', 0)}
 
-    # Fetch questions
     trivia = supabase.table('daily_trivia').select('*').eq('quiz_date', today).execute()
     if not trivia.data:
         raise HTTPException(status_code=404, detail='No quiz found for today')
@@ -117,11 +110,9 @@ def submit_trivia(payload: dict, authorization: str = Query('', alias='Authoriza
             total_correct += 1
             credits_earned += result['credits_earned']
 
-    # Award credits
     if credits_earned > 0:
         add_credits(user_id, credits_earned)
 
-    # Save score
     supabase.table('user_trivia_scores').insert({
         'user_id': user_id,
         'quiz_date': today,
@@ -146,7 +137,6 @@ def generate_daily_trivia(key: str = Query(...)):
 
     today = date.today().isoformat()
 
-    # Check if already generated
     existing = supabase.table('daily_trivia').select('*').eq('quiz_date', today).execute()
     if existing.data:
         return {'generated': False, 'message': 'Already generated for today'}
