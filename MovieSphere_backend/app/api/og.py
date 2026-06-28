@@ -15,27 +15,21 @@ def _build_og_html(title, overview, poster_url, backdrop_url, og_url, redirect_u
     genre_str = ', '.join(genres[:3]) if genres else ''
     schema_type = 'Movie' if og_type == 'video.movie' else 'TVSeries'
 
-    json_ld = {
-        '@context': 'https://schema.org',
-        '@type': schema_type,
-        'name': title,
-        'description': desc,
-        'image': image,
-        'url': og_url,
-    }
-    if release_date:
-        json_ld['datePublished' if schema_type == 'Movie' else 'startDate'] = release_date
-    if rating:
-        json_ld['aggregateRating'] = {
-            '@type': 'AggregateRating',
-            'ratingValue': str(rating),
-            'bestRating': '10',
-            'itemReviewed': {'@type': schema_type, 'name': title},
-        }
-    if genre_str:
-        json_ld['genre'] = genre_str
-
     import json as _json
+
+    media_obj = {'@type': schema_type, 'name': title, 'description': desc, 'image': image, 'url': og_url}
+    if release_date:
+        media_obj['datePublished' if schema_type == 'Movie' else 'startDate'] = release_date
+    if rating:
+        media_obj['aggregateRating'] = {'@type': 'AggregateRating', 'ratingValue': str(rating), 'bestRating': '10', 'itemReviewed': {'@type': schema_type, 'name': title}}
+    if genre_str:
+        media_obj['genre'] = genre_str
+
+    article_obj = {'@type': 'Article', 'headline': title, 'description': desc, 'image': image, 'url': og_url, 'mainEntityOfPage': og_url, 'author': {'@type': 'Organization', 'name': SITE}, 'publisher': {'@type': 'Organization', 'name': SITE}}
+    if release_date:
+        article_obj['datePublished'] = release_date
+
+    json_ld = {'@context': 'https://schema.org', '@graph': [media_obj, article_obj]}
     json_ld_str = _json.dumps(json_ld, ensure_ascii=False)
 
     html = f'''<!DOCTYPE html>
