@@ -108,9 +108,7 @@ export default function CalendarPage() {
                         }`}>
                           {day}
                         </div>
-                        {hasRelease && (
-                          <div className="w-1.5 h-1.5 rounded-full bg-indigo-400" />
-                        )}
+
                       </div>
 
                       {hasRelease && (
