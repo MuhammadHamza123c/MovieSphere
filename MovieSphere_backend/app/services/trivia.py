@@ -23,12 +23,14 @@ def _fetch_trending_items():
     items = []
     for media_type in ('movie', 'tv'):
         r = requests.get(
-            f'https://api.themoviedb.org/3/trending/{media_type}/day',
-            params={'api_key': TMDB_API_KEY, 'language': 'en-US'},
+            f'https://api.themoviedb.org/3/{media_type}/popular',
+            params={'api_key': TMDB_API_KEY, 'language': 'en-US', 'region': 'US'},
             timeout=8,
         )
         if r.ok:
             for item in (r.json().get('results') or []):
+                if item.get('vote_count', 0) < 50:
+                    continue
                 items.append({
                     'id': item.get('id'),
                     'title': item.get('title') or item.get('name'),
@@ -36,6 +38,7 @@ def _fetch_trending_items():
                     'genre_ids': item.get('genre_ids') or [],
                     'media_type': media_type,
                     'popularity': item.get('popularity', 0),
+                    'vote_count': item.get('vote_count', 0),
                 })
     random.shuffle(items)
     return items
