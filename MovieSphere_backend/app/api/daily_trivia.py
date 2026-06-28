@@ -1,7 +1,6 @@
 from fastapi import APIRouter, HTTPException, Query, Header, Depends
 from datetime import date
 from app.core.database import supabase
-from app.core.config import CRON_SECRET_KEY
 from app.services.trivia import generate_questions, check_answer, QUIZ_SIZE, TIME_LIMIT_SECONDS, CREDITS_PER_CORRECT
 from app.core.auth import _verify_token_locally
 from app.core.credits import add_credits
@@ -33,7 +32,7 @@ def _resolve_user(authorization: str = Header('')) -> str:
 
 
 @trivia_app.get('/MovieSphere/trivia/today')
-def get_today_trivia(user_id: str = Depends(_resolve_user)):
+async def get_today_trivia(user_id: str = Depends(_resolve_user)):
     today = date.today().isoformat()
 
     existing = supabase.table('user_trivia_scores').select('*').eq('user_id', user_id).eq('quiz_date', today).execute()
@@ -46,16 +45,12 @@ def get_today_trivia(user_id: str = Depends(_resolve_user)):
             'credits_earned': s.get('credits_earned', 0),
         }
 
-    trivia = supabase.table('daily_trivia').select('*').eq('quiz_date', today).execute()
-    if not trivia.data:
-        return {'completed': False, 'questions': None, 'message': 'No quiz available today yet'}
+    questions = await generate_questions()
 
-    questions_raw = trivia.data[0].get('questions')
-    if isinstance(questions_raw, str):
-        import json
-        questions = json.loads(questions_raw)
-    else:
-        questions = questions_raw
+    supabase.table('user_trivia_sessions').upsert({
+        'user_id': user_id,
+        'questions': questions,
+    }).execute()
 
     safe = []
     for q in questions:
@@ -64,8 +59,6 @@ def get_today_trivia(user_id: str = Depends(_resolve_user)):
             'options': q['options'],
             'type': q.get('type'),
             'media_title': q.get('media_title'),
-            'media_type': q.get('media_type'),
-            'media_id': q.get('media_id'),
         })
 
     return {'completed': False, 'questions': safe}
@@ -77,18 +70,21 @@ def submit_trivia(payload: dict, user_id: str = Depends(_resolve_user)):
 
     existing = supabase.table('user_trivia_scores').select('*').eq('user_id', user_id).eq('quiz_date', today).execute()
     if existing.data:
+        supabase.table('user_trivia_sessions').delete().eq('user_id', user_id).execute()
         return {'already_completed': True, 'credits_earned': existing.data[0].get('credits_earned', 0)}
 
-    trivia = supabase.table('daily_trivia').select('*').eq('quiz_date', today).execute()
-    if not trivia.data:
-        raise HTTPException(status_code=404, detail='No quiz found for today')
+    session = supabase.table('user_trivia_sessions').select('*').eq('user_id', user_id).execute()
+    if not session.data:
+        raise HTTPException(status_code=404, detail='No active trivia session. Fetch questions first.')
 
-    questions_raw = trivia.data[0].get('questions')
+    questions_raw = session.data[0].get('questions')
     if isinstance(questions_raw, str):
         import json
         questions = json.loads(questions_raw)
     else:
         questions = questions_raw
+
+    supabase.table('user_trivia_sessions').delete().eq('user_id', user_id).execute()
 
     answers = payload.get('answers', [])
     if len(answers) != QUIZ_SIZE:
@@ -128,23 +124,3 @@ def submit_trivia(payload: dict, user_id: str = Depends(_resolve_user)):
         'credits_earned': credits_earned,
         'results': results,
     }
-
-
-@trivia_app.get('/MovieSphere/trivia/generate')
-async def generate_daily_trivia(key: str = Query(...)):
-    if key != CRON_SECRET_KEY:
-        raise HTTPException(status_code=403, detail='Invalid key')
-
-    today = date.today().isoformat()
-
-    existing = supabase.table('daily_trivia').select('*').eq('quiz_date', today).execute()
-    if existing.data:
-        return {'generated': False, 'message': 'Already generated for today'}
-
-    questions = await generate_questions()
-    supabase.table('daily_trivia').insert({
-        'quiz_date': today,
-        'questions': questions,
-    }).execute()
-
-    return {'generated': True, 'count': len(questions)}
