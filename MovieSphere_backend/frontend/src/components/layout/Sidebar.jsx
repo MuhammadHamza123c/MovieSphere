@@ -42,7 +42,7 @@ export default function Sidebar() {
   }
 
   const navLinkClasses = ({ isActive }) =>
-    `flex items-center h-10 rounded-lg text-sm font-medium transition-all duration-200 ${
+    `flex items-center h-8 rounded-lg text-xs font-medium transition-all duration-200 ${
       isActive
         ? 'bg-indigo-500/15 text-indigo-400'
         : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-tertiary)]'
@@ -64,25 +64,25 @@ export default function Sidebar() {
       {mobileOpen && (
         <div className="md:hidden fixed inset-0 z-40 bg-black/60" onClick={() => setMobileOpen(false)}>
           <div className="fixed left-0 top-0 bottom-0 w-64 bg-[var(--bg-secondary)] border-r border-[var(--border-primary)] shadow-2xl flex flex-col" onClick={e => e.stopPropagation()}>
-            <div className="flex items-center gap-3 h-16 border-b border-[var(--border-primary)] px-4">
-              <div className="w-8 h-8 rounded bg-gradient-to-br from-indigo-400 to-purple-400" />
-              <h1 className="text-lg font-extrabold bg-gradient-to-r from-indigo-400 to-purple-400 bg-clip-text text-transparent">MovieSphere</h1>
+            <div className="flex items-center gap-3 h-14 border-b border-[var(--border-primary)] px-4">
+              <div className="w-7 h-7 rounded bg-gradient-to-br from-indigo-400 to-purple-400" />
+              <h1 className="text-base font-extrabold bg-gradient-to-r from-indigo-400 to-purple-400 bg-clip-text text-transparent">MovieSphere</h1>
             </div>
-            <nav className="flex-1 py-4 px-2 flex flex-col gap-1">
+            <nav className="flex-1 py-3 px-2 flex flex-col gap-0.5">
               {nav.map(item => (
                 <NavLink
                   key={item.to}
                   to={item.to}
                   onClick={() => setMobileOpen(false)}
                   className={({ isActive }) =>
-                    `flex items-center gap-3 h-12 rounded-lg text-sm font-medium transition-all ${
+                    `flex items-center gap-3 h-9 rounded-lg text-xs font-medium transition-all ${
                       isActive
                         ? 'bg-indigo-500/15 text-indigo-400'
                         : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-tertiary)]'
                     }`
                   }
                 >
-                  <svg className="w-5 h-5 ml-2 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                  <svg className="w-4 h-4 ml-2 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
                     <path strokeLinecap="round" strokeLinejoin="round" d={item.icon} />
                   </svg>
                   {item.label}
@@ -126,86 +126,86 @@ export default function Sidebar() {
       )}
 
       {/* Desktop sidebar */}
-      <aside className="hidden md:flex group w-14 hover:w-56 bg-[var(--bg-secondary)] border-r border-[var(--border-primary)] flex-col flex-shrink-0 h-screen sticky top-0 transition-all duration-200 z-50">
-        <div className="flex items-center h-16 border-b border-[var(--border-primary)]">
-          <div className="flex items-center justify-center w-14 min-w-[56px]">
-            <div className="w-5 h-5 rounded bg-gradient-to-br from-indigo-400 to-purple-400" />
+      <aside className="hidden md:flex group w-12 hover:w-52 bg-[var(--bg-secondary)] border-r border-[var(--border-primary)] flex-col flex-shrink-0 h-screen sticky top-0 transition-all duration-200 z-50">
+        <div className="flex items-center h-12 border-b border-[var(--border-primary)]">
+          <div className="flex items-center justify-center w-12 min-w-[48px]">
+            <div className="w-4 h-4 rounded bg-gradient-to-br from-indigo-400 to-purple-400" />
           </div>
-          <h1 className="text-lg font-extrabold bg-gradient-to-r from-indigo-400 to-purple-400 bg-clip-text text-transparent whitespace-nowrap hidden group-hover:block">
+          <h1 className="text-sm font-extrabold bg-gradient-to-r from-indigo-400 to-purple-400 bg-clip-text text-transparent whitespace-nowrap hidden group-hover:block">
             MovieSphere
           </h1>
         </div>
-        <nav className="flex-1 py-4 flex flex-col gap-1">
+        <nav className="flex-1 py-3 flex flex-col gap-0.5">
           {nav.map(item => (
             <NavLink
               key={item.to}
               to={item.to}
               className={navLinkClasses}
             >
-              <div className="flex items-center justify-center w-14 min-w-[56px]">
-                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+              <div className="flex items-center justify-center w-12 min-w-[48px]">
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
                   <path strokeLinecap="round" strokeLinejoin="round" d={item.icon} />
                 </svg>
               </div>
-              <span className="hidden group-hover:inline">{item.label}</span>
+              <span className="hidden group-hover:inline text-xs">{item.label}</span>
             </NavLink>
           ))}
         </nav>
         {credits && (
           <>
-            <div className="px-3.5 mb-1 hidden group-hover:block">
-              <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-indigo-500/10 text-indigo-300 text-xs font-medium">
+            <div className="px-2 mb-0.5 hidden group-hover:block">
+              <div className="flex items-center gap-1.5 px-2 py-1 rounded-lg bg-indigo-500/10 text-indigo-300 text-[11px] font-medium">
                 <span>⚡</span>
-                <span>{credits.credits_remaining}/100 credits</span>
+                <span>{credits.credits_remaining}/100</span>
               </div>
             </div>
-            <div className="flex items-center justify-center w-14 min-w-[56px] mb-1 hidden group-hover:hidden">
-              <div className="w-8 h-8 flex items-center justify-center rounded-lg bg-indigo-500/10 text-indigo-300 text-xs font-bold">
+            <div className="flex items-center justify-center w-12 min-w-[48px] mb-0.5 hidden group-hover:hidden">
+              <div className="w-6 h-6 flex items-center justify-center rounded-lg bg-indigo-500/10 text-indigo-300 text-[10px] font-bold">
                 {credits.credits_remaining}
               </div>
             </div>
           </>
         )}
         {/* Theme toggle */}
-        <div className="px-3.5 mb-2 hidden group-hover:block">
-          <button onClick={toggleTheme} className="w-full flex items-center gap-2 h-10 rounded-lg border border-[var(--border-primary)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-tertiary)] transition-all cursor-pointer text-sm justify-center">
+        <div className="px-2 mb-1 hidden group-hover:block">
+          <button onClick={toggleTheme} className="w-full flex items-center gap-2 h-7 rounded-lg border border-[var(--border-primary)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-tertiary)] transition-all cursor-pointer text-[11px] justify-center">
             {theme === 'dark' ? '☀️ Light' : '🌙 Dark'}
           </button>
         </div>
-        <div className="flex items-center justify-center w-14 min-w-[56px] mb-2 hidden group-hover:hidden">
-          <button onClick={toggleTheme} className="w-8 h-8 flex items-center justify-center rounded-lg text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-tertiary)] transition-all cursor-pointer text-sm">
+        <div className="flex items-center justify-center w-12 min-w-[48px] mb-1 hidden group-hover:hidden">
+          <button onClick={toggleTheme} className="w-6 h-6 flex items-center justify-center rounded-lg text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-tertiary)] transition-all cursor-pointer text-xs">
             {theme === 'dark' ? '☀️' : '🌙'}
           </button>
         </div>
         {user && (
           <div className="border-t border-[var(--border-primary)]">
-            <div className="py-3">
-              <div className="flex items-center h-10 mb-2">
-                <div className="flex items-center justify-center w-14 min-w-[56px]">
-                  <div className="w-8 h-8 rounded-full bg-indigo-500 flex items-center justify-center text-white font-bold text-xs">
+            <div className="py-2">
+              <div className="flex items-center h-8 mb-1">
+                <div className="flex items-center justify-center w-12 min-w-[48px]">
+                  <div className="w-6 h-6 rounded-full bg-indigo-500 flex items-center justify-center text-white font-bold text-[10px]">
                     {(user.username || user.email || 'U')[0].toUpperCase()}
                   </div>
                 </div>
-                <span className="text-sm text-[var(--text-secondary)] truncate hidden group-hover:block flex-1">{user.username || user.email}</span>
+                <span className="text-xs text-[var(--text-secondary)] truncate hidden group-hover:block flex-1">{user.username || user.email}</span>
                 <button onClick={() => setShowDeleteModal(true)} title="Delete account"
-                  className="flex items-center justify-center w-14 min-w-[56px] hidden group-hover:flex">
-                  <div className="w-7 h-7 flex items-center justify-center rounded-lg text-red-500/50 hover:text-red-400 hover:bg-red-500/10 transition-all cursor-pointer">
-                    <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                  className="flex items-center justify-center w-12 min-w-[48px] hidden group-hover:flex">
+                  <div className="w-6 h-6 flex items-center justify-center rounded-lg text-red-500/50 hover:text-red-400 hover:bg-red-500/10 transition-all cursor-pointer">
+                    <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
                       <path strokeLinecap="round" strokeLinejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" />
                     </svg>
                   </div>
                 </button>
                 <button onClick={() => setShowDeleteModal(true)} title="Delete account"
-                  className="flex items-center justify-center w-14 min-w-[56px] hidden group-hover:hidden">
-                  <div className="w-7 h-7 flex items-center justify-center rounded-lg text-red-500/50 hover:text-red-400 hover:bg-red-500/10 transition-all cursor-pointer">
-                    <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                  className="flex items-center justify-center w-12 min-w-[48px] hidden group-hover:hidden">
+                  <div className="w-6 h-6 flex items-center justify-center rounded-lg text-red-500/50 hover:text-red-400 hover:bg-red-500/10 transition-all cursor-pointer">
+                    <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
                       <path strokeLinecap="round" strokeLinejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" />
                     </svg>
                   </div>
                 </button>
               </div>
-              <div className="hidden group-hover:block px-3.5">
-                <button onClick={logout} className="w-full text-sm px-3 py-2 rounded-lg border border-[var(--border-primary)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-tertiary)] transition-all cursor-pointer">
+              <div className="hidden group-hover:block px-2">
+                <button onClick={logout} className="w-full text-xs px-2 py-1.5 rounded-lg border border-[var(--border-primary)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-tertiary)] transition-all cursor-pointer">
                   Sign Out
                 </button>
               </div>
