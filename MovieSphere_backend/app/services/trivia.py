@@ -1,10 +1,19 @@
 import json
+import random
 import httpx
 from app.core.config import GROQ_API_KEY
 
 QUIZ_SIZE = 5
 TIME_LIMIT_SECONDS = 10
 CREDITS_PER_CORRECT = 2
+
+TRIVIA_MODELS = [
+    "qwen/qwen3-32b",
+    "groq/compound",
+    "meta-llama/llama-4-scout-17b-16e-instruct",
+    "openai/gpt-oss-120b",
+    "llama-3.3-70b-versatile",
+]
 
 
 async def _ask_groq(prompt: str, max_tokens: int = 1500) -> str | None:
@@ -19,7 +28,7 @@ async def _ask_groq(prompt: str, max_tokens: int = 1500) -> str | None:
                     'Content-Type': 'application/json',
                 },
                 json={
-                    'model': 'llama-3.3-70b-versatile',
+                    'model': random.choice(TRIVIA_MODELS),
                     'messages': [{'role': 'user', 'content': prompt}],
                     'temperature': 0.9,
                     'max_tokens': max_tokens,
