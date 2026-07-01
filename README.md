@@ -4,8 +4,13 @@ A full-featured movie and TV streaming app with AI-powered recommendations, real
 
 <p align="center">
   <a href="https://youtu.be/55KF_V-PMeQ">
-    <img src="https://img.youtube.com/vi/55KF_V-PMeQ/maxresdefault.jpg" alt="MovieSphere Demo" width="700" />
+    <picture>
+      <source media="(prefers-color-scheme: dark)" srcset="https://img.youtube.com/vi/55KF_V-PMeQ/maxresdefault.jpg">
+      <img src="https://img.youtube.com/vi/55KF_V-PMeQ/maxresdefault.jpg" alt="MovieSphere Demo" width="700" style="border-radius: 12px;">
+    </picture>
   </a>
+  <br>
+  <sub>▶️ Click to watch demo on YouTube (video too large for GitHub — 106 MB)</sub>
 </p>
 
 ## 🌐 Live Demo
