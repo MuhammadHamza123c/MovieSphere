@@ -10,7 +10,7 @@ A full-featured movie and TV streaming app with AI-powered recommendations, real
     </picture>
   </a>
   <br>
-  <sub>▶️ Click to watch demo on YouTube (video too large for GitHub — 106 MB)</sub>
+  <sub>
 </p>
 
 ## 🌐 Live Demo
