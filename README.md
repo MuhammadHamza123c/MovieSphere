@@ -53,7 +53,7 @@ A full-featured movie and TV streaming app with AI-powered recommendations, real
 ### 📬 Push Notifications
 - **Web push notifications** via VAPID (Service Worker)
 - Up to **3 daily trailer notifications** with AI-generated text
-- Staggered cron jobs (12:00, 16:00, 21:00 Asia/Karachi)
+- Staggered cron jobs (12:00, 16:00, 21:00 UTC)
 - Force re-subscribe on every init
 
 ### ⚡ Credit System
@@ -368,7 +368,7 @@ Create 3 jobs hitting:
 https://movie-sphere-backend.vercel.app/MovieSphere/trailer-digest/run?key=YOUR_CRON_SECRET_KEY
 ```
 
-At times: `12:00`, `16:00`, `21:00` (Asia/Karachi).
+At times: `12:00`, `16:00`, `21:00` (UTC).
 
 ---
 
@@ -641,7 +641,7 @@ Set `VITE_API_URL` to the deployed backend URL.
 
 - Up to **3 trailer notifications** per day
 - AI-generated title & body via Groq (`llama-3.3-70b-versatile`)
-- Staggered cron jobs at 12:00, 16:00, 21:00 Asia/Karachi
+- Staggered cron jobs at 12:00, 16:00, 21:00 UTC
 - Each notification links to `/detail/{media_type}/{media_id}`
 - VAPID-based with `force re-subscribe` on every initialization
 
