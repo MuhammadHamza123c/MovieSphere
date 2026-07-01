@@ -574,6 +574,26 @@ All API routes are prefixed with `/MovieSphere` (unless noted as `/auth`).
 
 ---
 
+## 📸 Screenshots
+
+| Home | TV Shows | Trending |
+|:---:|:---:|:---:|
+| ![home](MovieSphere_backend/homepage.png) | ![tv](MovieSphere_backend/tvshowpage.png) | ![trending](MovieSphere_backend/Trendingpage.png) |
+
+| Top Rated | Upcoming | Favorites |
+|:---:|:---:|:---:|
+| ![top](MovieSphere_backend/topratedpage.png) | ![upcoming](MovieSphere_backend/upcomingpage.png) | ![fav](MovieSphere_backend/favpage.png) |
+
+| Watch Later | Recommendations | Calendar |
+|:---:|:---:|:---:|
+| ![wl](MovieSphere_backend/watchlater.png) | ![rec](MovieSphere_backend/recomendpage.png) | ![cal](MovieSphere_backend/calendarpage.png) |
+
+| Trivia Quiz |
+|:---:|
+| ![quiz](MovieSphere_backend/quizz.png) |
+
+---
+
 ## 🔄 Deployment
 
 ### Backend (Vercel)
