@@ -2,6 +2,12 @@
 
 A full-featured movie and TV streaming app with AI-powered recommendations, real-time watch parties, YouTube-powered reels, push notifications, and a weekly credit system.
 
+<p align="center">
+  <a href="https://youtu.be/55KF_V-PMeQ">
+    <img src="https://img.youtube.com/vi/55KF_V-PMeQ/maxresdefault.jpg" alt="MovieSphere Demo" width="700" />
+  </a>
+</p>
+
 ## 🌐 Live Demo
 
 - **Frontend**: https://movie-sphere-sigma.vercel.app
